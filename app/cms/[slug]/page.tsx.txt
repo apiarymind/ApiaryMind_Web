@@ -1,0 +1,31 @@
+import { notFound } from "next/navigation";
+import { getCmsPageBySlug } from "@/lib/api";
+
+type Props = {
+  params: { slug: string };
+};
+
+export default async function CmsPage({ params }: Props) {
+  const data = await getCmsPageBySlug(params.slug);
+
+  if (!data) return notFound();
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-10">
+      <h1 className="text-2xl font-bold text-amber-200 mb-4">
+        {data.title}
+      </h1>
+      {/* Na razie tylko surowa treść – później sekcje będą bardziej rozbudowane */}
+      {data.sections?.map((sec: any) => (
+        <section key={sec.id} className="mb-6 bg-brown-800/60 border border-brown-700 rounded-xl p-4">
+          <h2 className="text-lg font-semibold text-amber-200 mb-2">
+            {sec.title}
+          </h2>
+          <p className="text-sm text-amber-100/85 whitespace-pre-line">
+            {sec.content}
+          </p>
+        </section>
+      ))}
+    </div>
+  );
+}

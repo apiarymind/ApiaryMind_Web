@@ -1,0 +1,15 @@
+export default function AdminDashboard() {
+  return (
+    <div>
+      <h1 className="text-xl font-bold text-amber-200 mb-2">Panel administratora</h1>
+      <p className="text-sm text-amber-100/85 mb-4">
+        Tu administrator zarządza stroną WWW (CMS), formularzami, betatesterami i rolami użytkowników.
+      </p>
+      <ul className="list-disc pl-5 text-sm text-amber-100/80 space-y-1">
+        <li>Zarządzanie stronami CMS (Pages / Sections / Forms w Strapi).</li>
+        <li>Rekrutacja i obsługa betatesterów (przegląd zgłoszeń z formularza beta).</li>
+        <li>Role użytkowników: pszczelarz, związek, admin, super admin.</li>
+      </ul>
+    </div>
+  );
+}

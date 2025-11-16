@@ -1,0 +1,15 @@
+export default function AssociationDashboard() {
+  return (
+    <div>
+      <h1 className="text-xl font-bold text-amber-200 mb-2">Panel związku / koła pszczelarskiego</h1>
+      <p className="text-sm text-amber-100/85 mb-4">
+        To miejsce dla zarządów kół i związków – ogłoszenia, wydarzenia, komunikaty do członków.
+      </p>
+      <ul className="list-disc pl-5 text-sm text-amber-100/80 space-y-1">
+        <li>Publikacja ogłoszeń dla członków (Strapi: AssociationMessage).</li>
+        <li>Tworzenie wydarzeń z kalendarzem (AssociationEvent).</li>
+        <li>Lista członków (powiązanie z kontami użytkowników ApiaryMind).</li>
+      </ul>
+    </div>
+  );
+}
