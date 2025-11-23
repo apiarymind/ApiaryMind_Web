@@ -56,6 +56,22 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Tailwind Custom Classes to use variables */
+
+/* Backgrounds */
+.bg-brown-900 { background-color: var(--bg-primary) !important; }
+.bg-brown-800 { background-color: var(--bg-secondary) !important; }
+.bg-brown-700 { background-color: var(--bg-tertiary) !important; }
+
+/* Text */
+.text-amber-50 { color: var(--text-primary) !important; }
+.text-amber-100 { color: var(--text-secondary) !important; }
+.text-amber-200 { color: var(--text-muted) !important; }
+
+/* Borders */
+.border-brown-700 { border-color: var(--border-color) !important; }
+.border-brown-600 { border-color: var(--border-color) !important; }
+
 /* Components */
 
 .btn-primary {
@@ -87,36 +103,12 @@ body {
   color: var(--amber-500);
 }
 
-.label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 500;
-  margin-bottom: 0.25rem;
-  color: var(--text-muted);
-}
-
-.input {
-  width: 100%;
-  padding: 0.5rem 0.6rem;
-  border-radius: 0.55rem;
-  border: 1px solid var(--input-border);
-  background-color: var(--input-bg);
-  color: var(--text-primary);
-  font-size: 0.9rem;
-}
-
-.input:focus {
-  outline: none;
-  border-color: var(--amber-500);
-  box-shadow: 0 0 0 1px rgba(244, 181, 36, 0.3);
-}
-
 /* Ensure header/footer use vars */
 header {
-  background-color: var(--bg-header);
-  border-color: var(--border-color);
+  background-color: var(--bg-header) !important;
+  border-color: var(--border-color) !important;
 }
 footer {
-  background-color: var(--bg-secondary);
-  border-color: var(--border-color);
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
 }

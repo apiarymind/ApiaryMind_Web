@@ -5,6 +5,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
  * Oczekujemy kolekcji typu "pages" z polem slug, title, sections.
  */
 export async function getCmsPageBySlug(slug: string) {
+  // During build time or if API is not set, we return null so the page component can handle fallback
   if (!API_BASE) return null;
 
   try {
@@ -26,12 +27,16 @@ export async function getCmsPageBySlug(slug: string) {
       slug: attrs.slug,
       sections: attrs.sections?.map((s: any) => ({
         id: s.id,
+        type: s.type, // Ensure type is passed
         title: s.title,
         content: s.content
       }))
     };
   } catch (e) {
-    console.error("Błąd getCmsPageBySlug", e);
+    // Suppress error log during build if it's connection error to localhost
+    if ((e as any).code !== 'ECONNREFUSED') {
+       console.error("Błąd getCmsPageBySlug", e);
+    }
     return null;
   }
 }
