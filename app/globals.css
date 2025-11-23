@@ -1,109 +1,107 @@
-/* Podstawowe reset/typografia */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+/* Base font settings defined by data-font-size */
+:root {
+  font-size: 16px; /* Fallback */
 }
 
-html,body {
-  margin: 0;
-  padding: 0;
+:root[data-font-size="small"] { font-size: 14px; }
+:root[data-font-size="medium"] { font-size: 16px; }
+:root[data-font-size="large"] { font-size: 18px; }
+
+/* Themes */
+:root {
+  /* Common */
+  --amber-500: #F4B524;
+  --amber-400: #F6D56C;
+
+  /* Dark Theme (Default) */
+  --bg-primary: #3C2C1F;
+  --bg-secondary: #5A422D;
+  --bg-tertiary: #4A3725;
+  --bg-header: rgba(90, 66, 45, 0.95);
+
+  --text-primary: #FAF5E9;
+  --text-secondary: #FBEFDB;
+  --text-muted: #F9DA81;
+
+  --border-color: #4A3725;
+
+  --input-bg: rgba(15, 10, 6, 0.8);
+  --input-border: #4A3725;
+}
+
+:root[data-theme="light"] {
+  /* Light Theme */
+  --bg-primary: #FDFBF7;
+  --bg-secondary: #FFF9E8;
+  --bg-tertiary: #F3EAD3;
+  --bg-header: rgba(255, 249, 232, 0.95);
+
+  --text-primary: #3C2C1F;
+  --text-secondary: #5A422D;
+  --text-muted: #8B6B4E;
+
+  --border-color: #E6D5B8;
+
+  --input-bg: #FFFFFF;
+  --input-border: #E6D5B8;
 }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background-color: #3C2C1F;
-  color: #FAF5E9;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Paleta ApiaryMind */
-:root {
-  --brown-900: #3C2C1F;
-  --brown-800: #5A422D;
-  --brown-700: #4A3725;
-  --brown-600: #60472E;
+/* Components */
 
-  --amber-500: #F4B524;
-  --amber-400: #F6D56C;
-  --amber-300: #F9DA81;
-  --amber-50: #FFF9E8;
-}
-
-/* Pomocnicze klasy */
-.bg-brown-900 { background-color: var(--brown-900); }
-.bg-brown-800 { background-color: var(--brown-800); }
-.bg-brown-700 { background-color: var(--brown-700); }
-.border-brown-700 { border-color: var(--brown-700); }
-.text-amber-50 { color: var(--amber-50); }
-.text-amber-100 { color: #FBEFDB; }
-.text-amber-200 { color: #F9DA81; }
-
-/* Przyciski */
 .btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.55rem 1.1rem;
-  border-radius: 999px;
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-full text-sm font-semibold transition-all shadow-md;
   background-color: var(--amber-500);
   color: #2A1C10;
-  font-size: 0.9rem;
-  font-weight: 600;
   border: none;
   text-decoration: none;
   cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
 }
 
 .btn-primary:hover {
   background-color: var(--amber-400);
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.1), 0 10px 18px rgba(0,0,0,0.45);
   transform: translateY(-1px);
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: default;
-  box-shadow: none;
-  transform: none;
+  box-shadow: 0 10px 18px rgba(0,0,0,0.15);
 }
 
 .btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.55rem 1.1rem;
-  border-radius: 999px;
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-full text-sm font-medium transition-all;
   border: 1px solid var(--amber-500);
   background-color: transparent;
-  color: var(--amber-300);
-  font-size: 0.9rem;
-  font-weight: 500;
+  color: var(--text-muted);
   text-decoration: none;
   cursor: pointer;
 }
 
 .btn-secondary:hover {
   background-color: rgba(244, 181, 36, 0.1);
+  color: var(--amber-500);
 }
 
-/* Formularze */
 .label {
   display: block;
   font-size: 0.8rem;
   font-weight: 500;
   margin-bottom: 0.25rem;
-  color: var(--amber-200);
+  color: var(--text-muted);
 }
 
 .input {
   width: 100%;
   padding: 0.5rem 0.6rem;
   border-radius: 0.55rem;
-  border: 1px solid var(--brown-700);
-  background-color: rgba(15, 10, 6, 0.8);
-  color: var(--amber-50);
+  border: 1px solid var(--input-border);
+  background-color: var(--input-bg);
+  color: var(--text-primary);
   font-size: 0.9rem;
 }
 
@@ -111,4 +109,14 @@ body {
   outline: none;
   border-color: var(--amber-500);
   box-shadow: 0 0 0 1px rgba(244, 181, 36, 0.3);
+}
+
+/* Ensure header/footer use vars */
+header {
+  background-color: var(--bg-header);
+  border-color: var(--border-color);
+}
+footer {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
 }
