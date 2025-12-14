@@ -6,8 +6,7 @@ import { useAuth } from "../lib/AuthContext";
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
-  const { profile } = useAuth();
-  const role = profile?.role;
+  const { profile, role, logout } = useAuth();
 
   const isActive = (path: string) => pathname?.startsWith(path);
 
@@ -16,8 +15,8 @@ export default function DashboardSidebar() {
       <div className="p-4 border-b border-brown-700">
         <h2 className="text-xl font-bold text-amber-500">Panel</h2>
         <p className="text-xs text-amber-200/60 mt-1">
-          {profile?.email} <br/>
-          <span className="font-semibold text-amber-400">{role}</span>
+          {profile?.email || "Ładowanie..."} <br/>
+          <span className="font-semibold text-amber-400">{role || "..."}</span>
         </p>
       </div>
       
@@ -120,9 +119,9 @@ export default function DashboardSidebar() {
       </nav>
       
       <div className="p-4 border-t border-brown-700">
-         <Link href="/logout" className="text-xs text-amber-200 hover:text-white flex items-center gap-2">
+         <button onClick={() => logout()} className="text-xs text-amber-200 hover:text-white flex items-center gap-2 w-full text-left">
            🚪 Wyloguj
-         </Link>
+         </button>
       </div>
     </aside>
   );

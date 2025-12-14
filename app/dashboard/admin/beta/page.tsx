@@ -1,120 +1,165 @@
 "use client";
 
-import { useAuth } from "../../../../lib/AuthContext";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { apiGet, apiPut } from "../../../../lib/apiClient";
+import { useAuth } from "../../../../lib/AuthContext";
 
-interface BetaCandidate {
+// Define the shape of backend data
+type BetaCandidate = {
   id: number;
-  name: string;
-  email: string;
-  hivesCount: number | string;
-  apiaryType: string;
-  isAssociationMember: boolean;
-  status: 'NEW' | 'CONTACTED' | 'ACCEPTED' | 'REJECTED';
-  createdAt: string;
-  source: string;
+  attributes: {
+    fullName: string;
+    email: string;
+    hivesCount: number;
+    apiaryType: string;
+    isAssociationMember: string;
+    status: string; // NEW, CONTACTED, ACCEPTED, REJECTED
+    source: string;
+    createdAt: string;
+  }
 }
 
-// Mock data
-const MOCK_CANDIDATES: BetaCandidate[] = [
-  { id: 1, name: 'Jan Kowalski', email: 'jan@example.com', hivesCount: 25, apiaryType: 'Stacjonarna', isAssociationMember: true, status: 'NEW', createdAt: '2024-05-10T10:00:00Z', source: 'PORTAL_WEB' },
-  { id: 2, name: 'Anna Nowak', email: 'anna@example.com', hivesCount: 120, apiaryType: 'Wędrowna', isAssociationMember: false, status: 'CONTACTED', createdAt: '2024-05-09T14:30:00Z', source: 'PORTAL_WEB' },
-];
-
 export default function AdminBetaPage() {
-  const { profile, loading } = useAuth();
-  const router = useRouter();
-  const [candidates, setCandidates] = useState<BetaCandidate[]>(MOCK_CANDIDATES);
-  const [filterStatus, setFilterStatus] = useState<string>('ALL');
+  const { token } = useAuth();
+  const [candidates, setCandidates] = useState<BetaCandidate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
+  // Fetch candidates
   useEffect(() => {
-    if (!loading && profile?.role !== 'SUPER_ADMIN') {
-       router.push("/dashboard");
+    if (token) {
+      fetchCandidates();
     }
-  }, [loading, profile, router]);
+  }, [token]);
 
-  const handleStatusChange = async (id: number, newStatus: string) => {
-    // Optimistic update
-    setCandidates(prev => prev.map(c => c.id === id ? { ...c, status: newStatus as any } : c));
-    // await apiPut(`/beta-candidates/${id}`, { status: newStatus });
+  const fetchCandidates = async () => {
+    try {
+      setLoading(true);
+      // Backend Strapi format: { data: [...] }
+      const res = await apiGet("/beta-candidates?sort[createdAt]=desc");
+      if (res.data) {
+        setCandidates(res.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch beta candidates", error);
+      // Optionally set mock data if backend fails for demo
+      // setCandidates(mockCandidates); 
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (profile?.role !== 'SUPER_ADMIN') return null;
+  const handleStatusChange = async (id: number, newStatus: string) => {
+    try {
+      // Optimistic update
+      setCandidates(prev => prev.map(c => 
+        c.id === id ? { ...c, attributes: { ...c.attributes, status: newStatus } } : c
+      ));
 
-  const filteredCandidates = filterStatus === 'ALL' 
-    ? candidates 
-    : candidates.filter(c => c.status === filterStatus);
+      await apiPut(`/beta-candidates/${id}`, {
+        data: { status: newStatus }
+      });
+      
+    } catch (error) {
+      console.error("Failed to update status", error);
+      alert("Błąd aktualizacji statusu");
+      fetchCandidates(); // Revert on error
+    }
+  };
+
+  // Filtering logic
+  const filteredCandidates = candidates.filter(c => {
+    if (statusFilter === "ALL") return true;
+    return c.attributes.status === statusFilter;
+  });
+
+  if (loading) return <div className="p-8 text-center text-amber-500">Ładowanie zgłoszeń...</div>;
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-amber-500 mb-6">Zgłoszenia Beta Testów</h1>
-      
-      <div className="bg-brown-800 rounded-xl border border-brown-700 overflow-hidden">
-         <div className="p-4 border-b border-brown-700 bg-brown-800 flex justify-between items-center">
-            <h3 className="font-bold text-amber-100">Kandydaci ({filteredCandidates.length})</h3>
-            <select 
-              value={filterStatus} 
-              onChange={e => setFilterStatus(e.target.value)}
-              className="bg-brown-900 border border-brown-600 rounded px-3 py-1 text-sm text-amber-100 outline-none focus:border-amber-500"
-            >
-               <option value="ALL">Wszystkie statusy</option>
-               <option value="NEW">Nowe (NEW)</option>
-               <option value="CONTACTED">Skontaktowano (CONTACTED)</option>
-               <option value="ACCEPTED">Zaakceptowano (ACCEPTED)</option>
-               <option value="REJECTED">Odrzucono (REJECTED)</option>
-            </select>
-         </div>
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <h1 className="text-3xl font-bold text-amber-500">Zgłoszenia Beta</h1>
+        
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-amber-200">Status:</label>
+          <select 
+            value={statusFilter} 
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-brown-800 border border-brown-600 text-amber-100 rounded p-2 text-sm outline-none focus:border-amber-500"
+          >
+            <option value="ALL">Wszystkie</option>
+            <option value="NEW">Nowe (NEW)</option>
+            <option value="CONTACTED">Skontaktowano (CONTACTED)</option>
+            <option value="ACCEPTED">Zaakceptowano (ACCEPTED)</option>
+            <option value="REJECTED">Odrzucono (REJECTED)</option>
+          </select>
+        </div>
+      </div>
 
-         <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-amber-100/90">
-               <thead className="bg-brown-900/50 text-amber-500 uppercase text-xs font-bold border-b border-brown-700">
-                  <tr>
-                     <th className="px-4 py-3">Data</th>
-                     <th className="px-4 py-3">Imię i Nazwisko</th>
-                     <th className="px-4 py-3">Email</th>
-                     <th className="px-4 py-3">Ule</th>
-                     <th className="px-4 py-3">Typ</th>
-                     <th className="px-4 py-3">Związek?</th>
-                     <th className="px-4 py-3">Status</th>
+      <div className="bg-brown-800 rounded-xl border border-brown-700 overflow-x-auto">
+        <table className="w-full text-left text-sm text-amber-200 whitespace-nowrap">
+          <thead className="bg-brown-700 text-amber-100 uppercase font-bold text-xs">
+            <tr>
+              <th className="px-4 py-3">Data</th>
+              <th className="px-4 py-3">Imię i Nazwisko</th>
+              <th className="px-4 py-3">Email</th>
+              <th className="px-4 py-3 text-center">Ule</th>
+              <th className="px-4 py-3">Typ</th>
+              <th className="px-4 py-3 text-center">Związek?</th>
+              <th className="px-4 py-3">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-brown-700">
+            {filteredCandidates.length > 0 ? (
+              filteredCandidates.map((candidate) => {
+                const { attributes } = candidate;
+                return (
+                  <tr key={candidate.id} className="hover:bg-brown-700/50 transition-colors">
+                    <td className="px-4 py-3">
+                      {new Date(attributes.createdAt).toLocaleDateString('pl-PL')}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-amber-100">{attributes.fullName}</td>
+                    <td className="px-4 py-3">{attributes.email}</td>
+                    <td className="px-4 py-3 text-center font-bold">{attributes.hivesCount}</td>
+                    <td className="px-4 py-3">
+                      {attributes.apiaryType === 'STATIONARY' && 'Stacjonarna'}
+                      {attributes.apiaryType === 'MIGRATORY' && 'Wędrowna'}
+                      {attributes.apiaryType === 'MIXED' && 'Mieszana'}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {attributes.isAssociationMember === 'YES' ? (
+                        <span className="text-green-400">Tak</span>
+                      ) : (
+                        <span className="text-gray-500">Nie</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <select 
+                        value={attributes.status}
+                        onChange={(e) => handleStatusChange(candidate.id, e.target.value)}
+                        className={`bg-brown-900 border border-brown-600 rounded px-2 py-1 text-xs font-bold outline-none
+                          ${attributes.status === 'NEW' ? 'text-blue-400 border-blue-900' : ''}
+                          ${attributes.status === 'ACCEPTED' ? 'text-green-400 border-green-900' : ''}
+                          ${attributes.status === 'REJECTED' ? 'text-red-400 border-red-900' : ''}
+                          ${attributes.status === 'CONTACTED' ? 'text-yellow-400 border-yellow-900' : ''}
+                        `}
+                      >
+                        <option value="NEW">NEW</option>
+                        <option value="CONTACTED">CONTACTED</option>
+                        <option value="ACCEPTED">ACCEPTED</option>
+                        <option value="REJECTED">REJECTED</option>
+                      </select>
+                    </td>
                   </tr>
-               </thead>
-               <tbody className="divide-y divide-brown-700/50">
-                  {filteredCandidates.map(c => (
-                     <tr key={c.id} className="hover:bg-brown-700/30 transition-colors">
-                        <td className="px-4 py-3 text-amber-200/60 font-mono text-xs">{new Date(c.createdAt).toLocaleDateString()}</td>
-                        <td className="px-4 py-3 font-semibold">{c.name}</td>
-                        <td className="px-4 py-3">{c.email}</td>
-                        <td className="px-4 py-3">{c.hivesCount}</td>
-                        <td className="px-4 py-3">{c.apiaryType}</td>
-                        <td className="px-4 py-3">{c.isAssociationMember ? 'Tak' : 'Nie'}</td>
-                        <td className="px-4 py-3">
-                           <select 
-                             value={c.status} 
-                             onChange={(e) => handleStatusChange(c.id, e.target.value)}
-                             className={`bg-brown-900 border border-brown-600 rounded px-2 py-1 text-xs font-bold outline-none cursor-pointer
-                               ${c.status === 'NEW' ? 'text-blue-400' : 
-                                 c.status === 'ACCEPTED' ? 'text-green-400' :
-                                 c.status === 'REJECTED' ? 'text-red-400' : 'text-amber-400'}
-                             `}
-                           >
-                             <option value="NEW">NEW</option>
-                             <option value="CONTACTED">CONTACTED</option>
-                             <option value="ACCEPTED">ACCEPTED</option>
-                             <option value="REJECTED">REJECTED</option>
-                           </select>
-                        </td>
-                     </tr>
-                  ))}
-                  {filteredCandidates.length === 0 && (
-                     <tr>
-                        <td colSpan={7} className="px-4 py-8 text-center text-amber-200/40">Brak zgłoszeń spełniających kryteria.</td>
-                     </tr>
-                  )}
-               </tbody>
-            </table>
-         </div>
+                );
+              })
+            ) : (
+               <tr>
+                 <td colSpan={7} className="px-4 py-8 text-center text-amber-200/50">Brak zgłoszeń spełniających kryteria</td>
+               </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

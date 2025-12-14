@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, User, getIdToken, signOut as firebaseSignOut } from "firebase/auth";
+import { onAuthStateChanged, User, getIdToken, signOut as firebaseSignOut, IdTokenResult } from "firebase/auth";
 import { auth } from "./firebase";
 import { apiPost } from "./apiClient";
 
@@ -23,6 +23,7 @@ interface AuthContextType {
   user: User | null; // Firebase User
   profile: UserProfile | null; // Database Profile
   token: string | null;
+  role: UserRole | null;
   loading: boolean;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -34,23 +35,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [role, setRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (currentUser: User, currentToken: string) => {
     try {
-      // Sync with backend to get/create profile
+      // Attempt to sync with backend
+      // If backend is not available, we won't have a profile, but we still have role logic below
       const res = await apiPost("/auth/sync", {}, {
         headers: {
           "Authorization": `Bearer ${currentToken}`
         }
       });
       setProfile(res);
-      // Store basic info in localStorage if needed for non-react usage, strictly optional as we have context
-      localStorage.setItem("userRole", res.role);
+      if (res.role) {
+        setRole(res.role);
+        localStorage.setItem("userRole", res.role);
+      }
     } catch (error) {
-      console.error("Failed to fetch user profile", error);
-      // If sync fails, we might want to logout or show error. 
-      // For now, we keep the firebase user but no profile.
+      console.error("Failed to fetch user profile (backend might be offline or user not created)", error);
+      // Fallback logic happens in onAuthStateChanged
     }
   };
 
@@ -60,15 +64,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (currentUser) {
         try {
           const idToken = await getIdToken(currentUser);
+          const tokenResult: IdTokenResult = await currentUser.getIdTokenResult();
+          
           setToken(idToken);
           localStorage.setItem("authToken", idToken);
+
+          // Determine role
+          let detectedRole: UserRole = "BEEKEEPER"; // Default
+          
+          // 1. Hardcoded Super Admin Stub
+          if (currentUser.email === "admin@apiarymind.com") {
+            detectedRole = "SUPER_ADMIN";
+          } 
+          // 2. Check Custom Claims
+          else if (tokenResult.claims.role) {
+             detectedRole = tokenResult.claims.role as UserRole;
+          }
+
+          setRole(detectedRole);
+          localStorage.setItem("userRole", detectedRole);
+
           await fetchProfile(currentUser, idToken);
+
         } catch (e) {
           console.error("Error getting token", e);
         }
       } else {
         setToken(null);
         setProfile(null);
+        setRole(null);
         localStorage.removeItem("authToken");
         localStorage.removeItem("userRole");
       }
@@ -83,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setProfile(null);
     setToken(null);
+    setRole(null);
     localStorage.removeItem("authToken");
     localStorage.removeItem("userRole");
   };
@@ -94,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, token, loading, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, token, role, loading, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

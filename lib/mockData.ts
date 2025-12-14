@@ -1,39 +1,27 @@
+export const mockWarehouse = [
+  { id: 1, name: "Ramka Wielkopolska", category: "FRAMES", quantity: 150, unit: "szt" },
+  { id: 2, name: "Węza pszczela", category: "FOUNDATION", quantity: 5, unit: "kg" },
+  { id: 3, name: "Korpus Langstroth", category: "HIVE_BODY", quantity: 12, unit: "szt" },
+  { id: 4, name: "Daszek ocieplany", category: "ROOF", quantity: 8, unit: "szt" },
+  { id: 5, name: "Podkurzacz", category: "TOOLS", quantity: 2, unit: "szt" }
+];
+
 export const mockApiaries = [
-  { id: 1, name: "Pasieka Leśna", location: "Las Kabacki", hives: 12 },
-  { id: 2, name: "Pasieka Przydomowa", location: "Ogród", hives: 4 },
-  { id: 3, name: "Wrzosowisko", location: "Poligon", hives: 20 },
+  { id: 1, name: "Pasieka Leśna", type: "STATIONARY", hives: 25, location: "Las Kabacki" },
+  { id: 2, name: "Pasieka Wędrowna 1", type: "MIGRATORY", hives: 40, location: "Rzepak - Pole A" },
 ];
 
 export const mockInspections = [
-  { id: 101, date: "2024-05-12", apiary: "Pasieka Leśna", type: "Przegląd wiosenny", notes: "Rodziny silne, dużo czerwiu." },
-  { id: 102, date: "2024-05-14", apiary: "Pasieka Przydomowa", type: "Miodobranie", notes: "Rzepak, 20kg." },
-  { id: 103, date: "2024-05-20", apiary: "Wrzosowisko", type: "Kontrola nastroju rojowego", notes: "Znaleziono mateczniki w ulu #5." },
+  { id: 1, apiaryId: 1, date: "2023-05-12", notes: "Przegląd wiosenny, stan dobry." },
+  { id: 2, apiaryId: 1, date: "2023-05-20", notes: "Dodano nadstawki." },
 ];
 
-export const mockWarehouse = {
-  equipment: [
-    { id: 1, name: "Korpus Wielkopolski", quantity: 15, unit: "szt" },
-    { id: 2, name: "Dennica wysoka", quantity: 5, unit: "szt" },
-    { id: 3, name: "Ramka gniazdowa (zadrutowana)", quantity: 100, unit: "szt" },
-  ],
-  products: [
-    { id: 1, name: "Miód Rzepakowy 2024", quantity: 50, unit: "kg" },
-    { id: 2, name: "Wosk", quantity: 5, unit: "kg" },
-    { id: 3, name: "Propolis", quantity: 0.5, unit: "kg" },
-  ],
-  packaging: [
-    { id: 1, name: "Słoik 0.9l", quantity: 200, unit: "szt" },
-    { id: 2, name: "Zakrętka złota", quantity: 250, unit: "szt" },
-  ]
-};
-
 export const mockReports = [
-  { id: 1, title: "Raport sprzedaży RHD 2023", date: "2023-12-31", url: "#" },
-  { id: 2, title: "Raport miodobrania Wiosna 2024", date: "2024-06-01", url: "#" },
+  { id: 1, title: "Raport roczny 2022", date: "2022-12-31", type: "ANNUAL" },
+  { id: 2, title: "Straty zimowe", date: "2023-03-15", type: "LOSS" },
 ];
 
 export const mockBetaScenarios = [
-  { id: 1, title: "Test dodawania przeglądu głosowego", status: "OPEN" },
-  { id: 2, title: "Weryfikacja stanów magazynowych po synchronizacji", status: "DONE" },
-  { id: 3, title: "Test modułu mapy pasiek", status: "OPEN" },
+  { id: 1, title: "Scenariusz A", description: "Testowanie dodawania pasiek" },
+  { id: 2, title: "Scenariusz B", description: "Testowanie raportów" }
 ];

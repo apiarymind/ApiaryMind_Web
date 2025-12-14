@@ -1,26 +1,13 @@
 "use client";
 
-import { useAuth } from "../../../../lib/AuthContext";
-import { useEffect, useState } from "react";
-import { getBetaScenarios } from "../../../../lib/apiServices";
-
-export default function BeekeeperBetaPage() {
-  const { loading } = useAuth();
-  const [scenarios, setScenarios] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (!loading) {
-         getBetaScenarios().then(setScenarios).catch(console.error);
-    }
-  }, [loading]);
-
-  if (loading) return <div>Ładowanie...</div>;
-
+export default function BetaDashboardPage() {
   return (
     <div>
-      <h1 className="text-3xl font-bold text-amber-500 mb-6">Program Beta</h1>
-      <div className="bg-brown-800 rounded-xl border border-brown-700 p-6">
-        <p className="text-amber-100">Dostępne scenariusze testowe (Stub)</p>
+      <h1 className="text-3xl font-bold text-amber-500 mb-6">Status Beta Testów</h1>
+      <div className="bg-brown-800 p-8 rounded-xl border border-brown-700 text-center">
+         <div className="text-4xl mb-4">🚧</div>
+         <h2 className="text-xl font-bold text-amber-100 mb-2">Moduł w przygotowaniu</h2>
+         <p className="text-amber-200/70">Tutaj będziesz widzieć status swojego zgłoszenia i zadania testowe.</p>
       </div>
     </div>
   );

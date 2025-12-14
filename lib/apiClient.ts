@@ -1,8 +1,7 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 if (!API_BASE_URL) {
-  // In development, we might not have it set, but for production it's critical.
-  console.warn("NEXT_PUBLIC_API_BASE_URL is not set");
+  throw new Error("NEXT_PUBLIC_API_BASE_URL is not set in environment variables. Please configure it in .env.local");
 }
 
 function getAuthHeader() {
