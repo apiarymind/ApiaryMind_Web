@@ -1,111 +1,126 @@
-# ApiaryMind Web (Next.js 14 + TypeScript + Firebase Hosting)
+Jules, we are building the Web Dashboard for "ApiaryMind" (Next.js 14 App Router). CRITICAL CONSTRAINTS:
 
-Frontend portalu ApiaryMind – wersja szkieletowa przygotowana do dalszej rozbudowy przez backend (Strapi + Supabase) i integrację z portalem CMS.
+DATABASE IS IMMUTABLE: The database is managed by a live Android App. You strictly CANNOT change the schema, types, or data in Supabase. No migrations.
 
----
+RLS IS DISABLED: Row Level Security is OFF globally. You must manually filter every database query by user_id in the code to ensure security. Never query tables without a .eq('id', uid) clause.
 
-## ⭐ Stos technologiczny
+DATA NORMALIZATION: The data in the DB is inconsistent (e.g., plans are mixed case: 'free', 'PLUS', 'pro'). You must normalize this data on the Frontend/Server-side layer, not in the DB.
 
-- **Next.js 14 (App Router)**
-- **TypeScript**
-- **Firebase Hosting**  
-  (projekt: `apiarymindv2`)
-- **Firebase Auth Web SDK**  
-  (logowanie WWW zostanie dodane później)
-- **Strapi + Supabase**  
-  (backend, podłączany osobno — inne repo)
+TECH STACK: Next.js 14, Supabase SSR, TypeScript.
 
----
+YOUR TASK: Implement the Data Access Layer that connects Next.js to the existing Supabase instance securely. Create the following 3 files exactly as specified to handle the logic without touching the DB.
 
-## 🔧 Konfiguracja środowiska
+1. Setup Client (utils/supabase/server.ts)
+Standard SSR client.
 
-### 1. Skopiuj `.env.example` → `.env.local`
+TypeScript
 
-Uzupełnij klucze Firebase Web oraz adres backendu Strapi:
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
-```bash
-cp .env.example .env.local
-Uzupełnij klucze Firebase Web i adres Strapi w .env.local.
+export function createClient() {
+  const cookieStore = cookies()
 
-Zainstaluj zależności:
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value, ...options })
+          } catch (error) {
+            // Handle cookie errors
+          }
+        },
+        remove(name: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value: '', ...options })
+          } catch (error) {
+            // Handle cookie errors
+          }
+        },
+      },
+    }
+  )
+}
+2. Data Normalizer (utils/profile-mapper.ts)
+This is crucial. It fixes the messy data coming from the Android app so the Web app doesn't crash. It also handles the "Marketplace Lock" logic (User must have RHD or SB number).
 
-npm install
+TypeScript
 
+export type RawProfile = {
+  id: string;
+  email: string | null;
+  subscription_plan: string | null; // Database has mixed case: 'plus', 'FREE', 'Pro'
+  rhd_number: string | null;
+  sb_number: string | null;
+  vet_number: string | null;
+  sanepid_number: string | null;
+};
 
-Uruchom wersję deweloperską:
+export type UserProfile = {
+  id: string;
+  email: string;
+  plan: 'FREE' | 'PLUS' | 'PRO' | 'BUSINESS'; // Normalized to uppercase
+  rhd: string | null;
+  sb: string | null;
+  isRhdActive: boolean; // Computed logic for Marketplace access
+};
 
-npm run dev
+export function normalizeProfile(raw: RawProfile): UserProfile {
+  // 1. Normalize PLAN (fix case sensitivity issues from Android)
+  let cleanPlan: 'FREE' | 'PLUS' | 'PRO' | 'BUSINESS' = 'FREE';
+  
+  if (raw.subscription_plan) {
+    const p = raw.subscription_plan.toUpperCase().trim();
+    if (['FREE', 'PLUS', 'PRO', 'BUSINESS'].includes(p)) {
+      cleanPlan = p as any;
+    }
+  }
 
+  // 2. RHD/SB Logic (Marketplace Guard)
+  // User allows selling if RHD OR SB number is present in DB
+  const hasRhd = !!(raw.rhd_number && raw.rhd_number.length > 0);
+  const hasSb = !!(raw.sb_number && raw.sb_number.length > 0);
 
-Strona dostępna pod:
+  return {
+    id: raw.id,
+    email: raw.email || '',
+    plan: cleanPlan,
+    rhd: raw.rhd_number,
+    sb: raw.sb_number,
+    isRhdActive: hasRhd || hasSb,
+  };
+}
+3. Secure Fetcher (app/actions/get-user.ts)
+Since RLS is disabled, this function MUST manually check the ID.
 
-http://localhost:3000
+TypeScript
 
-Budowanie i eksport
+'use server'
 
-Projekt używa statycznego eksportu (output: 'export' w next.config.mjs).
+import { createClient } from '@/utils/supabase/server';
+import { normalizeProfile, UserProfile } from '@/utils/profile-mapper';
 
-Build:
-npm run build
+export async function getCurrentUserProfile(firebaseUid: string): Promise<UserProfile | null> {
+  const supabase = createClient();
 
-Export:
-npx next export
+  // SECURITY: Manual filtering is mandatory because RLS is OFF.
+  const { data: rawData, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', firebaseUid) // <--- CRITICAL
+    .single();
 
+  if (error || !rawData) {
+    console.error("Profile fetch error:", error);
+    return null;
+  }
 
-Pliki wygenerują się do folderu out/.
-
-Deploy na Firebase Hosting
-firebase deploy --only hosting
-
-
-Hosting:
-
-https://apiarymindv2.web.app/
-
-Struktura projektu
-app/
-  layout.tsx
-  page.tsx
-
-lib/
-  api.ts          ← klient CMS (pages/sections Strapi)
-  apiClient.ts    ← klient REST (pasieki/ule/magazyn/AI)
-  firebase.ts     ← konfiguracja Firebase Web
-
-public/
-  … zasoby statyczne …
-
-firebase.json      ← konfiguracja Firebase Hosting
-.firebaserc        ← wybór projektu Firebase
-next.config.mjs    ← konfiguracja Next.js (output: export)
-package.json
-tsconfig.json
-.env.example       ← zmienne środowiskowe (bez tajnych kluczy)
-
-Status
-
-Frontend ApiaryMind jest gotowy do:
-
-integracji z backendem Strapi,
-
-podłączenia CMS i API,
-
-dalszej rozbudowy panelu WWW,
-
-wdrożenia na Firebase Hosting.
-
-Cała logika backendowa (modele, API, CMS, pożytki, magazyn, AI itd.) będzie implementowana w repozytorium:
-
-ApiaryMind_Strapi
-
-Projekt gotowy do dalszej pracy.
-
-
----
-
-# KONIEC  
-Nic nie dopisujesz.  
-Nic nie zmieniasz.  
-Wklejasz taki jaki jest.
-
-Chcesz teraz dokładnie taki sam **README dla backendu Strapi?**
+  return normalizeProfile(rawData);
+}
+ACTION: Implement these files. Then, create a simple test page at /dashboard/debug that fetches the profile using a hardcoded valid UID (from the screenshot provided previously, e.g., starting with wf5W...) to verify the normalizer works.
