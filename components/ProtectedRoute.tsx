@@ -27,8 +27,8 @@ function ProtectedRouteContent({ children, allowedRoles }: ProtectedRouteProps) 
 
     // If logged in but role is restricted
     if (allowedRoles && role && !allowedRoles.includes(role)) {
-      if (role === 'SUPER_ADMIN') router.replace('/dashboard/admin');
-      else if (role === 'ASSOCIATION_ADMIN') router.replace('/dashboard/association');
+      if (role === 'super_admin') router.replace('/dashboard/admin');
+      else if (role === 'admin') router.replace('/dashboard/association');
       else router.replace('/dashboard/beekeeper');
     }
 

@@ -3,21 +3,36 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../lib/AuthContext";
+import { UserProfile } from "@/utils/profile-mapper";
 
-export default function DashboardSidebar() {
+interface DashboardSidebarProps {
+  userProfile?: UserProfile | null;
+}
+
+export default function DashboardSidebar({ userProfile }: DashboardSidebarProps) {
   const pathname = usePathname();
-  const { profile, role, logout } = useAuth();
+  const { profile: clientProfile, logout } = useAuth();
+  
+  // Prefer server-fetched userProfile, fall back to clientProfile
+  const profile = userProfile || clientProfile;
+  const role = profile?.role || 'user';
 
   const isActive = (path: string) => pathname?.startsWith(path);
+
+  const getRoleBadge = () => {
+      if (role === 'super_admin') return <span className="text-yellow-400 font-bold">SUPER ADMIN</span>;
+      if (role === 'admin') return <span className="text-red-400 font-bold">ADMIN</span>;
+      return <span className="text-amber-400 font-bold">PSZCZELARZ</span>;
+  };
 
   return (
     <aside className="w-64 bg-brown-800 border-r border-brown-700 min-h-screen flex flex-col">
       <div className="p-4 border-b border-brown-700">
         <h2 className="text-xl font-bold text-amber-500">Panel</h2>
-        <p className="text-xs text-amber-200/60 mt-1">
-          {profile?.email || "Ładowanie..."} <br/>
-          <span className="font-semibold text-amber-400">{role || "..."}</span>
-        </p>
+        <div className="text-xs text-amber-200/60 mt-1">
+          <div className="truncate">{profile?.email || (userProfile ? "" : "Ładowanie...")}</div>
+          <div className="mt-1">{getRoleBadge()}</div>
+        </div>
       </div>
       
       <nav className="flex-1 p-2 space-y-1">
@@ -31,14 +46,20 @@ export default function DashboardSidebar() {
         {/* BEEKEEPER Menu */}
         <div className="pt-4 px-3 pb-1 text-xs font-bold text-amber-200/40 uppercase">Pszczelarz</div>
         <Link 
-          href="/dashboard/beekeeper/apiaries"
-          className={`block px-3 py-2 rounded text-sm ${isActive('/dashboard/beekeeper/apiaries') ? 'bg-amber-500 text-brown-900 font-bold' : 'text-amber-100 hover:bg-brown-700'}`}
+          href="/dashboard/hives"
+          className={`block px-3 py-2 rounded text-sm ${isActive('/dashboard/hives') ? 'bg-amber-500 text-brown-900 font-bold' : 'text-amber-100 hover:bg-brown-700'}`}
+        >
+          Ule
+        </Link>
+        <Link 
+          href="/dashboard/apiaries"
+          className={`block px-3 py-2 rounded text-sm ${isActive('/dashboard/apiaries') ? 'bg-amber-500 text-brown-900 font-bold' : 'text-amber-100 hover:bg-brown-700'}`}
         >
           Pasieki
         </Link>
         <Link 
-          href="/dashboard/beekeeper/inspections"
-          className={`block px-3 py-2 rounded text-sm ${isActive('/dashboard/beekeeper/inspections') ? 'bg-amber-500 text-brown-900 font-bold' : 'text-amber-100 hover:bg-brown-700'}`}
+          href="/dashboard/inspections"
+          className={`block px-3 py-2 rounded text-sm ${isActive('/dashboard/inspections') ? 'bg-amber-500 text-brown-900 font-bold' : 'text-amber-100 hover:bg-brown-700'}`}
         >
           Przeglądy
         </Link>
@@ -61,58 +82,33 @@ export default function DashboardSidebar() {
           Beta Testy
         </Link>
 
-        {/* ASSOCIATION ADMIN Menu */}
-        {(role === 'ASSOCIATION_ADMIN' || role === 'SUPER_ADMIN') && (
+        {/* ADMIN Menu Group - Only for admin/super_admin */}
+        {(role === 'admin' || role === 'super_admin') && (
           <>
-            <div className="pt-4 px-3 pb-1 text-xs font-bold text-amber-200/40 uppercase">Związek</div>
-            <Link 
-              href="/dashboard/association/members"
-              className={`block px-3 py-2 rounded text-sm ${isActive('/dashboard/association/members') ? 'bg-amber-500 text-brown-900 font-bold' : 'text-amber-100 hover:bg-brown-700'}`}
-            >
-              Członkowie
-            </Link>
-            <Link 
-              href="/dashboard/association/calendar"
-              className={`block px-3 py-2 rounded text-sm ${isActive('/dashboard/association/calendar') ? 'bg-amber-500 text-brown-900 font-bold' : 'text-amber-100 hover:bg-brown-700'}`}
-            >
-              Kalendarz
-            </Link>
-            <Link 
-              href="/dashboard/association/announcements"
-              className={`block px-3 py-2 rounded text-sm ${isActive('/dashboard/association/announcements') ? 'bg-amber-500 text-brown-900 font-bold' : 'text-amber-100 hover:bg-brown-700'}`}
-            >
-              Ogłoszenia
-            </Link>
-          </>
-        )}
-
-        {/* SUPER ADMIN Menu */}
-        {role === 'SUPER_ADMIN' && (
-          <>
-            <div className="pt-4 px-3 pb-1 text-xs font-bold text-amber-200/40 uppercase">Admin</div>
+            <div className="pt-4 px-3 pb-1 text-xs font-bold text-amber-200/40 uppercase text-red-400">ADMINISTRACJA</div>
             <Link 
               href="/dashboard/admin/users"
               className={`block px-3 py-2 rounded text-sm ${isActive('/dashboard/admin/users') ? 'bg-amber-500 text-brown-900 font-bold' : 'text-amber-100 hover:bg-brown-700'}`}
             >
               Użytkownicy
             </Link>
-            <Link 
+             <Link 
               href="/dashboard/admin/approvals"
               className={`block px-3 py-2 rounded text-sm ${isActive('/dashboard/admin/approvals') ? 'bg-amber-500 text-brown-900 font-bold' : 'text-amber-100 hover:bg-brown-700'}`}
             >
               Zatwierdzenia
             </Link>
             <Link 
-              href="/dashboard/admin/beta"
-              className={`block px-3 py-2 rounded text-sm ${isActive('/dashboard/admin/beta') ? 'bg-amber-500 text-brown-900 font-bold' : 'text-amber-100 hover:bg-brown-700'}`}
-            >
-              Zgłoszenia Beta
-            </Link>
-            <Link 
               href="/dashboard/admin/cms"
               className={`block px-3 py-2 rounded text-sm ${isActive('/dashboard/admin/cms') ? 'bg-amber-500 text-brown-900 font-bold' : 'text-amber-100 hover:bg-brown-700'}`}
             >
               CMS Editor
+            </Link>
+            <Link 
+              href="/dashboard/admin/settings"
+              className={`block px-3 py-2 rounded text-sm ${isActive('/dashboard/admin/settings') ? 'bg-amber-500 text-brown-900 font-bold' : 'text-amber-100 hover:bg-brown-700'}`}
+            >
+              Konfiguracja
             </Link>
           </>
         )}

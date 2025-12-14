@@ -2,7 +2,7 @@ import { getUserHives } from '@/app/actions/get-hives';
 import { getSessionUid } from '@/app/actions/auth-session';
 import { redirect } from 'next/navigation';
 
-export default async function WarehousePage() {
+export default async function HivesPage() {
   const uid = await getSessionUid();
   if (!uid) {
     redirect('/login');
@@ -13,22 +13,21 @@ export default async function WarehousePage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-         {/* H1 matches Sidebar Label "Magazyn" */}
-         <h1 className="text-3xl font-bold text-amber-500">Magazyn</h1>
+         <h1 className="text-3xl font-bold text-amber-500">Ule</h1>
       </div>
 
       <div className="bg-brown-800/30 p-4 rounded-xl border border-brown-700/50 mb-6">
          <p className="text-sm text-amber-200/60">
-            Tutaj znajduje się lista wszystkich Twoich uli (również tych nieprzypisanych).
+            Tutaj znajduje się lista wszystkich Twoich uli.
          </p>
       </div>
 
       {hives.length === 0 ? (
         <div className="bg-brown-800/50 border border-brown-700 rounded-xl p-8 text-center">
            <div className="text-4xl mb-4">📦</div>
-           <h3 className="text-xl font-bold text-amber-100 mb-2">Pusty magazyn</h3>
+           <h3 className="text-xl font-bold text-amber-100 mb-2">Brak uli</h3>
            <p className="text-amber-200/60">
-             Nie znaleziono sprzętu ani uli.
+             Nie znaleziono uli. Dodaj je w aplikacji mobilnej.
            </p>
         </div>
       ) : (
@@ -38,7 +37,7 @@ export default async function WarehousePage() {
               <div className="text-2xl mb-2">🐝</div>
               <h3 className="font-bold text-amber-100 text-lg">{hive.name}</h3>
               <span className="text-xs text-amber-400 uppercase tracking-wider mt-1">{hive.type}</span>
-              {hive.description && <p className="text-xs text-amber-200/50 mt-2 line-clamp-2">{hive.description}</p>}
+              {hive.status && <p className="text-xs text-amber-200/50 mt-2 line-clamp-2">Status: {hive.status}</p>}
             </div>
           ))}
         </div>

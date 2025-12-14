@@ -48,7 +48,7 @@ export default function AdminCMSPage() {
   const [selectedPage, setSelectedPage] = useState<Page | null>(null);
 
   useEffect(() => {
-    if (!loading && profile?.role !== 'SUPER_ADMIN') {
+    if (!loading && profile?.role !== 'super_admin') {
        router.push("/dashboard");
     }
   }, [loading, profile, router]);
@@ -76,7 +76,7 @@ export default function AdminCMSPage() {
     e.preventDefault();
   };
 
-  if (profile?.role !== 'SUPER_ADMIN') return null;
+  if (profile?.role !== 'super_admin') return null;
 
   return (
     <div>

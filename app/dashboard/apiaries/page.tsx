@@ -34,9 +34,7 @@ export default async function ApiariesPage() {
                 <h2 className="text-xl font-bold text-amber-100 truncate pr-2" title={apiary.name}>
                   {apiary.name}
                 </h2>
-                <span className="bg-amber-900/50 text-amber-400 text-xs px-2 py-1 rounded border border-amber-500/20 whitespace-nowrap">
-                  {apiary.type}
-                </span>
+                {/* Apiary type is not in schema provided in prompt: apiaries columns: name, location, description. Removing badge. */}
               </div>
               
               <div className="flex-grow space-y-2 mb-6">

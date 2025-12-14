@@ -6,11 +6,14 @@ import { auth } from "./firebase";
 import { apiPost } from "./apiClient";
 
 // Define user roles and plan types
-export type UserRole = "BEEKEEPER" | "ASSOCIATION_ADMIN" | "SUPER_ADMIN";
+// UPDATED: Roles matching the new V2 requirements: 'super_admin' | 'admin' | 'user'
+// Keeping old ones for compatibility if needed, but we should align.
+// Prompt says: super_admin, admin, user.
+export type UserRole = "super_admin" | "admin" | "user";
 export type UserPlan = "FREE" | "PLUS" | "PRO" | "BUSINESS";
 
 export interface UserProfile {
-  id: number;
+  id: string; // was number
   firebaseUid: string;
   email: string;
   displayName: string;
@@ -70,15 +73,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.setItem("authToken", idToken);
 
           // Determine role
-          let detectedRole: UserRole = "BEEKEEPER"; // Default
+          let detectedRole: UserRole = "user"; // Default
           
           // 1. Hardcoded Super Admin Stub
           if (currentUser.email === "admin@apiarymind.com") {
-            detectedRole = "SUPER_ADMIN";
+            detectedRole = "super_admin";
           } 
           // 2. Check Custom Claims
           else if (tokenResult.claims.role) {
-             detectedRole = tokenResult.claims.role as UserRole;
+             // Cast to new role types if possible, or fallback
+             const claimRole = tokenResult.claims.role as string;
+             if (claimRole === 'SUPER_ADMIN') detectedRole = 'super_admin';
+             else if (claimRole === 'ASSOCIATION_ADMIN') detectedRole = 'admin'; // Mapping old to new approximate
+             else if (claimRole === 'BEEKEEPER') detectedRole = 'user';
+             else if (['super_admin', 'admin', 'user'].includes(claimRole)) {
+                 detectedRole = claimRole as UserRole;
+             }
           }
 
           setRole(detectedRole);

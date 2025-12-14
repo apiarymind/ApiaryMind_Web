@@ -5,6 +5,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { setSession } from "../actions/auth-session";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -16,7 +17,10 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // Set server session cookie
+      await setSession(userCredential.user.uid);
+      
       router.push("/dashboard");
     } catch (err: any) {
       console.error(err);

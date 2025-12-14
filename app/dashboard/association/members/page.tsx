@@ -9,12 +9,12 @@ export default function AssociationMembersPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && profile?.role !== 'ASSOCIATION_ADMIN' && profile?.role !== 'SUPER_ADMIN') {
+     if (!loading && profile?.role !== 'admin' && profile?.role !== 'super_admin') {
        router.push("/dashboard");
     }
   }, [loading, profile, router]);
 
-  if (profile?.role !== 'ASSOCIATION_ADMIN' && profile?.role !== 'SUPER_ADMIN') return null;
+  if (profile?.role !== 'admin' && profile?.role !== 'super_admin') return null;
 
   return (
     <div>
