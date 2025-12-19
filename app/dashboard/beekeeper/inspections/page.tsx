@@ -34,7 +34,7 @@ export default async function InspectionsPage() {
                    {insp.type}
                 </div>
                 <div className="text-xs text-amber-400 bg-amber-900/30 px-2 py-1 rounded border border-amber-500/10 w-fit">
-                   📅 {new Date(insp.date).toLocaleDateString()}
+                   📅 {new Date(insp.inspection_date).toLocaleDateString()}
                 </div>
               </div>
               {insp.notes && (

@@ -21,7 +21,7 @@
   --bg-primary: #3C2C1F;
   --bg-secondary: #5A422D;
   --bg-tertiary: #4A3725;
-  --bg-header: rgba(90, 66, 45, 0.95);
+  --bg-header: transparent;
   
   --text-primary: #FAF5E9;
   --text-secondary: #FBEFDB;
@@ -38,9 +38,9 @@
   --bg-primary: #FDFBF7;
   --bg-secondary: #FFF9E8;
   --bg-tertiary: #F3EAD3;
-  --bg-header: rgba(255, 249, 232, 0.95);
+  --bg-header: transparent;
   
-  --text-primary: #3C2C1F;
+  --text-primary: #3E2723;
   --text-secondary: #5A422D;
   --text-muted: #8B6B4E;
   
@@ -50,30 +50,50 @@
   --input-border: #E6D5B8;
 }
 
+/* GLOBAL BACKGROUND FIX */
 body {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  background-repeat: repeat;
+  background-size: 350px auto; /* Perfect scale for hexagons */
+  background-attachment: fixed;
+  /* background-color is handled by class on body, or defaults to transparent if not set, but next-themes sets class */
+}
+
+/* ENSURE ALL PARENT CONTAINERS ARE TRANSPARENT SO WE SEE THE BODY BG */
+html, #__next, main { 
+  background-color: transparent !important; 
+}
+
+/* Overriding old globals that forced background colors */
+header {
+  /* Let the component styles handle it */
+  background-color: transparent !important; 
+  border-color: transparent !important;
+}
+
+footer {
+  /* Let component styles or transparent default handle it */
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+
+/* Transition for colors */
+body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Tailwind Custom Classes to use variables */
+/* Legacy Utility Overrides - making them transparent where possible or keeping for legacy components that need them but ensuring text colors match */
+/* Note: Ideally we remove usages of bg-brown-900 in components and use GlassCard */
 
-/* Backgrounds */
-.bg-brown-900 { background-color: var(--bg-primary) !important; }
-.bg-brown-800 { background-color: var(--bg-secondary) !important; }
-.bg-brown-700 { background-color: var(--bg-tertiary) !important; }
+.bg-brown-900 { background-color: transparent !important; } /* Force transparency on old main containers */
+.bg-brown-800 { background-color: rgba(90, 66, 45, 0.4) !important; backdrop-filter: blur(10px); } /* Fallback glass for legacy cards */
+.bg-brown-700 { background-color: rgba(90, 66, 45, 0.3) !important; }
 
 /* Text */
 .text-amber-50 { color: var(--text-primary) !important; }
 .text-amber-100 { color: var(--text-secondary) !important; }
 .text-amber-200 { color: var(--text-muted) !important; }
 
-/* Borders */
-.border-brown-700 { border-color: var(--border-color) !important; }
-.border-brown-600 { border-color: var(--border-color) !important; }
-
 /* Components */
-
 .btn-primary {
   @apply inline-flex items-center justify-center px-4 py-2 rounded-full text-sm font-semibold transition-all shadow-md;
   background-color: var(--amber-500);
@@ -101,14 +121,4 @@ body {
 .btn-secondary:hover {
   background-color: rgba(244, 181, 36, 0.1);
   color: var(--amber-500);
-}
-
-/* Ensure header/footer use vars */
-header {
-  background-color: var(--bg-header) !important;
-  border-color: var(--border-color) !important;
-}
-footer {
-  background-color: var(--bg-secondary) !important;
-  border-color: var(--border-color) !important;
 }

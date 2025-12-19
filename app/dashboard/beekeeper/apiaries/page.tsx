@@ -35,7 +35,7 @@ export default async function ApiariesPage() {
                   {apiary.name}
                 </h2>
                 <span className="bg-amber-900/50 text-amber-400 text-xs px-2 py-1 rounded border border-amber-500/20 whitespace-nowrap">
-                  {apiary.type}
+                  STACJONARNA
                 </span>
               </div>
               

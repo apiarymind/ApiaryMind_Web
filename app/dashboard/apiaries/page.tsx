@@ -2,6 +2,7 @@ import { getUserApiaries } from '@/app/actions/get-apiaries';
 import { getSessionUid } from '@/app/actions/auth-session';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { GlassCard } from '@/app/components/ui/GlassCard';
 
 export default async function ApiariesPage() {
   const uid = await getSessionUid();
@@ -15,51 +16,50 @@ export default async function ApiariesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
          {/* H1 matches Sidebar Label "Pasieki" */}
-         <h1 className="text-3xl font-bold text-amber-500">Pasieki</h1>
+         <h1 className="text-3xl font-heading font-bold text-primary">Pasieki</h1>
       </div>
 
       {apiaries.length === 0 ? (
-        <div className="bg-brown-800/50 border border-brown-700 rounded-xl p-8 text-center">
+        <GlassCard className="p-8 text-center flex flex-col items-center justify-center">
            <div className="text-4xl mb-4">🍯</div>
-           <h3 className="text-xl font-bold text-amber-100 mb-2">Nie znaleziono pasiek</h3>
-           <p className="text-amber-200/60">
+           <h3 className="text-xl font-bold text-text-dark dark:text-amber-100 mb-2">Nie znaleziono pasiek</h3>
+           <p className="text-text-dark/60 dark:text-amber-200/60">
              Dodaj je w aplikacji mobilnej, aby zarządzać nimi tutaj.
            </p>
-        </div>
+        </GlassCard>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {apiaries.map((apiary) => (
-            <div key={apiary.id} className="bg-brown-800 p-6 rounded-xl border border-brown-700 shadow-lg hover:border-amber-500/30 transition-colors flex flex-col">
+            <GlassCard key={apiary.id} className="p-6 flex flex-col h-full hover:scale-[1.02] transition-transform">
               <div className="flex justify-between items-start mb-4">
-                <h2 className="text-xl font-bold text-amber-100 truncate pr-2" title={apiary.name}>
+                <h2 className="text-xl font-bold text-text-dark dark:text-amber-100 truncate pr-2" title={apiary.name}>
                   {apiary.name}
                 </h2>
-                {/* Apiary type is not in schema provided in prompt: apiaries columns: name, location, description. Removing badge. */}
               </div>
               
               <div className="flex-grow space-y-2 mb-6">
                  {apiary.description && (
-                   <p className="text-sm text-amber-200/80 line-clamp-2">
+                   <p className="text-sm text-text-dark/80 dark:text-amber-200/80 line-clamp-2">
                      {apiary.description}
                    </p>
                  )}
                  {apiary.location && (
-                   <div className="text-xs text-amber-200/60 flex items-center gap-1">
+                   <div className="text-xs text-text-dark/60 dark:text-amber-200/60 flex items-center gap-1">
                       <span>📍</span>
                       <span className="truncate">{apiary.location}</span>
                    </div>
                  )}
               </div>
 
-              <div className="mt-auto pt-4 border-t border-brown-700/50">
+              <div className="mt-auto pt-4 border-t border-glass-light dark:border-glass-dark">
                 <Link 
                   href={`/dashboard/apiaries/${apiary.id}`}
-                  className="block w-full text-center bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-bold py-2 rounded transition-colors text-sm uppercase"
+                  className="block w-full text-center bg-primary/10 hover:bg-primary/20 text-primary font-bold py-2 rounded transition-colors text-sm uppercase"
                 >
                   Zobacz ule
                 </Link>
               </div>
-            </div>
+            </GlassCard>
           ))}
         </div>
       )}
