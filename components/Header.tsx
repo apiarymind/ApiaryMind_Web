@@ -25,11 +25,11 @@ function UserMenu() {
         className="flex items-center gap-3 text-white hover:text-primary transition-colors focus:outline-none"
       >
         <div className="text-right hidden sm:block">
-           <div className="text-sm font-bold">{profile?.firstName || user.email}</div>
+           <div className="text-sm font-bold">{profile?.displayName || user.email}</div>
            <div className="text-[10px] text-white/60 uppercase">{profile?.role || 'Użytkownik'}</div>
         </div>
         <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center text-primary font-bold text-lg">
-           {profile?.firstName?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
+           {profile?.displayName?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
         </div>
       </button>
 
@@ -38,7 +38,7 @@ function UserMenu() {
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div className="absolute right-0 mt-2 w-48 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden">
              <div className="px-4 py-3 border-b border-white/10 sm:hidden">
-               <div className="text-sm font-bold text-white">{profile?.firstName || user.email}</div>
+               <div className="text-sm font-bold text-white">{profile?.displayName || user.email}</div>
                <div className="text-xs text-white/60">{user.email}</div>
              </div>
              <Link href="/dashboard" className="block px-4 py-3 text-sm text-white hover:bg-white/10 transition-colors" onClick={() => setIsOpen(false)}>

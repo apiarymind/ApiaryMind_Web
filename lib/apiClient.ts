@@ -1,7 +1,7 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.apiarymind.com/v1';
 
-if (!API_BASE_URL) {
-  throw new Error("NEXT_PUBLIC_API_BASE_URL is not set in environment variables. Please configure it in .env.local");
+if (!process.env.NEXT_PUBLIC_API_BASE_URL) {
+  console.warn("NEXT_PUBLIC_API_BASE_URL is not set in environment variables. Using default: " + API_BASE_URL);
 }
 
 function getAuthHeader() {
