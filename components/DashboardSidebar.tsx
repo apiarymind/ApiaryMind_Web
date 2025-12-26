@@ -19,6 +19,9 @@ export default function DashboardSidebar({ userProfile, newsContent, newsPositio
   // Prefer server-fetched userProfile, fall back to clientProfile
   const profile = userProfile || clientProfile;
   const role = profile?.role || 'user';
+  // Use 'any' cast because UserProfile might not have 'plan' in some contexts or types might differ slightly, but we know it should be there.
+  // Actually, let's try to access it safely. If it's missing, assume FREE.
+  const plan = (profile as any)?.plan || 'FREE';
 
   const isActive = (path: string) => pathname?.startsWith(path);
 
@@ -27,6 +30,8 @@ export default function DashboardSidebar({ userProfile, newsContent, newsPositio
       if (role === 'admin') return <span className="text-red-400 font-bold">ADMIN</span>;
       return <span className="text-primary font-bold">PSZCZELARZ</span>;
   };
+
+  const showBreeder = plan === 'PRO_PLUS' || plan === 'BUSINESS' || role === 'super_admin';
 
   return (
     <aside className="hidden md:flex flex-col w-64 m-4 rounded-3xl bg-black/40 backdrop-blur-xl border border-white/10 h-[calc(100vh-32px)] overflow-hidden shadow-2xl">
@@ -83,6 +88,25 @@ export default function DashboardSidebar({ userProfile, newsContent, newsPositio
         >
           Beta Testy
         </Link>
+
+        {/* BREEDER Menu - For PRO_PLUS/BUSINESS */}
+        {showBreeder && (
+          <>
+            <div className="pt-6 px-4 pb-2 text-[10px] font-bold text-yellow-500/80 uppercase tracking-widest">HODOWLA</div>
+            <Link
+              href="/dashboard/breeder/team"
+              className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/breeder/team') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
+            >
+              Mój Zespół
+            </Link>
+            <Link
+              href="/dashboard/breeder/production"
+              className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/breeder/production') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
+            >
+              Serie Mateczne
+            </Link>
+          </>
+        )}
 
         {/* ADMIN Menu Group - Only for admin/super_admin */}
         {(role === 'admin' || role === 'super_admin') && (

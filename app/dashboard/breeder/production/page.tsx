@@ -97,7 +97,7 @@ export default function BreedingProductionPage() {
        {/* Kanban/Grid Board */}
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {batches.map((batch) => (
-             <div key={batch.id} className="group bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all flex flex-col overflow-hidden">
+             <div key={batch.id} className="group backdrop-blur-md bg-white/70 dark:bg-black/40 rounded-xl border border-white/20 dark:border-white/10 shadow-lg hover:shadow-xl transition-all flex flex-col overflow-hidden">
                 {/* Status Bar */}
                 <div className={`h-1.5 w-full ${getStatusColor(batch.status).split(' ')[0].replace('/30', '')}`}></div>
 
