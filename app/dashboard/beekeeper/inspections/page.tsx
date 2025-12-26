@@ -31,10 +31,10 @@ export default async function InspectionsPage() {
             <div key={insp.id} className="bg-brown-800 p-4 rounded-xl border border-brown-700 hover:border-amber-500/30 transition-colors">
               <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-2">
                 <div className="text-lg font-bold text-amber-100">
-                   {insp.type}
+                   {insp.mood === 'AGGRESSIVE' ? 'Agresywne' : insp.mood === 'CALM' ? 'Spokojne' : 'Standardowy'}
                 </div>
                 <div className="text-xs text-amber-400 bg-amber-900/30 px-2 py-1 rounded border border-amber-500/10 w-fit">
-                   📅 {new Date(insp.inspection_date).toLocaleDateString()}
+                   📅 {new Date(insp.date).toLocaleDateString()}
                 </div>
               </div>
               {insp.notes && (

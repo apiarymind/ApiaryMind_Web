@@ -32,10 +32,10 @@ export default async function InspectionsPage() {
             <GlassCard key={insp.id} className="p-4 hover:scale-[1.01] transition-transform">
               <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-2">
                 <div className="text-lg font-bold text-text-dark dark:text-amber-100">
-                   {insp.type}
+                   {insp.mood === 'AGGRESSIVE' ? 'Agresywne' : insp.mood === 'CALM' ? 'Spokojne' : 'Standardowy'}
                 </div>
                 <div className="text-xs text-primary bg-primary/10 px-2 py-1 rounded border border-primary/20 w-fit">
-                   📅 {new Date(insp.inspection_date).toLocaleDateString()}
+                   📅 {new Date(insp.date).toLocaleDateString()}
                 </div>
               </div>
               {insp.notes && (

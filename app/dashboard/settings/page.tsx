@@ -48,7 +48,21 @@ export default function SettingsPage() {
       if (error) {
         console.error('Error fetching profile:', error);
       } else if (data) {
-        reset(data);
+        // Ensure default values for potentially null fields to avoid uncontrolled input warnings
+        reset({
+            ...data,
+            company_name: data.company_name || '',
+            nip: data.nip || '',
+            regon: data.regon || '',
+            address_street: data.address_street || '',
+            zip_code: data.zip_code || '',
+            city: data.city || '',
+            wni_number: data.wni_number || '',
+            rhd_number: data.rhd_number || '',
+            sb_number: data.sb_number || '',
+            arimr_ep_number: data.arimr_ep_number || '',
+            avatar_url: data.avatar_url || '',
+        });
       }
       setLoading(false);
     };
