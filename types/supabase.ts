@@ -38,13 +38,26 @@ export interface BusinessTeam {
   created_at: string;
 }
 
+export interface BusinessTeamMember {
+  id: string;
+  team_id: string;
+  user_id: string; // Foreign key to profiles
+  role: 'OWNER' | 'ADMIN' | 'EMPLOYEE';
+  status: 'ACTIVE' | 'PENDING' | 'INVITED';
+  created_at: string;
+  // Joins
+  profile?: Profile;
+}
+
 export interface BreedingBatch {
   id: string;
   batch_number: string;
+  lineage: string; // Linia genetyczna
   start_date: string;
+  estimated_hatching_date?: string; // Can be derived or stored
   queen_mother_id?: string;
   breeder_id: string;
-  status: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  status: 'PLANNED' | 'IN_PROGRESS' | 'SEALED' | 'HATCHED' | 'COMPLETED' | 'CANCELLED';
   created_at: string;
 }
 
@@ -64,4 +77,17 @@ export interface AssociationFinance {
   description: string;
   date: string;
   created_at: string;
+}
+
+export interface Inspection {
+  id: string;
+  hive_id: string;
+  performed_by_id: string;
+  date: string;
+  mood: 'CALM' | 'AGGRESSIVE' | 'NORMAL';
+  notes?: string;
+  batch_id?: string; // Link to breeding batch
+  created_at: string;
+  // Joins
+  performed_by?: Profile;
 }

@@ -10,7 +10,7 @@ import { apiPost } from "./apiClient";
 // Keeping old ones for compatibility if needed, but we should align.
 // Prompt says: super_admin, admin, user.
 export type UserRole = "super_admin" | "admin" | "user";
-export type UserPlan = "FREE" | "PLUS" | "PRO" | "BUSINESS";
+export type UserPlan = "FREE" | "PLUS" | "PRO" | "PRO_PLUS" | "BUSINESS";
 
 export interface UserProfile {
   id: string; // was number
