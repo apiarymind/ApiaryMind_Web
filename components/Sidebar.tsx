@@ -32,7 +32,8 @@ export default function Sidebar() {
             <li><Link href="/dashboard/admin" className="block text-amber-100 hover:text-amber-300 transition-colors">Pulpit Admina</Link></li>
             <li><Link href="/dashboard/admin/users" className="block text-amber-100 hover:text-amber-300 transition-colors">Użytkownicy</Link></li>
             <li><Link href="/dashboard/admin/approvals" className="block text-amber-100 hover:text-amber-300 transition-colors">Zatwierdzanie zgłoszeń</Link></li>
-            <li><Link href="/dashboard/admin/beta-management" className="block text-amber-100 hover:text-amber-300 transition-colors">Zarządzanie Betą</Link></li>
+            <li><Link href="/dashboard/admin/cms-editor" className="block text-amber-100 hover:text-amber-300 transition-colors">CMS Editor</Link></li>
+            <li><Link href="/dashboard/admin/configuration" className="block text-amber-100 hover:text-amber-300 transition-colors">Konfiguracja</Link></li>
           </ul>
         </div>
       </nav>

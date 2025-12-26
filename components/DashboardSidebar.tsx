@@ -4,14 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../lib/AuthContext";
 import { UserProfile } from "@/utils/profile-mapper";
+import DashboardNews from "@/app/components/DashboardNews";
 
 interface DashboardSidebarProps {
   userProfile?: UserProfile | null;
+  newsContent?: string;
+  newsPosition?: 'top_banner' | 'modal_popup' | 'sidebar_widget' | 'hidden';
 }
 
-export default function DashboardSidebar({ userProfile }: DashboardSidebarProps) {
+export default function DashboardSidebar({ userProfile, newsContent, newsPosition }: DashboardSidebarProps) {
   const pathname = usePathname();
-  const { profile: clientProfile, logout } = useAuth();
+  const { profile: clientProfile } = useAuth();
   
   // Prefer server-fetched userProfile, fall back to clientProfile
   const profile = userProfile || clientProfile;
@@ -26,58 +29,57 @@ export default function DashboardSidebar({ userProfile }: DashboardSidebarProps)
   };
 
   return (
-    <aside className="w-64 bg-black/40 backdrop-blur-xl border-r border-white/10 min-h-screen flex flex-col">
-      <div className="p-4 border-b border-white/10">
-        <h2 className="text-xl font-bold font-heading text-primary">Panel</h2>
-        <div className="text-xs text-text-dark/60 dark:text-amber-200/60 mt-1">
-          <div className="truncate font-sans text-white/80">{profile?.email || (userProfile ? "" : "Ładowanie...")}</div>
+    <aside className="hidden md:flex flex-col w-64 m-4 rounded-3xl bg-black/40 backdrop-blur-xl border border-white/10 h-[calc(100vh-32px)] overflow-hidden shadow-2xl">
+      <div className="p-6 border-b border-white/10">
+        <h2 className="text-2xl font-bold font-heading text-primary">Panel</h2>
+        <div className="text-xs text-white/60 mt-2">
           <div className="mt-1">{getRoleBadge()}</div>
         </div>
       </div>
       
-      <nav className="flex-1 p-2 space-y-1">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto custom-scrollbar">
         <Link 
           href="/dashboard" 
-          className={`block px-3 py-2 rounded text-sm transition-colors ${isActive('/dashboard') && pathname === '/dashboard' ? 'bg-primary text-brown-900 font-bold' : 'text-white/80 hover:bg-white/10'}`}
+          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard') && pathname === '/dashboard' ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
         >
           Pulpit
         </Link>
 
         {/* BEEKEEPER Menu */}
-        <div className="pt-4 px-3 pb-1 text-xs font-bold text-white/40 uppercase">Pszczelarz</div>
+        <div className="pt-6 px-4 pb-2 text-[10px] font-bold text-white/40 uppercase tracking-widest">Pszczelarz</div>
         <Link 
           href="/dashboard/hives"
-          className={`block px-3 py-2 rounded text-sm transition-colors ${isActive('/dashboard/hives') ? 'bg-primary text-brown-900 font-bold' : 'text-white/80 hover:bg-white/10'}`}
+          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/hives') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
         >
           Ule
         </Link>
         <Link 
           href="/dashboard/apiaries"
-          className={`block px-3 py-2 rounded text-sm transition-colors ${isActive('/dashboard/apiaries') ? 'bg-primary text-brown-900 font-bold' : 'text-white/80 hover:bg-white/10'}`}
+          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/apiaries') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
         >
           Pasieki
         </Link>
         <Link 
           href="/dashboard/inspections"
-          className={`block px-3 py-2 rounded text-sm transition-colors ${isActive('/dashboard/inspections') ? 'bg-primary text-brown-900 font-bold' : 'text-white/80 hover:bg-white/10'}`}
+          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/inspections') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
         >
           Przeglądy
         </Link>
         <Link 
           href="/dashboard/beekeeper/warehouse"
-          className={`block px-3 py-2 rounded text-sm transition-colors ${isActive('/dashboard/beekeeper/warehouse') ? 'bg-primary text-brown-900 font-bold' : 'text-white/80 hover:bg-white/10'}`}
+          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/beekeeper/warehouse') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
         >
           Magazyn
         </Link>
         <Link 
           href="/dashboard/beekeeper/reports"
-          className={`block px-3 py-2 rounded text-sm transition-colors ${isActive('/dashboard/beekeeper/reports') ? 'bg-primary text-brown-900 font-bold' : 'text-white/80 hover:bg-white/10'}`}
+          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/beekeeper/reports') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
         >
           Raporty
         </Link>
         <Link 
           href="/dashboard/beekeeper/beta"
-          className={`block px-3 py-2 rounded text-sm transition-colors ${isActive('/dashboard/beekeeper/beta') ? 'bg-primary text-brown-900 font-bold' : 'text-white/80 hover:bg-white/10'}`}
+          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/beekeeper/beta') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
         >
           Beta Testy
         </Link>
@@ -85,28 +87,28 @@ export default function DashboardSidebar({ userProfile }: DashboardSidebarProps)
         {/* ADMIN Menu Group - Only for admin/super_admin */}
         {(role === 'admin' || role === 'super_admin') && (
           <>
-            <div className="pt-4 px-3 pb-1 text-xs font-bold text-red-400/80 uppercase">ADMINISTRACJA</div>
+            <div className="pt-6 px-4 pb-2 text-[10px] font-bold text-red-400/80 uppercase tracking-widest">ADMINISTRACJA</div>
             <Link 
               href="/dashboard/admin/users"
-              className={`block px-3 py-2 rounded text-sm transition-colors ${isActive('/dashboard/admin/users') ? 'bg-primary text-brown-900 font-bold' : 'text-white/80 hover:bg-white/10'}`}
+              className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/admin/users') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
             >
               Użytkownicy
             </Link>
              <Link 
               href="/dashboard/admin/approvals"
-              className={`block px-3 py-2 rounded text-sm transition-colors ${isActive('/dashboard/admin/approvals') ? 'bg-primary text-brown-900 font-bold' : 'text-white/80 hover:bg-white/10'}`}
+              className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/admin/approvals') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
             >
               Zatwierdzenia
             </Link>
             <Link 
-              href="/dashboard/admin/cms"
-              className={`block px-3 py-2 rounded text-sm transition-colors ${isActive('/dashboard/admin/cms') ? 'bg-primary text-brown-900 font-bold' : 'text-white/80 hover:bg-white/10'}`}
+              href="/dashboard/admin/cms-editor"
+              className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/admin/cms-editor') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
             >
               CMS Editor
             </Link>
             <Link 
-              href="/dashboard/admin/settings"
-              className={`block px-3 py-2 rounded text-sm transition-colors ${isActive('/dashboard/admin/settings') ? 'bg-primary text-brown-900 font-bold' : 'text-white/80 hover:bg-white/10'}`}
+              href="/dashboard/admin/configuration"
+              className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/admin/configuration') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
             >
               Konfiguracja
             </Link>
@@ -114,11 +116,14 @@ export default function DashboardSidebar({ userProfile }: DashboardSidebarProps)
         )}
       </nav>
       
-      <div className="p-4 border-t border-white/10">
-         <button onClick={() => logout()} className="text-xs text-white/60 hover:text-white flex items-center gap-2 w-full text-left transition-colors">
-           🚪 Wyloguj
-         </button>
-      </div>
+      {/* Sidebar News Widget */}
+      {newsContent && newsPosition === 'sidebar_widget' && (
+         <div className="mt-auto pb-4">
+            <DashboardNews content={newsContent} position="sidebar_widget" />
+         </div>
+      )}
+      
+      {/* Logout button removed as per requirements */}
     </aside>
   );
 }

@@ -23,36 +23,39 @@ export default async function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-brown-800 p-6 rounded-xl border border-brown-700 hover:border-amber-500/50 transition-colors">
            <div className="text-3xl mb-2">⚙️</div>
-           <h3 className="text-xl font-bold text-amber-100 mb-2">Konfiguracja Systemu</h3>
-           <p className="text-sm text-amber-200/60 mb-4">Zarządzaj flagami systemowymi i logiką biznesową.</p>
-           <Link href="/dashboard/admin/settings" className="inline-block bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded text-sm font-bold">
+           <h3 className="text-xl font-bold text-white mb-2">Konfiguracja Systemu</h3>
+           <p className="text-sm text-white/60 mb-4">Zarządzaj flagami systemowymi (Włącz/Wyłącz).</p>
+           <Link href="/dashboard/admin/configuration" className="inline-block bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded text-sm font-bold">
              Otwórz ustawienia
            </Link>
         </div>
 
         <div className="bg-brown-800 p-6 rounded-xl border border-brown-700 hover:border-amber-500/50 transition-colors">
            <div className="text-3xl mb-2">📝</div>
-           <h3 className="text-xl font-bold text-amber-100 mb-2">Zarządzanie Treścią</h3>
-           <p className="text-sm text-amber-200/60 mb-4">Edytor stron CMS i treści statycznych.</p>
-           <Link href="/dashboard/admin/cms" className="inline-block bg-brown-700 hover:bg-brown-600 text-amber-100 px-4 py-2 rounded text-sm font-bold">
-             Przejdź do CMS
+           <h3 className="text-xl font-bold text-white mb-2">Zarządzanie Treścią</h3>
+           <p className="text-sm text-white/60 mb-4">Edytor treści tekstowych (Tytuły, Linki, Opisy).</p>
+           <Link href="/dashboard/admin/cms-editor" className="inline-block bg-brown-700 hover:bg-brown-600 text-white px-4 py-2 rounded text-sm font-bold">
+             Edytor treści
            </Link>
         </div>
+        
+         {/* Keep old CMS for page builder if needed, or remove. Assuming the user wants to split the *Config* part. 
+             I'll leave the Users and Approvals links as is. */}
 
         <div className="bg-brown-800 p-6 rounded-xl border border-brown-700 hover:border-amber-500/50 transition-colors">
            <div className="text-3xl mb-2">👥</div>
-           <h3 className="text-xl font-bold text-amber-100 mb-2">Użytkownicy</h3>
-           <p className="text-sm text-amber-200/60 mb-4">Lista użytkowników i zarządzanie rolami.</p>
-           <Link href="/dashboard/admin/users" className="inline-block bg-brown-700 hover:bg-brown-600 text-amber-100 px-4 py-2 rounded text-sm font-bold">
+           <h3 className="text-xl font-bold text-white mb-2">Użytkownicy</h3>
+           <p className="text-sm text-white/60 mb-4">Lista użytkowników i zarządzanie rolami.</p>
+           <Link href="/dashboard/admin/users" className="inline-block bg-brown-700 hover:bg-brown-600 text-white px-4 py-2 rounded text-sm font-bold">
              Lista użytkowników
            </Link>
         </div>
         
         <div className="bg-brown-800 p-6 rounded-xl border border-brown-700 hover:border-amber-500/50 transition-colors">
            <div className="text-3xl mb-2">🤝</div>
-           <h3 className="text-xl font-bold text-amber-100 mb-2">Zgłoszenia Kół</h3>
-           <p className="text-sm text-amber-200/60 mb-4">Weryfikacja nowych kół pszczelarskich.</p>
-           <Link href="/dashboard/admin/approvals" className="inline-block bg-brown-700 hover:bg-brown-600 text-amber-100 px-4 py-2 rounded text-sm font-bold">
+           <h3 className="text-xl font-bold text-white mb-2">Zgłoszenia Kół</h3>
+           <p className="text-sm text-white/60 mb-4">Weryfikacja nowych kół pszczelarskich.</p>
+           <Link href="/dashboard/admin/approvals" className="inline-block bg-brown-700 hover:bg-brown-600 text-white px-4 py-2 rounded text-sm font-bold">
              Weryfikuj
            </Link>
         </div>
