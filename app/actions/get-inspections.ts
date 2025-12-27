@@ -3,6 +3,18 @@
 import { createClient } from '@/utils/supabase/server';
 import { Inspection } from '@/types/supabase';
 
+// Extend Inspection type to include nested hive and apiary data
+export interface ExtendedInspection extends Inspection {
+  hive: {
+    id: string;
+    name: string; // was number, but Hive interface has name
+    apiary: {
+      id: string;
+      name: string;
+    }
+  }
+}
+
 export async function getHiveInspections(hiveId: string): Promise<Inspection[]> {
   const supabase = createClient();
 
@@ -18,10 +30,6 @@ export async function getHiveInspections(hiveId: string): Promise<Inspection[]> 
       return [];
     }
 
-    // Map the response to match the Inspection interface if necessary
-    // The query returns `performed_by` as an object inside the inspection row.
-    // Our Inspection type expects `performed_by?: Profile`.
-    // The Supabase query returns partial profile data.
     return data as unknown as Inspection[];
   } catch (error) {
     console.error('Unexpected error fetching inspections:', error);
@@ -29,28 +37,36 @@ export async function getHiveInspections(hiveId: string): Promise<Inspection[]> 
   }
 }
 
-export async function getUserInspections(userId: string): Promise<Inspection[]> {
+export async function getUserInspections(): Promise<{ data: ExtendedInspection[], error: string | null }> {
   const supabase = createClient();
 
   try {
-    // We want inspections for hives owned by the user.
-    // This requires a join on hives, filtering by hives.user_id = userId
-    // Supabase allows filtering on joined tables: !inner join
-
+    // Deep Select: Inspection -> Hive -> Apiary
+    // Relying on RLS, so no user_id filtering needed explicitly unless tables are public.
     const { data, error } = await supabase
       .from('inspections')
-      .select('*, hives!inner(user_id), performed_by:profiles(full_name, avatar_url)')
-      .eq('hives.user_id', userId)
+      .select(`
+        *,
+        hive:hives (
+          id,
+          name,
+          apiary:apiaries (
+            id,
+            name
+          )
+        ),
+        performed_by:profiles(full_name, avatar_url)
+      `)
       .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching user inspections:', error);
-      return [];
+      return { data: [], error: error.message };
     }
 
-    return data as unknown as Inspection[];
-  } catch (error) {
+    return { data: data as unknown as ExtendedInspection[], error: null };
+  } catch (error: any) {
     console.error('Unexpected error fetching user inspections:', error);
-    return [];
+    return { data: [], error: error.message || 'Unknown error' };
   }
 }

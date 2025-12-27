@@ -9,25 +9,36 @@ export type Hive = {
   status: string | null;
   user_id: string;
   apiary_id: string;
+  apiary: {
+    id: string;
+    name: string;
+    location_name?: string;
+  };
 };
 
-export async function getUserHives(userId: string): Promise<Hive[]> {
+export async function getUserHives(): Promise<{ data: Hive[], error: string | null }> {
   const supabase = createClient();
 
   try {
     const { data, error } = await supabase
       .from('hives')
-      .select('id, name, type, status, user_id, apiary_id')
-      .eq('user_id', userId);
+      .select(`
+        *,
+        apiary:apiaries (
+          id,
+          name
+        )
+      `)
+      .order('name', { ascending: true }); // Using 'name' (often holds number) for sorting
 
     if (error) {
       console.error('Error fetching hives:', error);
-      return [];
+      return { data: [], error: error.message };
     }
 
-    return data as Hive[];
-  } catch (error) {
+    return { data: data as Hive[], error: null };
+  } catch (error: any) {
     console.error('Unexpected error fetching hives:', error);
-    return [];
+    return { data: [], error: error.message || 'Unknown error' };
   }
 }
