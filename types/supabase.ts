@@ -82,18 +82,29 @@ export interface AssociationFinance {
 export interface Inspection {
   id: string;
   hive_id: string;
-  // performed_by_id: string; // Not in provided schema facts, assuming optional or handled via Profile relation if exists
   inspection_date: string; // timestamp
-  colony_strength?: string;
   notes?: string;
-  // mood? Prompt says 'colony_strength' instead of 'mood' in the schema facts.
-  // But UI uses 'mood'. I'll keep 'mood' optional if code relies on it, but emphasize schema fields.
-  // Actually, prompt says: "Table: inspections... colony_strength (text), notes (text)". No 'mood'.
-  // I should probably map 'colony_strength' to UI concept of mood or update UI to show strength.
-  // For safety, I will include colony_strength.
   
-  batch_id?: string; // Link to breeding batch (from previous context, maybe keep optional)
-  created_at?: string; // Timestamp
+  // Expanded fields based on Schema Map
+  weather_condition?: string;
+  temperature?: number;
+  colony_strength?: string;
+  mood?: string;
+  brood_frames_count?: number;
+  swarming_mood?: boolean;
+  swarming_date?: string;
+  is_queen_seen?: boolean;
+  is_queen_marked?: boolean;
+  laying_pattern?: string;
+  honey_supers_count?: number;
+  half_supers_count?: number;
+  frames_sealed_percent?: number;
+  pests_detected?: string[]; // array of strings
+  treatment_applied?: string;
+  next_visit_tasks?: string[]; // array of strings
+
+  batch_id?: string;
+  created_at?: string;
   // Joins
   performed_by?: Profile;
 }

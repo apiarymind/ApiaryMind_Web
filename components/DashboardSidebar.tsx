@@ -25,6 +25,10 @@ export default function DashboardSidebar({ userProfile, newsContent, newsPositio
 
   const isActive = (path: string) => pathname?.startsWith(path);
 
+  // Custom logic for Hives vs Apiaries
+  const isHivesActive = isActive('/dashboard/hives') || pathname?.includes('/hive/');
+  const isApiariesActive = isActive('/dashboard/apiaries') && !pathname?.includes('/hive/');
+
   const getRoleBadge = () => {
       if (role === 'super_admin') return <span className="text-yellow-400 font-bold">SUPER ADMIN</span>;
       if (role === 'admin') return <span className="text-red-400 font-bold">ADMIN</span>;
@@ -54,13 +58,13 @@ export default function DashboardSidebar({ userProfile, newsContent, newsPositio
         <div className="pt-6 px-4 pb-2 text-[10px] font-bold text-white/40 uppercase tracking-widest">Pszczelarz</div>
         <Link 
           href="/dashboard/hives"
-          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/hives') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
+          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isHivesActive ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
         >
           Ule
         </Link>
         <Link 
           href="/dashboard/apiaries"
-          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/apiaries') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
+          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isApiariesActive ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
         >
           Pasieki
         </Link>
