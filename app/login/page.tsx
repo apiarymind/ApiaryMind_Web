@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../lib/firebase";
+import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { setSession } from "../actions/auth-session";
 import { GlassCard } from "@/app/components/ui/GlassCard";
 
 export default function LoginPage() {
@@ -13,23 +11,26 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // Set server session cookie
-      await setSession(userCredential.user.uid);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw error;
+      }
       
       router.push("/dashboard");
+      router.refresh();
     } catch (err: any) {
       console.error(err);
-      if (err.code === 'auth/invalid-credential') {
-        setError("Nieprawidłowy email lub hasło.");
-      } else {
-        setError("Wystąpił błąd logowania: " + err.message);
-      }
+      setError("Wystąpił błąd logowania: " + err.message);
     }
   };
 
@@ -39,7 +40,7 @@ export default function LoginPage() {
         <div className="text-center mb-6">
           <div className="text-4xl mb-2">🐝</div>
           <h1 className="text-2xl font-bold font-heading text-primary">Logowanie</h1>
-          <p className="text-text-dark/60 dark:text-amber-200/60 text-sm mt-1">Zaloguj się do konta ApiaryMind</p>
+          <p className="text-text-dark/60 dark:text-amber-200/60 text-sm mt-1">Zaloguj się do konta ApiaryMind (Supabase)</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">

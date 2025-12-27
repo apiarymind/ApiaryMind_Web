@@ -1,31 +1,26 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, User, getIdToken, signOut as firebaseSignOut, IdTokenResult } from "firebase/auth";
-import { auth } from "./firebase";
-import { apiPost } from "./apiClient";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { User } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/client";
 
 // Define user roles and plan types
-// UPDATED: Roles matching the new V2 requirements: 'super_admin' | 'admin' | 'user'
-// Keeping old ones for compatibility if needed, but we should align.
-// Prompt says: super_admin, admin, user.
 export type UserRole = "super_admin" | "admin" | "user";
 export type UserPlan = "FREE" | "PLUS" | "PRO" | "PRO_PLUS" | "BUSINESS";
 
 export interface UserProfile {
-  id: string; // was number
-  firebaseUid: string;
+  id: string;
   email: string;
   displayName: string;
   role: UserRole;
   plan: UserPlan;
   associationId?: number;
+  avatar_url?: string;
 }
 
 interface AuthContextType {
-  user: User | null; // Firebase User
-  profile: UserProfile | null; // Database Profile
-  token: string | null;
+  user: User | null;
+  profile: UserProfile | null;
   role: UserRole | null;
   loading: boolean;
   logout: () => Promise<void>;
@@ -37,99 +32,95 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
-  const fetchProfile = async (currentUser: User, currentToken: string) => {
+  const fetchProfile = useCallback(async (currentUser: User) => {
     try {
-      // Attempt to sync with backend
-      // If backend is not available, we won't have a profile, but we still have role logic below
-      const res = await apiPost("/auth/sync", {}, {
-        headers: {
-          "Authorization": `Bearer ${currentToken}`
-        }
-      });
-      setProfile(res);
-      if (res.role) {
-        setRole(res.role);
-        localStorage.setItem("userRole", res.role);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+
+      if (data) {
+        const userProfile: UserProfile = {
+          id: data.id,
+          email: data.email,
+          displayName: data.full_name || data.email,
+          role: 'user', // Default
+          plan: data.subscription_plan || 'FREE',
+          avatar_url: data.avatar_url,
+        };
+        setProfile(userProfile);
+        setRole('user');
       }
     } catch (error) {
-      console.error("Failed to fetch user profile (backend might be offline or user not created)", error);
-      // Fallback logic happens in onAuthStateChanged
+      console.error("Failed to fetch user profile", error);
     }
-  };
+  }, [supabase]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        try {
-          const idToken = await getIdToken(currentUser);
-          const tokenResult: IdTokenResult = await currentUser.getIdTokenResult();
-          
-          setToken(idToken);
-          localStorage.setItem("authToken", idToken);
-
-          // Determine role
-          let detectedRole: UserRole = "user"; // Default
-          
-          // 1. Hardcoded Super Admin Stub
-          if (currentUser.email === "admin@apiarymind.com") {
-            detectedRole = "super_admin";
-          } 
-          // 2. Check Custom Claims
-          else if (tokenResult.claims.role) {
-             // Cast to new role types if possible, or fallback
-             const claimRole = tokenResult.claims.role as string;
-             if (claimRole === 'SUPER_ADMIN') detectedRole = 'super_admin';
-             else if (claimRole === 'ASSOCIATION_ADMIN') detectedRole = 'admin'; // Mapping old to new approximate
-             else if (claimRole === 'BEEKEEPER') detectedRole = 'user';
-             else if (['super_admin', 'admin', 'user'].includes(claimRole)) {
-                 detectedRole = claimRole as UserRole;
-             }
-          }
-
-          setRole(detectedRole);
-          localStorage.setItem("userRole", detectedRole);
-
-          await fetchProfile(currentUser, idToken);
-
-        } catch (e) {
-          console.error("Error getting token", e);
-        }
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.access_token) {
+        localStorage.setItem("authToken", session.access_token);
       } else {
-        setToken(null);
-        setProfile(null);
-        setRole(null);
         localStorage.removeItem("authToken");
-        localStorage.removeItem("userRole");
+      }
+
+      if (session?.user) {
+        fetchProfile(session.user);
+      } else {
+          setLoading(false);
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.access_token) {
+        localStorage.setItem("authToken", session.access_token);
+      } else {
+        localStorage.removeItem("authToken");
+      }
+
+      if (session?.user) {
+         fetchProfile(session.user);
+      } else {
+         setProfile(null);
+         setRole(null);
       }
       setLoading(false);
     });
 
-    return () => unsubscribe();
-  }, []);
+    return () => subscription.unsubscribe();
+  }, [supabase, fetchProfile]);
 
   const logout = async () => {
-    await firebaseSignOut(auth);
+    await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
-    setToken(null);
     setRole(null);
     localStorage.removeItem("authToken");
-    localStorage.removeItem("userRole");
   };
 
   const refreshProfile = async () => {
-    if (user && token) {
-      await fetchProfile(user, token);
+    if (user) {
+      await fetchProfile(user);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, token, role, loading, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, role, loading, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

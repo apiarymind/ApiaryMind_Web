@@ -20,17 +20,17 @@ type BetaCandidate = {
 }
 
 export default function AdminBetaPage() {
-  const { token } = useAuth();
+  const { user } = useAuth(); // Removed 'token'
   const [candidates, setCandidates] = useState<BetaCandidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
   // Fetch candidates
   useEffect(() => {
-    if (token) {
+    if (user) {
       fetchCandidates();
     }
-  }, [token]);
+  }, [user]);
 
   const fetchCandidates = async () => {
     try {
