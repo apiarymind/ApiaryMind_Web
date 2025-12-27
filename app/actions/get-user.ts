@@ -8,7 +8,7 @@ export async function getCurrentUserProfile(userId: string): Promise<UserProfile
 
   const { data: rawData, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select('*, system_role, subscription_plan')
     .eq('id', userId)
     .single();
 

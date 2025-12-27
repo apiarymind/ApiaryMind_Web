@@ -38,9 +38,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = useCallback(async (currentUser: User) => {
     try {
+      // Fetch system_role and subscription_plan as per new DB schema facts
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, system_role, subscription_plan')
         .eq('id', currentUser.id)
         .single();
 
@@ -50,16 +51,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data) {
+        console.log("Rola z bazy:", data.system_role);
+
+        // Map system_role to app role
+        let appRole: UserRole = 'user';
+        if (data.system_role === 'SUPER_ADMIN') appRole = 'super_admin';
+        else if (data.system_role === 'ADMIN') appRole = 'admin';
+        // Add other role mappings if needed
+
         const userProfile: UserProfile = {
           id: data.id,
           email: data.email,
           displayName: data.full_name || data.email,
-          role: 'user', // Default
+          role: appRole,
           plan: data.subscription_plan || 'FREE',
           avatar_url: data.avatar_url,
         };
         setProfile(userProfile);
-        setRole('user');
+        setRole(appRole);
       }
     } catch (error) {
       console.error("Failed to fetch user profile", error);
