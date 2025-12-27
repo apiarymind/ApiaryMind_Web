@@ -41,7 +41,7 @@ export async function getHiveDetails(hiveId: string): Promise<{ data: HiveDetail
         bottom_board_type,
         installation_date,
         apiary:apiaries ( id, name ),
-        queen:queens (
+        queen:queens!hives_current_queen_id_fkey (
           id,
           marking_code,
           year,
