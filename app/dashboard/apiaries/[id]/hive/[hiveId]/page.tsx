@@ -13,6 +13,8 @@ export default async function HiveDetailsPage({ params }: { params: { id: string
     redirect('/login');
   }
 
+  console.log('[HiveDetailsPage] Params:', params);
+
   // Parallel data fetching for efficiency
   // 1. Full Hive Details (Metadata + Queen + Latest Inspection)
   // 2. All Inspections (For timeline)
@@ -24,9 +26,12 @@ export default async function HiveDetailsPage({ params }: { params: { id: string
   const hive = hiveDetailsRes.data;
 
   if (!hive) {
+     console.error('[HiveDetailsPage] Hive not found. Error:', hiveDetailsRes.error);
      return (
         <div className="p-8 text-center text-red-400">
-           Nie znaleziono ula.
+           Nie znaleziono ula. (ID: {params.hiveId})
+           <br/>
+           <span className="text-sm text-gray-500">Error: {hiveDetailsRes.error}</span>
         </div>
      );
   }
