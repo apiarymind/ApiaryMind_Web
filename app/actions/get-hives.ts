@@ -4,9 +4,8 @@ import { createClient } from '@/utils/supabase/server';
 
 export type Hive = {
   id: string;
-  hive_number: string; // Correct column name
+  hive_number: string;
   type: string;
-  status: string | null;
   apiary_id: string;
   apiary: {
     id: string;
@@ -24,7 +23,6 @@ export async function getUserHives(): Promise<{ data: Hive[], error: string | nu
         id,
         hive_number,
         type,
-        status,
         apiary_id,
         apiary:apiaries (
           id,
@@ -38,7 +36,7 @@ export async function getUserHives(): Promise<{ data: Hive[], error: string | nu
       return { data: [], error: error.message };
     }
 
-    return { data: data as Hive[], error: null };
+    return { data: data as unknown as Hive[], error: null };
   } catch (error: any) {
     console.error('Unexpected error fetching hives:', error);
     return { data: [], error: error.message || 'Unknown error' };

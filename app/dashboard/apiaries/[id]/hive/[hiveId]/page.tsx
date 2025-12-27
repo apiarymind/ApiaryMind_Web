@@ -19,12 +19,11 @@ export default async function HiveDetailsPage({ params }: { params: { id: string
   // Fetch Hive Name (Optional but good for UI)
   const { data: hive } = await supabase
     .from('hives')
-    .select('name, status')
+    .select('hive_number')
     .eq('id', params.hiveId)
     .single();
 
-  const hiveName = hive?.name || `#${params.hiveId}`;
-  const hiveStatus = hive?.status || 'UNKNOWN';
+  const hiveName = hive?.hive_number || `#${params.hiveId}`;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -37,9 +36,6 @@ export default async function HiveDetailsPage({ params }: { params: { id: string
              <div>
                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                     Ul {hiveName}
-                    <span className={`text-sm px-2 py-1 rounded font-bold uppercase tracking-wider ${hiveStatus === 'ACTIVE' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-700'}`}>
-                       {hiveStatus}
-                    </span>
                  </h1>
                  <p className="text-gray-500 dark:text-gray-400 mt-1">
                     Historia przeglądów i stan rodziny.

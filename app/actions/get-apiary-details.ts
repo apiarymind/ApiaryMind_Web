@@ -17,8 +17,8 @@ export async function getApiaryDetails(userId: string, apiaryId: string): Promis
     const [apiaryRes, hivesRes] = await Promise.all([
       supabase
         .from('apiaries')
-        .select('id, name, location, description, user_id') // columns might need alias if schema differs, but prompt didn't specify changes for apiaries columns other than what's standard
-        .eq('user_id', userId)
+        .select('id, name, location:location_geo, user_id:owner_id')
+        .eq('owner_id', userId) // Updated to owner_id
         .eq('id', apiaryId)
         .single(),
       supabase
@@ -27,15 +27,12 @@ export async function getApiaryDetails(userId: string, apiaryId: string): Promis
           id, 
           hive_number, 
           type, 
-          status, 
-          user_id, 
           apiary_id,
           apiary:apiaries (
             id,
             name
           )
         `)
-        .eq('user_id', userId)
         .eq('apiary_id', apiaryId)
         .order('hive_number', { ascending: true })
     ]);
@@ -49,8 +46,8 @@ export async function getApiaryDetails(userId: string, apiaryId: string): Promis
     }
 
     return {
-      apiary: apiaryRes.data as Apiary | null,
-      hives: (hivesRes.data as Hive[]) || [],
+      apiary: apiaryRes.data as unknown as Apiary | null,
+      hives: (hivesRes.data as unknown as Hive[]) || [],
     };
   } catch (error) {
     console.error('Unexpected error in getApiaryDetails:', error);

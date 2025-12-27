@@ -21,8 +21,11 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
       <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-gray-200 dark:bg-gray-700 -z-10"></div>
 
       {inspections.map((inspection, index) => {
-        const isAggressive = inspection.mood === 'AGGRESSIVE';
-        const isCalm = inspection.mood === 'CALM';
+        // We do not have 'mood' on Inspection type based on schema facts.
+        // We use colony_strength or defaults.
+        // Assuming colony_strength strings might be mapped, or just default to neutral.
+        const isAggressive = false; // inspection.mood === 'AGGRESSIVE';
+        const isCalm = false; // inspection.mood === 'CALM';
         const hasBatch = !!inspection.batch_id;
 
         return (
@@ -61,10 +64,10 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
                    <div>
                       <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1">
                          <Activity className="w-3 h-3" />
-                         {inspection.date}
+                         {inspection.inspection_date}
                       </span>
                       <h4 className="font-bold text-lg text-gray-900 dark:text-gray-100 mt-1">
-                         Przegląd {inspection.mood === 'AGGRESSIVE' ? 'Agresywny' : inspection.mood === 'CALM' ? 'Spokojny' : 'Standardowy'}
+                         Przegląd {inspection.colony_strength ? `(${inspection.colony_strength})` : 'Standardowy'}
                       </h4>
                    </div>
                    
