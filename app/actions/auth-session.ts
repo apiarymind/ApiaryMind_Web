@@ -1,23 +1,20 @@
 'use server'
 
-import { cookies } from 'next/headers';
-
-const SESSION_COOKIE_NAME = 'firebase_uid';
-
-export async function setSession(uid: string) {
-  cookies().set(SESSION_COOKIE_NAME, uid, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 60 * 60 * 24 * 7, // 1 week
-    path: '/',
-  });
-}
+import { createClient } from '@/utils/supabase/server';
 
 export async function getSessionUid(): Promise<string | undefined> {
-  const cookieStore = cookies();
-  return cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.user?.id;
+}
+
+export async function setSession(uid: string) {
+    // No-op for Supabase Auth as it handles cookies automatically via middleware
+    // This function kept for compatibility if needed, but should likely be removed or deprecated.
+    console.warn("setSession called but Supabase Auth manages sessions automatically.");
 }
 
 export async function clearSession() {
-  cookies().delete(SESSION_COOKIE_NAME);
+  const supabase = createClient();
+  await supabase.auth.signOut();
 }

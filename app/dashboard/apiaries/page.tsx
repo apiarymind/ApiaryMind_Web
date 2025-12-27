@@ -10,7 +10,11 @@ export default async function ApiariesPage() {
     redirect('/login');
   }
 
-  const apiaries = await getUserApiaries(uid);
+  const { data: apiaries, error } = await getUserApiaries();
+
+  if (error) {
+    console.error("Apiaries fetch error:", error);
+  }
 
   return (
     <div className="space-y-6">
@@ -18,8 +22,14 @@ export default async function ApiariesPage() {
          {/* H1 matches Sidebar Label "Pasieki" */}
          <h1 className="text-3xl font-heading font-bold text-primary">Pasieki</h1>
       </div>
+      
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/50 p-4 rounded-xl text-red-500 text-sm mb-4">
+           Błąd pobierania danych: {error}
+        </div>
+      )}
 
-      {apiaries.length === 0 ? (
+      {!error && apiaries.length === 0 ? (
         <GlassCard className="p-8 text-center flex flex-col items-center justify-center">
            <div className="text-4xl mb-4">🍯</div>
            <h3 className="text-xl font-bold text-text-dark dark:text-amber-100 mb-2">Nie znaleziono pasiek</h3>
@@ -29,12 +39,17 @@ export default async function ApiariesPage() {
         </GlassCard>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {apiaries.map((apiary) => (
+          {apiaries.map((apiary) => {
+            const hivesCount = apiary.hives?.[0]?.count || 0;
+            return (
             <GlassCard key={apiary.id} className="p-6 flex flex-col h-full hover:scale-[1.02] transition-transform">
               <div className="flex justify-between items-start mb-4">
                 <h2 className="text-xl font-bold text-text-dark dark:text-amber-100 truncate pr-2" title={apiary.name}>
                   {apiary.name}
                 </h2>
+                <div className="text-xs font-bold bg-primary/20 text-primary px-2 py-1 rounded-full whitespace-nowrap">
+                  {hivesCount} {hivesCount === 1 ? 'Ul' : 'Uli'}
+                </div>
               </div>
               
               <div className="flex-grow space-y-2 mb-6">
@@ -60,7 +75,7 @@ export default async function ApiariesPage() {
                 </Link>
               </div>
             </GlassCard>
-          ))}
+          )})}
         </div>
       )}
     </div>

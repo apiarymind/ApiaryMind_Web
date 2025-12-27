@@ -2,7 +2,8 @@ export type RawProfile = {
   id: string;
   email: string | null;
   subscription_plan: string | null; // Database has mixed case: 'plus', 'FREE', 'Pro'
-  role: string | null; // Added role field from DB
+  system_role: string | null; // Changed to system_role from DB
+  role?: string | null; // Keep for backward compat if needed, but primary is system_role
   rhd_number: string | null;
   sb_number: string | null;
   vet_number: string | null;
@@ -30,9 +31,15 @@ export function normalizeProfile(raw: RawProfile): UserProfile {
     }
   }
 
-  // Normalize Role
+  // Normalize Role using system_role (ENUM)
   let cleanRole: 'super_admin' | 'admin' | 'user' = 'user';
-  if (raw.role) {
+  // Use system_role if present
+  if (raw.system_role) {
+      if (raw.system_role === 'SUPER_ADMIN') cleanRole = 'super_admin';
+      else if (raw.system_role === 'ADMIN') cleanRole = 'admin';
+      else cleanRole = 'user';
+  } else if (raw.role) {
+    // Fallback
     const r = raw.role.toLowerCase().trim();
     if (['super_admin', 'admin', 'user'].includes(r)) {
         cleanRole = r as any;

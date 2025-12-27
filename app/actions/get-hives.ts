@@ -4,25 +4,43 @@ import { createClient } from '@/utils/supabase/server';
 
 export type Hive = {
   id: string;
-  name: string; // number/name
+  hive_number: string; // Correct column name
   type: string;
   status: string | null;
-  user_id: string;
+  apiary_id: string;
+  apiary: {
+    id: string;
+    name: string;
+  };
 };
 
-export async function getUserHives(userId: string): Promise<Hive[]> {
+export async function getUserHives(): Promise<{ data: Hive[], error: string | null }> {
   const supabase = createClient();
 
-  // Security: .eq('user_id', userId) is MANDATORY.
-  const { data, error } = await supabase
-    .from('hives')
-    .select('id, name, type, status, user_id')
-    .eq('user_id', userId);
+  try {
+    const { data, error } = await supabase
+      .from('hives')
+      .select(`
+        id,
+        hive_number,
+        type,
+        status,
+        apiary_id,
+        apiary:apiaries (
+          id,
+          name
+        )
+      `)
+      .order('hive_number', { ascending: true });
 
-  if (error) {
-    console.error('Error fetching hives:', error);
-    return [];
+    if (error) {
+      console.error('Error fetching hives:', error);
+      return { data: [], error: error.message };
+    }
+
+    return { data: data as Hive[], error: null };
+  } catch (error: any) {
+    console.error('Unexpected error fetching hives:', error);
+    return { data: [], error: error.message || 'Unknown error' };
   }
-
-  return data as Hive[];
 }
