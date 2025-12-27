@@ -1,9 +1,9 @@
-import { Inspection } from '@/types/supabase';
-import { InspectionTimeline } from '@/components/InspectionTimeline';
+import { getHiveDetails } from '@/app/actions/get-hive-details';
 import { getHiveInspections } from '@/app/actions/get-inspections';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
+import HiveDetailsTabs from '@/app/components/HiveDetailsTabs';
 
 export default async function HiveDetailsPage({ params }: { params: { id: string; hiveId: string } }) {
   const supabase = createClient();
@@ -13,17 +13,23 @@ export default async function HiveDetailsPage({ params }: { params: { id: string
     redirect('/login');
   }
 
-  // Fetch Inspections
-  const inspections = await getHiveInspections(params.hiveId);
+  // Parallel data fetching for efficiency
+  // 1. Full Hive Details (Metadata + Queen + Latest Inspection)
+  // 2. All Inspections (For timeline)
+  const [hiveDetailsRes, inspections] = await Promise.all([
+    getHiveDetails(params.hiveId),
+    getHiveInspections(params.hiveId)
+  ]);
 
-  // Fetch Hive Name (Optional but good for UI)
-  const { data: hive } = await supabase
-    .from('hives')
-    .select('hive_number')
-    .eq('id', params.hiveId)
-    .single();
+  const hive = hiveDetailsRes.data;
 
-  const hiveName = hive?.hive_number || `#${params.hiveId}`;
+  if (!hive) {
+     return (
+        <div className="p-8 text-center text-red-400">
+           Nie znaleziono ula.
+        </div>
+     );
+  }
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -35,7 +41,7 @@ export default async function HiveDetailsPage({ params }: { params: { id: string
           <div className="flex justify-between items-start">
              <div>
                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                    Ul {hiveName}
+                    Ul {hive.hive_number}
                  </h1>
                  <p className="text-gray-500 dark:text-gray-400 mt-1">
                     Historia przeglądów i stan rodziny.
@@ -48,23 +54,8 @@ export default async function HiveDetailsPage({ params }: { params: { id: string
           </div>
        </div>
 
-       {/* Tabs placeholder */}
-       <div className="border-b border-gray-200 dark:border-gray-700 flex gap-6">
-          <button className="py-3 border-b-2 border-yellow-500 text-yellow-600 dark:text-yellow-500 font-bold">
-             Historia Przeglądów
-          </button>
-          <button className="py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-medium">
-             Dane Rodziny
-          </button>
-          <button className="py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-medium">
-             Matka Pszczela
-          </button>
-       </div>
-
-       {/* Timeline Content */}
-       <div className="bg-gray-50 dark:bg-gray-900/50 rounded-2xl p-6 border border-gray-100 dark:border-gray-800">
-          <InspectionTimeline inspections={inspections} />
-       </div>
+       {/* Client Component handling Tabs */}
+       <HiveDetailsTabs hive={hive} inspections={inspections} />
     </div>
   );
 }
