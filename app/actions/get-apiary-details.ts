@@ -17,8 +17,8 @@ export async function getApiaryDetails(userId: string, apiaryId: string): Promis
     const [apiaryRes, hivesRes] = await Promise.all([
       supabase
         .from('apiaries')
-        .select('id, name, location, description, user_id')
-        .eq('user_id', userId)
+        .select('id, name, location:location_geo, user_id:owner_id')
+        .eq('owner_id', userId) // Updated to owner_id
         .eq('id', apiaryId)
         .single(),
       supabase
@@ -46,7 +46,7 @@ export async function getApiaryDetails(userId: string, apiaryId: string): Promis
     }
 
     return {
-      apiary: apiaryRes.data as Apiary | null,
+      apiary: apiaryRes.data as unknown as Apiary | null,
       hives: (hivesRes.data as unknown as Hive[]) || [],
     };
   } catch (error) {

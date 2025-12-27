@@ -42,9 +42,6 @@ export default async function ApiaryDetailsPage({ params }: { params: { id: stri
                         </span>
                     )}
                 </div>
-                {apiary.description && (
-                   <p className="text-amber-200/80 mt-4 max-w-2xl">{apiary.description}</p>
-                )}
              </div>
         </div>
       </div>

@@ -6,7 +6,7 @@ export type Apiary = {
   id: string;
   name: string;
   location: string | null;
-  description: string | null;
+  // description: string | null; // Removed as per schema
   user_id: string;
   hives: { count: number }[];
 };
@@ -20,9 +20,8 @@ export async function getUserApiaries(): Promise<{ data: Apiary[], error: string
       .select(`
         id,
         name,
-        location,
-        description,
-        user_id,
+        location:location_geo,
+        user_id:owner_id,
         hives:hives(count)
       `)
       .order('name', { ascending: true });

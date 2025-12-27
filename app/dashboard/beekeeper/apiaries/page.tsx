@@ -52,11 +52,6 @@ export default async function ApiariesPage() {
               </div>
               
               <div className="flex-grow space-y-2 mb-6">
-                 {apiary.description && (
-                   <p className="text-sm text-amber-200/80 line-clamp-2">
-                     {apiary.description}
-                   </p>
-                 )}
                  {apiary.location && (
                    <div className="text-xs text-amber-200/60 flex items-center gap-1">
                       <span>📍</span>
