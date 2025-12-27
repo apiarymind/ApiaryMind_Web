@@ -38,7 +38,7 @@ export async function getUserHives(): Promise<{ data: Hive[], error: string | nu
       return { data: [], error: error.message };
     }
 
-    return { data: data as Hive[], error: null };
+    return { data: data as unknown as Hive[], error: null };
   } catch (error: any) {
     console.error('Unexpected error fetching hives:', error);
     return { data: [], error: error.message || 'Unknown error' };

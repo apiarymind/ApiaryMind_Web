@@ -50,7 +50,7 @@ export async function getApiaryDetails(userId: string, apiaryId: string): Promis
 
     return {
       apiary: apiaryRes.data as Apiary | null,
-      hives: (hivesRes.data as Hive[]) || [],
+      hives: (hivesRes.data as unknown as Hive[]) || [],
     };
   } catch (error) {
     console.error('Unexpected error in getApiaryDetails:', error);

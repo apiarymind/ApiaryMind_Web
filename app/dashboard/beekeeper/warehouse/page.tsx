@@ -47,7 +47,7 @@ export default async function WarehousePage() {
           {hives.map((hive) => (
             <GlassCard key={hive.id} className="p-4 flex flex-col items-center text-center hover:scale-[1.02] transition-transform">
               <div className="text-2xl mb-2">🐝</div>
-              <h3 className="font-bold text-text-dark dark:text-amber-100 text-lg">{hive.name}</h3>
+              <h3 className="font-bold text-text-dark dark:text-amber-100 text-lg">{hive.hive_number}</h3>
               {hive.apiary && (
                  <div className="text-xs text-text-dark/60 dark:text-amber-200/60 mt-1 mb-1 font-medium bg-black/10 dark:bg-white/10 px-2 py-0.5 rounded">
                     {hive.apiary.name}
