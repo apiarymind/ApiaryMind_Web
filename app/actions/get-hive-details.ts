@@ -41,7 +41,7 @@ export async function getHiveDetails(hiveId: string): Promise<{ data: HiveDetail
         bottom_board_type,
         installation_date,
         apiary:apiaries ( id, name ),
-        queen:queens!hives_current_queen_id_fkey (
+        queen:queens!current_queen_id (
           id,
           marking_code,
           year,
@@ -82,7 +82,7 @@ export async function getHiveDetails(hiveId: string): Promise<{ data: HiveDetail
         }
     }
 
-    // Handle potential array return for queen (if relationship is One-to-Many but we treat as One-to-One)
+    // Handle potential array return for queen
     let processedQueen = null;
     if (rawData.queen) {
         const queens = Array.isArray(rawData.queen) ? rawData.queen : [rawData.queen];
