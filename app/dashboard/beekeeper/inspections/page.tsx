@@ -42,12 +42,12 @@ export default async function InspectionsPage() {
               <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2 mb-2">
                 <div>
                     <div className="text-lg font-bold text-amber-100">
-                       {insp.mood === 'AGGRESSIVE' ? 'Agresywne' : insp.mood === 'CALM' ? 'Spokojne' : 'Standardowy'}
+                       {insp.colony_strength ? `Siła: ${insp.colony_strength}` : 'Przegląd'}
                     </div>
                     {/* Context Info: Hive and Apiary */}
                     {insp.hive && (
                         <div className="text-xs text-amber-200/60 mt-1 flex items-center gap-2">
-                           <span className="font-bold bg-amber-900/50 px-1.5 py-0.5 rounded">Ul: {insp.hive.name}</span>
+                           <span className="font-bold bg-amber-900/50 px-1.5 py-0.5 rounded">Ul: {insp.hive.hive_number}</span>
                            {insp.hive.apiary && (
                                <span>| Pasieka: {insp.hive.apiary.name}</span>
                            )}
@@ -55,7 +55,7 @@ export default async function InspectionsPage() {
                     )}
                 </div>
                 <div className="text-xs text-amber-400 bg-amber-900/30 px-2 py-1 rounded border border-amber-500/10 w-fit whitespace-nowrap">
-                   📅 {new Date(insp.date).toLocaleDateString()}
+                   📅 {new Date(insp.inspection_date).toLocaleDateString()}
                 </div>
               </div>
               {insp.notes && (
