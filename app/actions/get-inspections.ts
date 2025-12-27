@@ -5,7 +5,7 @@ import { Inspection } from '@/types/supabase';
 
 // Extend Inspection type to include nested hive and apiary data
 export interface ExtendedInspection extends Omit<Inspection, 'performed_by'> {
-  colony_strength?: string; // Add back since it exists in schema
+  colony_strength?: string;
   hive: {
     id: string;
     hive_number: string;
@@ -27,7 +27,22 @@ export async function getHiveInspections(hiveId: string): Promise<Inspection[]> 
          inspection_date,
          colony_strength,
          notes,
-         hive_id
+         hive_id,
+         weather_condition,
+         temperature,
+         mood,
+         brood_frames_count,
+         swarming_mood,
+         swarming_date,
+         is_queen_seen,
+         is_queen_marked,
+         laying_pattern,
+         honey_supers_count,
+         half_supers_count,
+         frames_sealed_percent,
+         pests_detected,
+         treatment_applied,
+         next_visit_tasks
       `)
       .eq('hive_id', hiveId)
       .order('inspection_date', { ascending: false });
@@ -56,6 +71,21 @@ export async function getUserInspections(): Promise<{ data: ExtendedInspection[]
         inspection_date,
         colony_strength,
         notes,
+        weather_condition,
+        temperature,
+        mood,
+        brood_frames_count,
+        swarming_mood,
+        swarming_date,
+        is_queen_seen,
+        is_queen_marked,
+        laying_pattern,
+        honey_supers_count,
+        half_supers_count,
+        frames_sealed_percent,
+        pests_detected,
+        treatment_applied,
+        next_visit_tasks,
         hive:hives (
           id,
           hive_number,
