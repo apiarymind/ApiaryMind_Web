@@ -182,12 +182,20 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
-                         {/* Replaced 'Oznakowanie' with integrated colored dot in 'Rocznik' */}
+                         {/* RESTORED: Oznakowanie (Text) */}
+                         <div>
+                            <span className="block text-xs font-bold text-neutral-500 uppercase mb-1">Oznakowanie</span>
+                            <div className="flex items-center gap-2">
+                               <span className="text-xl font-bold text-white">{queen.marking_code || 'Brak'}</span>
+                            </div>
+                         </div>
+
+                         {/* KEPT: Rocznik (Year) with Opalitek (Dot) */}
                          <div>
                             <span className="block text-xs font-bold text-neutral-500 uppercase mb-1">Rocznik</span>
                             <div className="flex items-center gap-2">
-                                <span className="text-xl font-bold text-white">{queen.year}</span>
-                                <span className={`w-4 h-4 rounded-full inline-block ${getQueenColorClass(queen.year)}`} title="Oznakowanie (Opalitek)"></span>
+                               <span className="text-xl font-bold text-white">{queen.year}</span>
+                               <span className={`w-4 h-4 rounded-full inline-block ${getQueenColorClass(queen.year)}`} title="Oznakowanie (Opalitek)"></span>
                             </div>
                          </div>
 
@@ -200,9 +208,6 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
                             <span className="block text-xs font-bold text-neutral-500 uppercase mb-1">Linia Genetyczna</span>
                             <span className="text-lg font-medium text-white">{queen.lineage || '--'}</span>
                          </div>
-
-                         {/* Empty div for grid alignment if needed, or remove */}
-                         <div></div>
 
                          <div className="sm:col-span-2 pt-4 border-t border-neutral-800 flex items-center gap-3">
                             <span className="text-neutral-400 font-medium">Przycięta skrzydełka:</span>
