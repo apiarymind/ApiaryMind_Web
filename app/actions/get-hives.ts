@@ -4,9 +4,8 @@ import { createClient } from '@/utils/supabase/server';
 
 export type Hive = {
   id: string;
-  hive_number: string; // Correct column name
+  hive_number: string;
   type: string;
-  status: string | null;
   apiary_id: string;
   apiary: {
     id: string;
@@ -24,7 +23,6 @@ export async function getUserHives(): Promise<{ data: Hive[], error: string | nu
         id,
         hive_number,
         type,
-        status,
         apiary_id,
         apiary:apiaries (
           id,

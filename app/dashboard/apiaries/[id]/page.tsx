@@ -67,7 +67,6 @@ export default async function ApiaryDetailsPage({ params }: { params: { id: stri
                     <div className="text-2xl mb-2">🐝</div>
                     <h3 className="font-bold text-amber-100 text-lg">{hive.hive_number}</h3>
                     <span className="text-xs text-amber-400 uppercase tracking-wider mt-1">{hive.type}</span>
-                    {hive.status && <p className="text-xs text-amber-200/50 mt-2 line-clamp-2">Status: {hive.status}</p>}
                   </div>
                ))}
             </div>

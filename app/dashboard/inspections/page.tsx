@@ -44,7 +44,7 @@ export default async function InspectionsPage() {
               <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2 mb-2">
                  <div>
                     <div className="text-lg font-bold text-text-dark dark:text-amber-100">
-                       {insp.colony_strength ? `Sila: ${insp.colony_strength}` : 'Przeglad'}
+                       Przeglad
                     </div>
                     {insp.hive && (
                         <div className="text-xs text-text-dark/60 dark:text-amber-200/60 mt-1 flex items-center gap-2">

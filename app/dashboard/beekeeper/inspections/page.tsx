@@ -42,7 +42,7 @@ export default async function InspectionsPage() {
               <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2 mb-2">
                 <div>
                     <div className="text-lg font-bold text-amber-100">
-                       {insp.colony_strength ? `Siła: ${insp.colony_strength}` : 'Przegląd'}
+                       Przegląd
                     </div>
                     {/* Context Info: Hive and Apiary */}
                     {insp.hive && (

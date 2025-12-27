@@ -17,7 +17,7 @@ export async function getApiaryDetails(userId: string, apiaryId: string): Promis
     const [apiaryRes, hivesRes] = await Promise.all([
       supabase
         .from('apiaries')
-        .select('id, name, location, description, user_id') // columns might need alias if schema differs, but prompt didn't specify changes for apiaries columns other than what's standard
+        .select('id, name, location, description, user_id')
         .eq('user_id', userId)
         .eq('id', apiaryId)
         .single(),
@@ -27,15 +27,12 @@ export async function getApiaryDetails(userId: string, apiaryId: string): Promis
           id, 
           hive_number, 
           type, 
-          status, 
-          user_id, 
           apiary_id,
           apiary:apiaries (
             id,
             name
           )
         `)
-        .eq('user_id', userId)
         .eq('apiary_id', apiaryId)
         .order('hive_number', { ascending: true })
     ]);

@@ -54,7 +54,6 @@ export default async function HivesPage() {
                  </div>
               )}
               <span className="text-xs text-primary uppercase tracking-wider mt-1">{hive.type}</span>
-              {hive.status && <p className="text-xs text-text-dark/50 dark:text-amber-200/50 mt-2 line-clamp-2">Status: {hive.status}</p>}
             </GlassCard>
           ))}
         </div>
