@@ -32,6 +32,22 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
     );
   };
 
+  const getQueenColorClass = (year: number): string => {
+    const digit = year % 5;
+    // 0 or 5 -> Blue
+    if (digit === 0) return 'bg-blue-500';
+    // 1 or 6 -> White
+    if (digit === 1) return 'bg-white border border-gray-300'; // Add border for visibility
+    // 2 or 7 -> Yellow
+    if (digit === 2) return 'bg-yellow-400';
+    // 3 or 8 -> Red
+    if (digit === 3) return 'bg-red-500';
+    // 4 or 9 -> Green
+    if (digit === 4) return 'bg-green-500';
+
+    return 'bg-gray-500'; // Default fallback
+  };
+
   const queen = hive.queen;
   const latest = hive.latest_inspection;
 
@@ -166,17 +182,13 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
-                         <div>
-                            <span className="block text-xs font-bold text-neutral-500 uppercase mb-1">Oznakowanie</span>
-                            <div className="flex items-center gap-2">
-                               <span className="w-3 h-3 rounded-full bg-white"></span> {/* Dynamic color based on year needed? Keeping white/default for now */}
-                               <span className="text-xl font-bold text-white">{queen.marking_code || 'Brak'}</span>
-                            </div>
-                         </div>
-
+                         {/* Replaced 'Oznakowanie' with integrated colored dot in 'Rocznik' */}
                          <div>
                             <span className="block text-xs font-bold text-neutral-500 uppercase mb-1">Rocznik</span>
-                            <span className="text-xl font-bold text-white">{queen.year}</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xl font-bold text-white">{queen.year}</span>
+                                <span className={`w-4 h-4 rounded-full inline-block ${getQueenColorClass(queen.year)}`} title="Oznakowanie (Opalitek)"></span>
+                            </div>
                          </div>
 
                          <div>
@@ -188,6 +200,9 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
                             <span className="block text-xs font-bold text-neutral-500 uppercase mb-1">Linia Genetyczna</span>
                             <span className="text-lg font-medium text-white">{queen.lineage || '--'}</span>
                          </div>
+
+                         {/* Empty div for grid alignment if needed, or remove */}
+                         <div></div>
 
                          <div className="sm:col-span-2 pt-4 border-t border-neutral-800 flex items-center gap-3">
                             <span className="text-neutral-400 font-medium">Przycięta skrzydełka:</span>
