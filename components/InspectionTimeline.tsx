@@ -84,15 +84,35 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
             const activePests = pests.filter(p => p !== 'HEALTHY' && p !== 'NONE' && p !== 'None');
             const hasPests = activePests.length > 0;
             const isQueenSeen = inspection.is_queen_seen;
-
-            // Alarm Logic per Item
-            // 1. Critical (Red): pests detected OR aggressive mood OR (Missing now AND Missing previously)
             const isQueenMissingTwice = !isQueenSeen && (previousInspection && previousInspection.is_queen_seen === false);
-            const isCritical = hasPests || isAggressive || isQueenMissingTwice;
 
-            // 2. Warning (Orange): Queen NOT seen (and not Critical) - implies first time missing
+            // Determine Primary Alert Message (Priority Chain)
+            let alertMessage = null;
+            let alertColorClass = '';
+
+            // Priority 1: Disease
+            if (hasPests) {
+               alertMessage = "☣️ WYKRYTO ZAGROŻENIE";
+               alertColorClass = "text-red-500";
+            }
+            // Priority 2: Missing Queen x2
+            else if (isQueenMissingTwice) {
+               alertMessage = "⚠️ BRAK MATKI (x2) - ZAMÓW NOWĄ!";
+               alertColorClass = "text-red-500";
+            }
+            // Priority 3: Aggressive
+            else if (isAggressive) {
+               alertMessage = "⚠️ AGRESYWNA RODZINA";
+               alertColorClass = "text-red-500";
+            }
+            // Priority 4: Missing Queen x1
+            else if (!isQueenSeen) {
+               alertMessage = "❓ BRAK MATKI - DO SPRAWDZENIA";
+               alertColorClass = "text-orange-500";
+            }
+
+            const isCritical = hasPests || isAggressive || isQueenMissingTwice;
             const isWarning = !isQueenSeen && !isCritical;
-            // 3. Normal: Else
 
             let borderClass = 'border-gray-200 dark:border-gray-700 shadow-sm';
             let dotClass = 'border-gray-400 bg-gray-400';
@@ -195,23 +215,23 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
                        )}
                     </div>
 
+                    {/* Prominent Alert Message - Center/Right */}
+                    {alertMessage && (
+                       <div className={`mt-3 mb-1 text-sm md:text-base font-bold uppercase tracking-wide ${alertColorClass}`}>
+                          {alertMessage}
+                       </div>
+                    )}
+
                     <div className="mt-2 text-gray-600 dark:text-gray-300 text-sm leading-relaxed line-clamp-2">
                        {inspection.notes || 'Brak notatek.'}
                     </div>
 
                     <div className="mt-4 flex items-center gap-3 pt-3 border-t border-gray-100 dark:border-gray-700/50">
-                        {isCritical ? (
-                             <span className="text-xs font-bold text-red-600 flex items-center gap-1">
-                                <ShieldAlert className="w-3 h-3" /> Wymaga uwagi
-                             </span>
-                        ) : isWarning ? (
-                            <span className="text-xs font-bold text-orange-600 flex items-center gap-1">
-                                <AlertTriangle className="w-3 h-3" /> Sprawdź matkę
-                             </span>
-                        ) : (
-                            <span className="text-xs font-bold text-green-600 flex items-center gap-1">
-                               <CheckCircle className="w-3 h-3" /> Status OK
-                            </span>
+                        {/* Only show default OK message if no major alert */}
+                        {!alertMessage && (
+                           <span className="text-xs font-bold text-green-600 flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" /> Status OK
+                           </span>
                         )}
                         <span className="text-xs font-bold text-blue-500 ml-auto group-hover:underline">
                           Szczegóły &rarr;
