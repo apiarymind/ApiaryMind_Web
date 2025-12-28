@@ -84,6 +84,7 @@ export async function getHiveDetails(hiveId: string): Promise<{ data: HiveDetail
           performed_by:profiles!user_id (
             id,
             full_name,
+            email,
             avatar_url
           )
         ),

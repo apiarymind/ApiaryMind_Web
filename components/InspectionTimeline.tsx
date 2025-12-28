@@ -122,9 +122,10 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
             const strengthLabel = translateColonyStrength(inspection.colony_strength);
             const moodLabel = translateMood(inspection.mood);
 
-            // User Badge Data
-            const performerName = inspection.performed_by?.full_name || 'Użytkownik';
-            const performerAvatar = inspection.performed_by?.avatar_url;
+            // User Badge Data - Identity Cascade
+            const profile = inspection.performed_by;
+            const performerName = profile?.full_name || profile?.email || 'Anonim';
+            const performerAvatar = profile?.avatar_url;
             const performerInitials = performerName ? performerName.charAt(0).toUpperCase() : 'U';
 
             return (
