@@ -23,6 +23,8 @@ export interface HiveDetails extends Hive {
     brood_frames_count: number | null;
     is_queen_seen: boolean | null;
     pests_detected: string[] | null;
+    honey_supers_count: number | null;
+    frames_sealed_percent: number | null;
   }>;
   latest_inspection: {
     colony_strength: string | null;
@@ -31,6 +33,8 @@ export interface HiveDetails extends Hive {
     brood_frames_count: number | null;
     is_queen_seen: boolean | null;
     pests_detected: string[] | null;
+    honey_supers_count: number | null;
+    frames_sealed_percent: number | null;
   } | null;
   apiary: {
     id: string;
@@ -74,7 +78,8 @@ export async function getHiveDetails(hiveId: string): Promise<{ data: HiveDetail
           pests_detected,
           notes,
           treatment_applied,
-          honey_supers_count
+          honey_supers_count,
+          frames_sealed_percent
         )
       `)
       .eq('id', hiveId)
@@ -115,25 +120,10 @@ export async function getHiveDetails(hiveId: string): Promise<{ data: HiveDetail
 
     const hiveDetails: HiveDetails = {
         ...rawData,
-        // For UI that expects `inspections` property on Hive object (if any),
-        // usually we pass it separately to components, but here we fulfill the interface.
-        // The HiveDetails interface defines `recent_inspections` specifically.
-        // We might want to pass ALL inspections if the component uses them from here.
-        // But checking `HiveDetailsTabs` props, it takes `inspections` separately.
-        // So `recent_inspections` is just for the specific logic helper.
         recent_inspections: recent,
         latest_inspection: latest,
         queen: processedQueen
     } as unknown as HiveDetails;
-
-    // We modify the return slightly. The function returns HiveDetails.
-    // However, the caller likely passes `processedInspections` separately as `inspections` prop.
-    // Wait, `HiveDetailsTabs` takes `hive` and `inspections`.
-    // We should make sure we aren't losing data.
-    // The server action just returns `hiveDetails`.
-    // Does the caller (page.tsx) fetch inspections separately?
-    // Let's check `app/dashboard/hives/[id]/page.tsx` if it existed, or we assume caller handles it.
-    // Based on `HiveDetailsTabs` usage, we are good.
 
     return { data: hiveDetails, error: null };
   } catch (error: any) {

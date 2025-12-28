@@ -5,7 +5,7 @@ import { HiveDetails } from '@/app/actions/get-hive-details';
 import { Inspection } from '@/types/supabase';
 import { InspectionTimeline } from '@/components/InspectionTimeline';
 import { GlassCard } from '@/app/components/ui/GlassCard';
-import { Check, X, Calendar, Crown, Activity, AlertTriangle, Layers, Thermometer, Bug } from 'lucide-react';
+import { Check, X, Calendar, Crown, Activity, AlertTriangle, Layers, Thermometer, Bug, Lightbulb } from 'lucide-react';
 import { translateColonyStrength, translateMood } from '@/utils/inspectionTranslations';
 
 interface HiveDetailsTabsProps {
@@ -61,26 +61,81 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
     const isWeak = latest.colony_strength === 'WEAK';
     const isAggressive = latest.mood === 'AGGRESSIVE';
     const queenMissingLatest = latest.is_queen_seen === false;
-    // Check previous inspection for queen status. If no previous inspection, assume not missing previously.
     const queenMissingPrevious = previous ? previous.is_queen_seen === false : false;
 
-    // RED (Critical)
-    // 1. Disease detected
-    // 2. Queen missing twice in a row
-    // 3. Colony Strength WEAK
     if (hasDisease || (queenMissingLatest && queenMissingPrevious) || isWeak) {
       return 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)] bg-red-900/10';
     }
 
-    // ORANGE (Warning)
-    // 1. Mood AGGRESSIVE
-    // 2. Queen missing latest, but seen/unknown previous (First time missing)
     if (isAggressive || (queenMissingLatest && !queenMissingPrevious)) {
       return 'border-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.2)] bg-orange-900/10';
     }
 
-    // GREEN (Good)
     return 'border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.2)] bg-green-900/10';
+  };
+
+  const getSmartAlert = (latest: HiveDetails['latest_inspection']) => {
+      if (!latest) return null;
+
+      const honeySupers = latest.honey_supers_count || 0;
+      const framesSealed = latest.frames_sealed_percent || 0;
+      const isQueenMissing = latest.is_queen_seen === false;
+
+      // Date Logic for Robbing Season (After July 20th)
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1; // 1-12
+      const currentDay = now.getDate();
+      const isAfterJuly20 = (currentMonth > 7) || (currentMonth === 7 && currentDay > 20);
+
+      // 1. CRITICAL: Missing Queen
+      if (isQueenMissing) {
+          return (
+              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  <div>
+                      <h4 className="font-bold text-red-400 text-sm">BRAK MATKI</h4>
+                      <p className="text-red-200 text-xs mt-1">Wymagana natychmiastowa interwencja.</p>
+                  </div>
+              </div>
+          );
+      }
+
+      // 2. ACTION: Harvest Ready
+      if (framesSealed >= 65 || (framesSealed === 0 && honeySupers > 0)) {
+           return (
+              <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-3 flex items-start gap-3">
+                  <Activity className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
+                  <div>
+                      <h4 className="font-bold text-yellow-400 text-sm">MIODNIA GOTOWA {framesSealed > 0 ? `(>65%)` : ''}</h4>
+                      <p className="text-yellow-200 text-xs mt-1">Zaplanuj miodobranie w najbliższym czasie.</p>
+                  </div>
+              </div>
+          );
+      }
+
+      // 3. WARNING: Robbing Season
+      if (isAfterJuly20 && (honeySupers > 0 || framesSealed > 0)) {
+           return (
+              <div className="bg-orange-500/20 border border-orange-500/50 rounded-lg p-3 flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
+                  <div>
+                      <h4 className="font-bold text-orange-400 text-sm">KONIEC POŻYTKU</h4>
+                      <p className="text-orange-200 text-xs mt-1">Ryzyko rabunków! Zbierz miód i zabezpiecz wylotek.</p>
+                  </div>
+              </div>
+          );
+      }
+
+      // 4. NORMAL
+      return (
+          <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 flex items-start gap-3">
+              <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+              <div>
+                  <h4 className="font-bold text-green-400 text-sm">STAN STABILNY</h4>
+                  <p className="text-green-200 text-xs mt-1">Brak pilnych zaleceń. Rodzina rozwija się prawidłowo.</p>
+              </div>
+          </div>
+      );
   };
 
   const queen = hive.queen;
@@ -163,40 +218,50 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
                 </div>
              </GlassCard>
 
-             {/* Column 2: Last Known Condition */}
-             <div className={`backdrop-blur-xl bg-white/5 border rounded-2xl p-6 space-y-6 h-full transition-all duration-500 ${statusColorClass}`}>
-                <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                   <Activity className="text-yellow-500" />
-                   Ostatnia Kondycja
-                </h3>
-                
+             {/* Column 2: Status & Recommendations (Interactive Card) */}
+             <div className={`backdrop-blur-xl bg-white/5 border rounded-2xl p-6 space-y-6 h-full transition-all duration-500 ${statusColorClass} flex flex-col`}>
+                <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                       <Lightbulb className="text-yellow-500" />
+                       Status i Zalecenia
+                    </h3>
+                </div>
+
                 {latest ? (
-                   <div className="space-y-4">
-                      <div className="flex justify-between items-center py-2 border-b border-neutral-800">
-                         <span className="text-neutral-400">Siła Rodziny</span>
-                         <span className="text-white font-bold">
-                            {translateColonyStrength(latest.colony_strength) || '--'}
-                         </span>
+                   <div className="flex-1 flex flex-col gap-6">
+                      {/* Smart Alert Section */}
+                      <div>
+                          {getSmartAlert(latest)}
                       </div>
-                      <div className="flex justify-between items-center py-2 border-b border-neutral-800">
-                         <span className="text-neutral-400">Nastrój</span>
-                         <span className="text-white font-bold">
-                            {translateMood(latest.mood) || '--'}
-                         </span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-neutral-800">
-                         <span className="text-neutral-400">Nastrój Rojowy</span>
-                         {latest.swarming_mood ? (
-                            <span className="text-red-400 font-bold flex items-center gap-1">
-                               <AlertTriangle className="w-4 h-4" /> TAK
-                            </span>
-                         ) : (
-                            <span className="text-green-400 font-bold">NIE</span>
-                         )}
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-neutral-800">
-                         <span className="text-neutral-400">Czerw (Ramki)</span>
-                         <span className="text-white font-bold">{latest.brood_frames_count ?? 0}</span>
+
+                      {/* Vital Stats Grid */}
+                      <div className="space-y-4 border-t border-white/10 pt-4">
+                          <div className="flex justify-between items-center py-2 border-b border-white/5">
+                             <span className="text-neutral-300">Siła Rodziny</span>
+                             <span className="text-white font-bold">
+                                {translateColonyStrength(latest.colony_strength) || '--'}
+                             </span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-b border-white/5">
+                             <span className="text-neutral-300">Nastrój</span>
+                             <span className="text-white font-bold">
+                                {translateMood(latest.mood) || '--'}
+                             </span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-b border-white/5">
+                             <span className="text-neutral-300">Nastrój Rojowy</span>
+                             {latest.swarming_mood ? (
+                                <span className="text-red-400 font-bold flex items-center gap-1">
+                                   <AlertTriangle className="w-4 h-4" /> TAK
+                                </span>
+                             ) : (
+                                <span className="text-green-400 font-bold">NIE</span>
+                             )}
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-b border-white/5">
+                             <span className="text-neutral-300">Czerw (Ramki)</span>
+                             <span className="text-white font-bold">{latest.brood_frames_count ?? 0}</span>
+                          </div>
                       </div>
                    </div>
                 ) : (
