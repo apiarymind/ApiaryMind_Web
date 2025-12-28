@@ -72,6 +72,12 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
           <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-gray-200 dark:bg-gray-700 -z-10"></div>
 
           {filteredInspections.map((inspection, index) => {
+            // Find actual chronological predecessor from full list to ensure context accuracy
+            // inspections are assumed to be sorted DESC by date by the caller/server
+            // We find the index of the current inspection in the source array
+            const sourceIndex = inspections.findIndex(i => i.id === inspection.id);
+            const previousInspection = sourceIndex !== -1 ? inspections[sourceIndex + 1] : undefined;
+
             const isAggressive = inspection.mood === 'AGGRESSIVE';
             const pests = inspection.pests_detected || [];
             // Filter out 'HEALTHY' or 'None' from pests to determine alarm status
@@ -80,9 +86,11 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
             const isQueenSeen = inspection.is_queen_seen;
 
             // Alarm Logic per Item
-            // 1. Critical (Red): pests detected OR aggressive mood
-            const isCritical = hasPests || isAggressive;
-            // 2. Warning (Orange): Queen NOT seen (and not Critical)
+            // 1. Critical (Red): pests detected OR aggressive mood OR (Missing now AND Missing previously)
+            const isQueenMissingTwice = !isQueenSeen && (previousInspection && previousInspection.is_queen_seen === false);
+            const isCritical = hasPests || isAggressive || isQueenMissingTwice;
+
+            // 2. Warning (Orange): Queen NOT seen (and not Critical) - implies first time missing
             const isWarning = !isQueenSeen && !isCritical;
             // 3. Normal: Else
 
