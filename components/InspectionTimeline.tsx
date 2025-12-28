@@ -9,7 +9,8 @@ import {
   Package,
   Pill,
   Search,
-  ShieldAlert
+  ShieldAlert,
+  AlertTriangle
 } from 'lucide-react';
 import InspectionDetailModal from '@/app/components/InspectionDetailModal';
 import { translateColonyStrength, translateMood, translatePest } from '@/utils/inspectionTranslations';
@@ -72,15 +73,33 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
 
           {filteredInspections.map((inspection, index) => {
             const isAggressive = inspection.mood === 'AGGRESSIVE';
-            const isWeak = inspection.colony_strength === 'WEAK';
             const pests = inspection.pests_detected || [];
             // Filter out 'HEALTHY' or 'None' from pests to determine alarm status
             const activePests = pests.filter(p => p !== 'HEALTHY' && p !== 'NONE' && p !== 'None');
             const hasPests = activePests.length > 0;
-            const isAlarm = isAggressive || hasPests || isWeak;
+            const isQueenSeen = inspection.is_queen_seen;
+
+            // Alarm Logic per Item
+            // 1. Critical (Red): pests detected OR aggressive mood
+            const isCritical = hasPests || isAggressive;
+            // 2. Warning (Orange): Queen NOT seen (and not Critical)
+            const isWarning = !isQueenSeen && !isCritical;
+            // 3. Normal: Else
+
+            let borderClass = 'border-gray-200 dark:border-gray-700 shadow-sm';
+            let dotClass = 'border-gray-400 bg-gray-400';
+
+            if (isCritical) {
+              borderClass = 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)]';
+              dotClass = 'border-red-500 bg-red-500';
+            } else if (isWarning) {
+              borderClass = 'border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.3)]';
+              dotClass = 'border-orange-500 bg-orange-500';
+            } else {
+               dotClass = 'border-green-500 bg-green-500';
+            }
 
             // Badges logic
-            const isQueenSeen = inspection.is_queen_seen;
             const honeyCount = inspection.honey_supers_count || 0;
             const hasHoney = honeyCount > 0;
             const hasTreatment = !!inspection.treatment_applied;
@@ -97,21 +116,13 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
                 onClick={() => setSelectedInspection(inspection)}
               >
                  {/* Connector Dot */}
-                 <div className={`absolute -left-[23px] top-6 w-3 h-3 rounded-full border-2 bg-white dark:bg-gray-900 z-10
-                    ${isAlarm
-                      ? 'border-red-500 bg-red-500'
-                      : 'border-green-500 bg-green-500'
-                    }`}
-                 />
+                 <div className={`absolute -left-[23px] top-6 w-3 h-3 rounded-full border-2 bg-white dark:bg-gray-900 z-10 ${dotClass}`} />
 
                  {/* Card - Clickable */}
                  <div className={`
                     relative backdrop-blur-sm bg-white/80 dark:bg-gray-800/80
                     border rounded-xl p-5 overflow-hidden transition-all hover:shadow-md cursor-pointer hover:scale-[1.01]
-                    ${isAlarm
-                       ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
-                       : 'border-gray-200 dark:border-gray-700 shadow-sm'
-                    }
+                    ${borderClass}
                  `}>
 
                     {/* Header Line: Date | Badges */}
@@ -181,9 +192,13 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
                     </div>
 
                     <div className="mt-4 flex items-center gap-3 pt-3 border-t border-gray-100 dark:border-gray-700/50">
-                        {isAlarm ? (
+                        {isCritical ? (
                              <span className="text-xs font-bold text-red-600 flex items-center gap-1">
                                 <ShieldAlert className="w-3 h-3" /> Wymaga uwagi
+                             </span>
+                        ) : isWarning ? (
+                            <span className="text-xs font-bold text-orange-600 flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3" /> Sprawdź matkę
                              </span>
                         ) : (
                             <span className="text-xs font-bold text-green-600 flex items-center gap-1">
