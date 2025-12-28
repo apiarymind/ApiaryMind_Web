@@ -6,6 +6,7 @@ import { Inspection } from '@/types/supabase';
 import { InspectionTimeline } from '@/components/InspectionTimeline';
 import { GlassCard } from '@/app/components/ui/GlassCard';
 import { Check, X, Calendar, Crown, Activity, AlertTriangle, Layers, Thermometer, Bug } from 'lucide-react';
+import { translateColonyStrength, translateMood } from '@/utils/inspectionTranslations';
 
 interface HiveDetailsTabsProps {
   hive: HiveDetails;
@@ -37,7 +38,7 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
     // 0 or 5 -> Blue
     if (digit === 0) return 'bg-blue-500';
     // 1 or 6 -> White
-    if (digit === 1) return 'bg-white border border-gray-300'; // Add border for visibility
+    if (digit === 1) return 'bg-white border border-gray-300';
     // 2 or 7 -> Yellow
     if (digit === 2) return 'bg-yellow-400';
     // 3 or 8 -> Red
@@ -48,8 +49,46 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
     return 'bg-gray-500'; // Default fallback
   };
 
+  const getColonyStatusColor = (
+    latest: HiveDetails['latest_inspection'],
+    previous: HiveDetails['recent_inspections'][0] | undefined
+  ): string => {
+    if (!latest) return 'border-neutral-800'; // No data
+
+    const pests = latest.pests_detected || [];
+    const activePests = pests.filter(p => p !== 'HEALTHY' && p !== 'NONE' && p !== 'None');
+    const hasDisease = activePests.length > 0;
+    const isWeak = latest.colony_strength === 'WEAK';
+    const isAggressive = latest.mood === 'AGGRESSIVE';
+    const queenMissingLatest = latest.is_queen_seen === false;
+    // Check previous inspection for queen status. If no previous inspection, assume not missing previously.
+    const queenMissingPrevious = previous ? previous.is_queen_seen === false : false;
+
+    // RED (Critical)
+    // 1. Disease detected
+    // 2. Queen missing twice in a row
+    // 3. Colony Strength WEAK
+    if (hasDisease || (queenMissingLatest && queenMissingPrevious) || isWeak) {
+      return 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)] bg-red-900/10';
+    }
+
+    // ORANGE (Warning)
+    // 1. Mood AGGRESSIVE
+    // 2. Queen missing latest, but seen/unknown previous (First time missing)
+    if (isAggressive || (queenMissingLatest && !queenMissingPrevious)) {
+      return 'border-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.2)] bg-orange-900/10';
+    }
+
+    // GREEN (Good)
+    return 'border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.2)] bg-green-900/10';
+  };
+
   const queen = hive.queen;
   const latest = hive.latest_inspection;
+  const recent = hive.recent_inspections || [];
+  const previous = recent.length > 1 ? recent[1] : undefined;
+
+  const statusColorClass = getColonyStatusColor(latest, previous);
 
   return (
     <div className="space-y-6">
@@ -125,7 +164,7 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
              </GlassCard>
 
              {/* Column 2: Last Known Condition */}
-             <GlassCard className="p-6 space-y-6 h-full">
+             <div className={`backdrop-blur-xl bg-white/5 border rounded-2xl p-6 space-y-6 h-full transition-all duration-500 ${statusColorClass}`}>
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
                    <Activity className="text-yellow-500" />
                    Ostatnia Kondycja
@@ -135,11 +174,15 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
                    <div className="space-y-4">
                       <div className="flex justify-between items-center py-2 border-b border-neutral-800">
                          <span className="text-neutral-400">Siła Rodziny</span>
-                         <span className="text-white font-bold">{latest.colony_strength || '--'}</span>
+                         <span className="text-white font-bold">
+                            {translateColonyStrength(latest.colony_strength) || '--'}
+                         </span>
                       </div>
                       <div className="flex justify-between items-center py-2 border-b border-neutral-800">
                          <span className="text-neutral-400">Nastrój</span>
-                         <span className="text-white font-bold">{latest.mood || '--'}</span>
+                         <span className="text-white font-bold">
+                            {translateMood(latest.mood) || '--'}
+                         </span>
                       </div>
                       <div className="flex justify-between items-center py-2 border-b border-neutral-800">
                          <span className="text-neutral-400">Nastrój Rojowy</span>
@@ -161,7 +204,7 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
                       Brak danych z przeglądów.
                    </div>
                 )}
-             </GlassCard>
+             </div>
           </div>
         )}
 
