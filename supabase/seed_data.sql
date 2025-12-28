@@ -32,7 +32,7 @@ BEGIN
     -- Step 2: Create Test Apiary
     v_apiary_id := uuid_generate_v4();
     INSERT INTO apiaries (id, owner_id, name, location_geo, type, is_deleted)
-    VALUES (v_apiary_id, v_user_id, 'Poligon Testowy AI', '52.2297,21.0122', 'Stationary', false);
+    VALUES (v_apiary_id, v_user_id, 'Poligon Testowy AI', '52.2297,21.0122', 'STATIONARY', false);
 
     -- Step 3: Scenario A - The "Angel" Lineage
     v_hive1_id := uuid_generate_v4();
