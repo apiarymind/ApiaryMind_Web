@@ -82,6 +82,7 @@ export interface AssociationFinance {
 export interface Inspection {
   id: string;
   hive_id: string;
+  user_id?: string; // Foreign key to profiles
   inspection_date: string; // timestamp
   notes?: string;
   

@@ -81,7 +81,7 @@ export async function getHiveDetails(hiveId: string): Promise<{ data: HiveDetail
           treatment_applied,
           honey_supers_count,
           frames_sealed_percent,
-          performed_by:profiles (
+          performed_by:profiles!user_id (
             id,
             full_name,
             avatar_url
