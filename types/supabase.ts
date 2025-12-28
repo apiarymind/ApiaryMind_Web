@@ -82,6 +82,7 @@ export interface AssociationFinance {
 export interface Inspection {
   id: string;
   hive_id: string;
+  user_id?: string; // Foreign key to profiles
   inspection_date: string; // timestamp
   notes?: string;
   
@@ -126,4 +127,13 @@ export interface Apiary {
   location_geo?: string; // point
   location?: string; // UI uses this, maybe map from geo or keep optional
   description?: string;
+}
+
+export interface TreatmentsLog {
+  id: string;
+  hive_id: string;
+  medication_name: string;
+  application_date: string;
+  withdrawal_end_date?: string;
+  created_at: string;
 }

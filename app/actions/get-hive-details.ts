@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server';
-import { Hive, Inspection } from '@/types/supabase';
+import { Hive, Inspection, TreatmentsLog } from '@/types/supabase';
 
 export interface Queen {
   id: string;
@@ -15,16 +15,34 @@ export interface Queen {
 
 export interface HiveDetails extends Hive {
   queen: Queen | null;
+  inspections: Inspection[]; // Add inspections for full history
+  recent_inspections: Array<{
+    inspection_date: string;
+    colony_strength: string | null;
+    mood: string | null;
+    swarming_mood: boolean | null;
+    brood_frames_count: number | null;
+    is_queen_seen: boolean | null;
+    pests_detected: string[] | null;
+    honey_supers_count: number | null;
+    frames_sealed_percent: number | null;
+  }>;
   latest_inspection: {
     colony_strength: string | null;
     mood: string | null;
     swarming_mood: boolean | null;
     brood_frames_count: number | null;
+    is_queen_seen: boolean | null;
+    pests_detected: string[] | null;
+    honey_supers_count: number | null;
+    frames_sealed_percent: number | null;
+    treatment_applied?: string | null; // Add missing field for safety logic
   } | null;
   apiary: {
     id: string;
     name: string;
   };
+  active_treatments: Pick<TreatmentsLog, 'medication_name' | 'withdrawal_end_date'>[];
 }
 
 export async function getHiveDetails(hiveId: string): Promise<{ data: HiveDetails | null; error: string | null }> {
@@ -50,15 +68,34 @@ export async function getHiveDetails(hiveId: string): Promise<{ data: HiveDetail
           status,
           is_clipped
         ),
-        latest_inspection:inspections (
+        inspections (
+          id,
           inspection_date,
           colony_strength,
           mood,
           swarming_mood,
-          brood_frames_count
+          brood_frames_count,
+          is_queen_seen,
+          pests_detected,
+          notes,
+          treatment_applied,
+          honey_supers_count,
+          frames_sealed_percent,
+          performed_by:profiles!user_id (
+            id,
+            full_name,
+            email,
+            avatar_url
+          )
+        ),
+        treatments_log (
+          medication_name,
+          withdrawal_end_date
         )
       `)
       .eq('id', hiveId)
+      .order('inspection_date', { foreignTable: 'inspections', ascending: false })
+      .order('withdrawal_end_date', { foreignTable: 'treatments_log', ascending: false })
       .single();
 
     if (rawError) {
@@ -71,15 +108,29 @@ export async function getHiveDetails(hiveId: string): Promise<{ data: HiveDetail
         return { data: null, error: 'Hive not found' };
     }
 
-    // Process latest_inspection
-    let processedLatestInspection = null;
-    if (rawData.latest_inspection) {
-        const inspections = Array.isArray(rawData.latest_inspection) ? rawData.latest_inspection : [rawData.latest_inspection];
-        // Sort descending by date
-        inspections.sort((a: any, b: any) => new Date(b.inspection_date).getTime() - new Date(a.inspection_date).getTime());
-        if (inspections.length > 0) {
-            processedLatestInspection = inspections[0];
-        }
+    // Process inspections
+    let processedInspections = [];
+    if (rawData.inspections) {
+        processedInspections = Array.isArray(rawData.inspections) ? rawData.inspections : [rawData.inspections];
+        // Ensure sorting is correct in JS as well
+        processedInspections.sort((a: any, b: any) => new Date(b.inspection_date).getTime() - new Date(a.inspection_date).getTime());
+    }
+
+    const latest = processedInspections.length > 0 ? processedInspections[0] : null;
+    
+    // Slice for recent logic usage (top 2)
+    const recent = processedInspections.slice(0, 2);
+
+    // Process treatments - check for active withdrawals
+    // Logic: withdrawal_end_date > current_date
+    let activeTreatments: Pick<TreatmentsLog, 'medication_name' | 'withdrawal_end_date'>[] = [];
+    if (rawData.treatments_log) {
+        const treatments = Array.isArray(rawData.treatments_log) ? rawData.treatments_log : [rawData.treatments_log];
+        const now = new Date();
+        activeTreatments = treatments.filter((t: any) => {
+            if (!t.withdrawal_end_date) return false;
+            return new Date(t.withdrawal_end_date) > now;
+        });
     }
 
     // Handle potential array return for queen
@@ -93,8 +144,11 @@ export async function getHiveDetails(hiveId: string): Promise<{ data: HiveDetail
 
     const hiveDetails: HiveDetails = {
         ...rawData,
-        latest_inspection: processedLatestInspection,
-        queen: processedQueen
+        inspections: processedInspections, // Add full inspections list
+        recent_inspections: recent,
+        latest_inspection: latest,
+        queen: processedQueen,
+        active_treatments: activeTreatments
     } as unknown as HiveDetails;
 
     return { data: hiveDetails, error: null };

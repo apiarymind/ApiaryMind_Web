@@ -13,7 +13,13 @@ export interface ExtendedInspection extends Omit<Inspection, 'performed_by'> {
       id: string;
       name: string;
     }
-  }
+  };
+  performed_by?: {
+    id: string;
+    full_name?: string;
+    email: string;
+    avatar_url?: string;
+  };
 }
 
 export async function getHiveInspections(hiveId: string): Promise<Inspection[]> {
@@ -42,7 +48,13 @@ export async function getHiveInspections(hiveId: string): Promise<Inspection[]> 
          frames_sealed_percent,
          pests_detected,
          treatment_applied,
-         next_visit_tasks
+         next_visit_tasks,
+         performed_by:profiles!user_id (
+            id,
+            full_name,
+            email,
+            avatar_url
+         )
       `)
       .eq('hive_id', hiveId)
       .order('inspection_date', { ascending: false });
@@ -93,6 +105,12 @@ export async function getUserInspections(): Promise<{ data: ExtendedInspection[]
             id, 
             name
           )
+        ),
+        performed_by:profiles!user_id (
+            id,
+            full_name,
+            email,
+            avatar_url
         )
       `)
       .order('inspection_date', { ascending: false });
