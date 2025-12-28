@@ -10,7 +10,8 @@ import {
   Pill,
   Search,
   ShieldAlert,
-  AlertTriangle
+  AlertTriangle,
+  ClipboardList
 } from 'lucide-react';
 import InspectionDetailModal from '@/app/components/InspectionDetailModal';
 import { translateColonyStrength, translateMood, translatePest } from '@/utils/inspectionTranslations';
@@ -133,6 +134,8 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
             const performerAvatar = profile?.avatar_url;
             const performerInitials = performerName ? performerName.charAt(0).toUpperCase() : 'U';
 
+            const hasNextVisitTasks = inspection.next_visit_tasks && inspection.next_visit_tasks.length > 0;
+
             return (
               <div
                 key={inspection.id}
@@ -203,6 +206,20 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
                     <div className="mt-2 text-gray-600 dark:text-gray-300 text-sm leading-relaxed line-clamp-2">
                        {inspection.notes || 'Brak notatek.'}
                     </div>
+
+                    {hasNextVisitTasks && (
+                       <div className="mt-4 mb-2 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-900/30">
+                          <h5 className="flex items-center gap-2 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase mb-2">
+                             <ClipboardList className="w-4 h-4" />
+                             Zaplanowane na następną wizytę:
+                          </h5>
+                          <ul className="list-disc list-inside text-sm text-blue-900 dark:text-blue-200 space-y-1">
+                             {inspection.next_visit_tasks?.map((task, i) => (
+                                <li key={i}>{task}</li>
+                             ))}
+                          </ul>
+                       </div>
+                    )}
 
                     <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700/50">
                         <div className="flex items-center gap-2">
