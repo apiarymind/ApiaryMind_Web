@@ -73,40 +73,29 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
 
           {filteredInspections.map((inspection, index) => {
             // Find actual chronological predecessor from full list to ensure context accuracy
-            // inspections are assumed to be sorted DESC by date by the caller/server
-            // We find the index of the current inspection in the source array
             const sourceIndex = inspections.findIndex(i => i.id === inspection.id);
             const previousInspection = sourceIndex !== -1 ? inspections[sourceIndex + 1] : undefined;
 
             const isAggressive = inspection.mood === 'AGGRESSIVE';
             const pests = inspection.pests_detected || [];
-            // Filter out 'HEALTHY' or 'None' from pests to determine alarm status
             const activePests = pests.filter(p => p !== 'HEALTHY' && p !== 'NONE' && p !== 'None');
             const hasPests = activePests.length > 0;
             const isQueenSeen = inspection.is_queen_seen;
             const isQueenMissingTwice = !isQueenSeen && (previousInspection && previousInspection.is_queen_seen === false);
 
-            // Determine Primary Alert Message (Priority Chain)
             let alertMessage = null;
             let alertColorClass = '';
 
-            // Priority 1: Disease
             if (hasPests) {
                alertMessage = "☣️ WYKRYTO ZAGROŻENIE";
                alertColorClass = "text-red-500";
-            }
-            // Priority 2: Missing Queen x2
-            else if (isQueenMissingTwice) {
+            } else if (isQueenMissingTwice) {
                alertMessage = "⚠️ BRAK MATKI (x2) - ZAMÓW NOWĄ!";
                alertColorClass = "text-red-500";
-            }
-            // Priority 3: Aggressive
-            else if (isAggressive) {
+            } else if (isAggressive) {
                alertMessage = "⚠️ AGRESYWNA RODZINA";
                alertColorClass = "text-red-500";
-            }
-            // Priority 4: Missing Queen x1
-            else if (!isQueenSeen) {
+            } else if (!isQueenSeen) {
                alertMessage = "❓ BRAK MATKI - DO SPRAWDZENIA";
                alertColorClass = "text-orange-500";
             }
@@ -127,14 +116,16 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
                dotClass = 'border-green-500 bg-green-500';
             }
 
-            // Badges logic
             const honeyCount = inspection.honey_supers_count || 0;
             const hasHoney = honeyCount > 0;
             const hasTreatment = !!inspection.treatment_applied;
-
-            // Translations
             const strengthLabel = translateColonyStrength(inspection.colony_strength);
             const moodLabel = translateMood(inspection.mood);
+
+            // User Badge Data
+            const performerName = inspection.performed_by?.full_name || 'Użytkownik';
+            const performerAvatar = inspection.performed_by?.avatar_url;
+            const performerInitials = performerName ? performerName.charAt(0).toUpperCase() : 'U';
 
             return (
               <div
@@ -143,25 +134,20 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
                 style={{ animationDelay: `${index * 50}ms` }}
                 onClick={() => setSelectedInspection(inspection)}
               >
-                 {/* Connector Dot */}
                  <div className={`absolute -left-[23px] top-6 w-3 h-3 rounded-full border-2 bg-white dark:bg-gray-900 z-10 ${dotClass}`} />
 
-                 {/* Card - Clickable */}
                  <div className={`
                     relative backdrop-blur-sm bg-white/80 dark:bg-gray-800/80
                     border rounded-xl p-5 overflow-hidden transition-all hover:shadow-md cursor-pointer hover:scale-[1.01]
                     ${borderClass}
                  `}>
 
-                    {/* Header Line: Date | Badges */}
                     <div className="flex justify-between items-center mb-3">
                        <div className="flex items-center gap-3">
                           <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1">
                              <Activity className="w-3 h-3" />
                              {new Date(inspection.inspection_date).toLocaleDateString()}
                           </span>
-
-                          {/* Visual Badges Row */}
                           <div className="flex items-center gap-2">
                             {isQueenSeen && (
                                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400" title="Matka widziana">
@@ -182,7 +168,7 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
                        </div>
                     </div>
 
-                    <div className="flex justify-between items-start mb-2 pr-20 relative">
+                    <div className="flex justify-between items-start mb-2 pr-2 relative">
                        <div>
                           <h4 className="font-bold text-lg text-gray-900 dark:text-gray-100">
                              Przegląd {strengthLabel ? `(${strengthLabel})` : ''}
@@ -200,22 +186,8 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
                              ))}
                           </div>
                        </div>
-
-                       {/* Performer Avatar */}
-                       {inspection.performed_by && (
-                         <div className="absolute right-0 top-0">
-                            <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-white dark:border-gray-800 flex items-center justify-center text-gray-500 font-bold text-sm shadow-sm overflow-hidden" title={inspection.performed_by?.full_name}>
-                               {inspection.performed_by?.avatar_url ? (
-                                  <img src={inspection.performed_by.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                               ) : (
-                                  <span>{inspection.performed_by?.full_name?.[0] || 'U'}</span>
-                               )}
-                            </div>
-                         </div>
-                       )}
                     </div>
 
-                    {/* Prominent Alert Message - Center/Right */}
                     {alertMessage && (
                        <div className={`mt-3 mb-1 text-sm md:text-base font-bold uppercase tracking-wide ${alertColorClass}`}>
                           {alertMessage}
@@ -226,14 +198,23 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
                        {inspection.notes || 'Brak notatek.'}
                     </div>
 
-                    <div className="mt-4 flex items-center gap-3 pt-3 border-t border-gray-100 dark:border-gray-700/50">
-                        {/* Only show default OK message if no major alert */}
-                        {!alertMessage && (
-                           <span className="text-xs font-bold text-green-600 flex items-center gap-1">
-                              <CheckCircle className="w-3 h-3" /> Status OK
-                           </span>
-                        )}
-                        <span className="text-xs font-bold text-blue-500 ml-auto group-hover:underline">
+                    <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700/50">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-400 font-medium">Przegląd:</span>
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex items-center justify-center text-[10px] font-bold text-gray-500">
+                                    {performerAvatar ? (
+                                        <img src={performerAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span>{performerInitials}</span>
+                                    )}
+                                </div>
+                                <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 truncate max-w-[100px]">
+                                    {performerName}
+                                </span>
+                            </div>
+                        </div>
+                        <span className="text-xs font-bold text-blue-500 ml-auto group-hover:underline cursor-pointer">
                           Szczegóły &rarr;
                         </span>
                     </div>
