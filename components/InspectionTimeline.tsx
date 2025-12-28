@@ -122,8 +122,9 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
             const strengthLabel = translateColonyStrength(inspection.colony_strength);
             const moodLabel = translateMood(inspection.mood);
 
-            // User Badge Data - Identity Cascade
-            const profile = inspection.performed_by;
+            // User Badge Data - Identity Cascade with Alias Fallback
+            // Check both potential aliases to be robust against schema mismatches
+            const profile = inspection.performed_by || (inspection as any).profiles;
             const performerName = profile?.full_name || profile?.email || 'Anonim';
             const performerAvatar = profile?.avatar_url;
             const performerInitials = performerName ? performerName.charAt(0).toUpperCase() : 'U';
