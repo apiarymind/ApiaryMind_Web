@@ -75,53 +75,74 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
   };
 
   const getStackedAlerts = (latest: HiveDetails['latest_inspection'], activeTreatments: HiveDetails['active_treatments']) => {
+      if (!latest) return null;
+
       const alerts = [];
-
-      // 1. CRITICAL: FOOD SAFETY (Withdrawal)
-      if (activeTreatments && activeTreatments.length > 0) {
-          activeTreatments.forEach(t => {
-              alerts.push(
-                  <div key={`withdrawal-${t.medication_name}`} className="bg-purple-500/20 border border-purple-500/50 rounded-lg p-3 flex items-start gap-3">
-                      <Ban className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
-                      <div>
-                          <h4 className="font-bold text-purple-300 text-sm uppercase">⛔ KARENCJA - MIÓD SKAŻONY (Lek: {t.medication_name})</h4>
-                          <p className="text-purple-200 text-xs mt-1">
-                              Do {t.withdrawal_end_date ? new Date(t.withdrawal_end_date).toLocaleDateString() : '???'} miód jest niezdatny do spożycia. Tylko dla pszczół.
-                          </p>
-                      </div>
-                  </div>
-              );
-          });
-      }
-
-      if (!latest) {
-          if (alerts.length > 0) return <div className="space-y-3">{alerts}</div>;
-          return null;
-      }
+      let isHoneyUnsafe = false;
 
       const pests = latest.pests_detected || [];
       const activePests = pests.filter(p => p !== 'HEALTHY' && p !== 'NONE' && p !== 'None');
       const hasDisease = activePests.length > 0;
+
       const isQueenMissing = latest.is_queen_seen === false;
       const honeySupers = latest.honey_supers_count || 0;
       const framesSealed = latest.frames_sealed_percent || 0;
+      // Use logical OR for fallback if frames_sealed is not used/0 but user marked supers
       const isHarvestReady = framesSealed >= 65 || (framesSealed === 0 && honeySupers > 0);
-      const isWithdrawalActive = activeTreatments.length > 0;
 
-      // 2. CRITICAL: DISEASE DETECTED (If not covered by treatment - simplified logic: just show alert)
-      if (hasDisease) {
-           alerts.push(
+      // 1. CHECK HEALTH & WITHDRAWAL (Highest Priority)
+      // Check both active treatments from log AND if the latest inspection has treatment applied
+      const hasActiveTreatmentLog = activeTreatments && activeTreatments.length > 0;
+      const hasTreatmentInLatest = !!latest.treatment_applied;
+      const hasActiveTreatment = hasActiveTreatmentLog || hasTreatmentInLatest;
+
+      if (hasActiveTreatment) {
+          isHoneyUnsafe = true;
+          // Add alerts for specific treatments from log
+          if (hasActiveTreatmentLog) {
+              activeTreatments.forEach(t => {
+                  alerts.push(
+                      <div key={`withdrawal-${t.medication_name}`} className="bg-purple-500/20 border border-purple-500/50 rounded-lg p-3 flex items-start gap-3">
+                          <Ban className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                          <div>
+                              <h4 className="font-bold text-purple-300 text-sm uppercase">⛔ KARENCJA - MIÓD SKAŻONY (Lek: {t.medication_name})</h4>
+                              <p className="text-purple-200 text-xs mt-1">
+                                  Do {t.withdrawal_end_date ? new Date(t.withdrawal_end_date).toLocaleDateString() : '???'} miód jest niezdatny do spożycia. Tylko dla pszczół.
+                              </p>
+                          </div>
+                      </div>
+                  );
+              });
+          }
+          // Add generic alert if treatment found in latest inspection but no log details yet
+          if (hasTreatmentInLatest && !hasActiveTreatmentLog) {
+               alerts.push(
+                  <div key="treatment-latest" className="bg-purple-500/20 border border-purple-500/50 rounded-lg p-3 flex items-start gap-3">
+                      <Ban className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                      <div>
+                          <h4 className="font-bold text-purple-300 text-sm uppercase">⛔ KARENCJA - MIÓD SKAŻONY</h4>
+                          <p className="text-purple-200 text-xs mt-1">
+                              W ulu zastosowano leki ({latest.treatment_applied}). Miód NIE NADAJE się do spożycia.
+                          </p>
+                      </div>
+                  </div>
+              );
+          }
+      } else if (hasDisease) {
+          // Disease detected but no explicit treatment record yet -> Still risky
+          isHoneyUnsafe = true; // Risk of contamination or need for treatment overrides harvest
+          alerts.push(
               <div key="disease" className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex items-start gap-3">
                   <Bug className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                   <div>
                       <h4 className="font-bold text-red-400 text-sm uppercase">☣️ WYKRYTO CHOROBĘ ({activePests.join(', ')})</h4>
-                      <p className="text-red-200 text-xs mt-1">Rozpocznij leczenie natychmiast.</p>
+                      <p className="text-red-200 text-xs mt-1">Rozpocznij leczenie natychmiast. Miód może być zagrożony.</p>
                   </div>
               </div>
           );
       }
 
-      // 3. WARNING: MISSING QUEEN
+      // 2. CHECK QUEEN (High Priority)
       if (isQueenMissing) {
           alerts.push(
               <div key="missing-queen" className="bg-orange-500/20 border border-orange-500/50 rounded-lg p-3 flex items-start gap-3">
@@ -134,8 +155,9 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
           );
       }
 
-      // 4. INFO: HARVEST READY (Only if NO Food Safety Alert)
-      if (isHarvestReady && !isWithdrawalActive) {
+      // 3. CHECK HARVEST (Lowest Priority - CONDITIONAL)
+      // CRITICAL FIX: Only suggest harvest if honey is SAFE
+      if (isHarvestReady && !isHoneyUnsafe) {
            alerts.push(
               <div key="harvest" className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-3 flex items-start gap-3">
                   <Activity className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
@@ -145,9 +167,20 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
                   </div>
               </div>
           );
+      } else if (isHarvestReady && isHoneyUnsafe) {
+           // Explicitly tell user NOT to harvest despite full frames
+           alerts.push(
+              <div key="harvest-ban" className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex items-start gap-3">
+                  <Ban className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  <div>
+                      <h4 className="font-bold text-red-400 text-sm uppercase">❌ ZAKAZ MIODOBRANIA</h4>
+                      <p className="text-red-200 text-xs mt-1">Miodnia jest pełna, ale trwa okres karencji lub leczenia!</p>
+                  </div>
+              </div>
+          );
       }
 
-      // 5. NORMAL (Only if NO alerts at all)
+      // 4. NORMAL (Only if NO alerts at all)
       if (alerts.length === 0) {
           return (
               <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 flex items-start gap-3">
