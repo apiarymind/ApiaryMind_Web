@@ -15,6 +15,7 @@ export interface Queen {
 
 export interface HiveDetails extends Hive {
   queen: Queen | null;
+  inspections: Inspection[]; // Add inspections for full history
   recent_inspections: Array<{
     inspection_date: string;
     colony_strength: string | null;
@@ -35,6 +36,7 @@ export interface HiveDetails extends Hive {
     pests_detected: string[] | null;
     honey_supers_count: number | null;
     frames_sealed_percent: number | null;
+    treatment_applied?: string | null; // Add missing field for safety logic
   } | null;
   apiary: {
     id: string;
@@ -78,7 +80,12 @@ export async function getHiveDetails(hiveId: string): Promise<{ data: HiveDetail
           notes,
           treatment_applied,
           honey_supers_count,
-          frames_sealed_percent
+          frames_sealed_percent,
+          performed_by:profiles (
+            id,
+            full_name,
+            avatar_url
+          )
         ),
         treatments_log (
           medication_name,
@@ -136,6 +143,7 @@ export async function getHiveDetails(hiveId: string): Promise<{ data: HiveDetail
 
     const hiveDetails: HiveDetails = {
         ...rawData,
+        inspections: processedInspections, // Add full inspections list
         recent_inspections: recent,
         latest_inspection: latest,
         queen: processedQueen,

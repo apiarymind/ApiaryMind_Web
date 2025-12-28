@@ -60,8 +60,9 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
     const hasDisease = activePests.length > 0;
     const isWeak = latest.colony_strength === 'WEAK';
     const isAggressive = latest.mood === 'AGGRESSIVE';
-    const queenMissingLatest = latest.is_queen_seen === false;
-    const queenMissingPrevious = previous ? previous.is_queen_seen === false : false;
+    // Use loosely equal false/null logic to match other components
+    const queenMissingLatest = !latest.is_queen_seen;
+    const queenMissingPrevious = previous ? !previous.is_queen_seen : false;
 
     if (hasDisease || (queenMissingLatest && queenMissingPrevious) || isWeak) {
       return 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)] bg-red-900/10';
@@ -74,75 +75,86 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
     return 'border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.2)] bg-green-900/10';
   };
 
-  const getStackedAlerts = (latest: HiveDetails['latest_inspection'], activeTreatments: HiveDetails['active_treatments']) => {
-      if (!latest) return null;
+  const getStackedAlerts = (latest: HiveDetails['latest_inspection'], activeTreatments: HiveDetails['active_treatments'], recentInspections: HiveDetails['recent_inspections']) => {
+      // NOTE: We check activeTreatments first, as it is the "Hard Block"
 
       const alerts = [];
       let isHoneyUnsafe = false;
 
-      const pests = latest.pests_detected || [];
-      const activePests = pests.filter(p => p !== 'HEALTHY' && p !== 'NONE' && p !== 'None');
-      const hasDisease = activePests.length > 0;
-
-      const isQueenMissing = latest.is_queen_seen === false;
-      const honeySupers = latest.honey_supers_count || 0;
-      const framesSealed = latest.frames_sealed_percent || 0;
-      // Use logical OR for fallback if frames_sealed is not used/0 but user marked supers
-      const isHarvestReady = framesSealed >= 65 || (framesSealed === 0 && honeySupers > 0);
-
-      // 1. CHECK HEALTH & WITHDRAWAL (Highest Priority)
-      // Check both active treatments from log AND if the latest inspection has treatment applied
-      const hasActiveTreatmentLog = activeTreatments && activeTreatments.length > 0;
-      const hasTreatmentInLatest = !!latest.treatment_applied;
-      const hasActiveTreatment = hasActiveTreatmentLog || hasTreatmentInLatest;
-
-      if (hasActiveTreatment) {
+      // 1. HARD BLOCK: ACTIVE TREATMENT (FROM LOG)
+      if (activeTreatments && activeTreatments.length > 0) {
           isHoneyUnsafe = true;
-          // Add alerts for specific treatments from log
-          if (hasActiveTreatmentLog) {
-              activeTreatments.forEach(t => {
-                  alerts.push(
-                      <div key={`withdrawal-${t.medication_name}`} className="bg-purple-500/20 border border-purple-500/50 rounded-lg p-3 flex items-start gap-3">
-                          <Ban className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
-                          <div>
-                              <h4 className="font-bold text-purple-300 text-sm uppercase">⛔ KARENCJA - MIÓD SKAŻONY (Lek: {t.medication_name})</h4>
-                              <p className="text-purple-200 text-xs mt-1">
-                                  Do {t.withdrawal_end_date ? new Date(t.withdrawal_end_date).toLocaleDateString() : '???'} miód jest niezdatny do spożycia. Tylko dla pszczół.
-                              </p>
-                          </div>
-                      </div>
-                  );
-              });
-          }
-          // Add generic alert if treatment found in latest inspection but no log details yet
-          if (hasTreatmentInLatest && !hasActiveTreatmentLog) {
-               alerts.push(
-                  <div key="treatment-latest" className="bg-purple-500/20 border border-purple-500/50 rounded-lg p-3 flex items-start gap-3">
+          activeTreatments.forEach(t => {
+              alerts.push(
+                  <div key={`withdrawal-${t.medication_name}`} className="bg-purple-500/20 border border-purple-500/50 rounded-lg p-3 flex items-start gap-3">
                       <Ban className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
                       <div>
-                          <h4 className="font-bold text-purple-300 text-sm uppercase">⛔ KARENCJA - MIÓD SKAŻONY</h4>
+                          <h4 className="font-bold text-purple-300 text-sm uppercase">⛔ KARENCJA AKTYWNA (do {t.withdrawal_end_date ? new Date(t.withdrawal_end_date).toLocaleDateString() : '???'})</h4>
                           <p className="text-purple-200 text-xs mt-1">
-                              W ulu zastosowano leki ({latest.treatment_applied}). Miód NIE NADAJE się do spożycia.
+                              W ulu znajdują się pozostałości leków. Miód skażony - nie nadaje się do spożycia.
                           </p>
                       </div>
                   </div>
               );
-          }
-      } else if (hasDisease) {
-          // Disease detected but no explicit treatment record yet -> Still risky
-          isHoneyUnsafe = true; // Risk of contamination or need for treatment overrides harvest
-          alerts.push(
-              <div key="disease" className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex items-start gap-3">
-                  <Bug className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+          });
+      }
+
+      // If no latest inspection but we have treatment log, we return just the treatment alerts
+      if (!latest) {
+          if (alerts.length > 0) return <div className="space-y-3">{alerts}</div>;
+          return null;
+      }
+
+      // FALLBACK: Check historical pests in last 2 inspections
+      // If we don't have explicit treatment log, but we saw dangerous pests recently
+      const checkPests = (pests: string[] | null) => {
+          if (!pests) return false;
+          return pests.some(p => ['VARROA', 'AFB', 'ZGNILEC', 'WARROZA'].some(bad => p.toUpperCase().includes(bad)));
+      };
+
+      const latestHasBadPests = checkPests(latest.pests_detected);
+      // Check previous inspection if available
+      const previous = recentInspections.length > 1 ? recentInspections[1] : undefined;
+      const previousHasBadPests = previous ? checkPests(previous.pests_detected) : false;
+
+      // 2. POTENTIAL CONTAMINATION / DISEASE (Fallback if no active treatment log found but risk exists)
+      // Only show if we haven't already flagged it as unsafe via Log, OR if we want to show both.
+      // User requirement: "If activeWithdrawal exists... BLOCK Harvest... Fallback: If activeWithdrawal is null... look at Last 2 Inspections... Trigger Potential Contamination"
+      if (!isHoneyUnsafe && (latestHasBadPests || previousHasBadPests)) {
+           isHoneyUnsafe = true;
+           alerts.push(
+              <div key="risk-contamination" className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                   <div>
-                      <h4 className="font-bold text-red-400 text-sm uppercase">☣️ WYKRYTO CHOROBĘ ({activePests.join(', ')})</h4>
-                      <p className="text-red-200 text-xs mt-1">Rozpocznij leczenie natychmiast. Miód może być zagrożony.</p>
+                      <h4 className="font-bold text-red-400 text-sm uppercase">⚠️ RYZYKO SKAŻENIA / CHOROBA</h4>
+                      <p className="text-red-200 text-xs mt-1">W ostatnich przeglądach wykryto chorobę. Sprawdź okres karencji leków!</p>
+                  </div>
+              </div>
+          );
+      }
+      // Also check explicit treatment_applied field in latest inspection if not caught by log
+      else if (!isHoneyUnsafe && latest.treatment_applied) {
+           isHoneyUnsafe = true;
+           alerts.push(
+              <div key="treatment-latest" className="bg-purple-500/20 border border-purple-500/50 rounded-lg p-3 flex items-start gap-3">
+                  <Ban className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                  <div>
+                      <h4 className="font-bold text-purple-300 text-sm uppercase">⛔ KARENCJA - MIÓD SKAŻONY</h4>
+                      <p className="text-purple-200 text-xs mt-1">
+                          W ulu zastosowano leki ({latest.treatment_applied}). Miód NIE NADAJE się do spożycia.
+                      </p>
                   </div>
               </div>
           );
       }
 
-      // 2. CHECK QUEEN (High Priority)
+      // Other checks
+      const isQueenMissing = !latest.is_queen_seen; // Matches InspectionTimeline loose check
+      const honeySupers = latest.honey_supers_count || 0;
+      const framesSealed = latest.frames_sealed_percent || 0;
+      const isHarvestReady = framesSealed >= 65 || (framesSealed === 0 && honeySupers > 0);
+
+      // 3. WARNING: MISSING QUEEN
       if (isQueenMissing) {
           alerts.push(
               <div key="missing-queen" className="bg-orange-500/20 border border-orange-500/50 rounded-lg p-3 flex items-start gap-3">
@@ -155,8 +167,7 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
           );
       }
 
-      // 3. CHECK HARVEST (Lowest Priority - CONDITIONAL)
-      // CRITICAL FIX: Only suggest harvest if honey is SAFE
+      // 4. CHECK HARVEST (Lowest Priority - CONDITIONAL)
       if (isHarvestReady && !isHoneyUnsafe) {
            alerts.push(
               <div key="harvest" className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-3 flex items-start gap-3">
@@ -180,7 +191,7 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
           );
       }
 
-      // 4. NORMAL (Only if NO alerts at all)
+      // 5. NORMAL (Only if NO alerts at all)
       if (alerts.length === 0) {
           return (
               <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 flex items-start gap-3">
@@ -290,7 +301,7 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
                    <div className="flex-1 flex flex-col gap-6">
                       {/* Smart Alert Section */}
                       <div className="mt-4">
-                          {getStackedAlerts(latest, activeTreatments)}
+                          {getStackedAlerts(latest, activeTreatments, recent)}
                       </div>
 
                       {/* Vital Stats Grid */}
