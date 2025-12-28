@@ -5,7 +5,7 @@ import { HiveDetails } from '@/app/actions/get-hive-details';
 import { Inspection } from '@/types/supabase';
 import { InspectionTimeline } from '@/components/InspectionTimeline';
 import { GlassCard } from '@/app/components/ui/GlassCard';
-import { Check, X, Calendar, Crown, Activity, AlertTriangle, Layers, Thermometer, Bug, Lightbulb } from 'lucide-react';
+import { Check, X, Calendar, Crown, Activity, AlertTriangle, Layers, Thermometer, Bug, Lightbulb, Ban } from 'lucide-react';
 import { translateColonyStrength, translateMood } from '@/utils/inspectionTranslations';
 
 interface HiveDetailsTabsProps {
@@ -74,74 +74,100 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
     return 'border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.2)] bg-green-900/10';
   };
 
-  const getSmartAlert = (latest: HiveDetails['latest_inspection']) => {
-      if (!latest) return null;
+  const getStackedAlerts = (latest: HiveDetails['latest_inspection'], activeTreatments: HiveDetails['active_treatments']) => {
+      const alerts = [];
 
+      // 1. CRITICAL: FOOD SAFETY (Withdrawal)
+      if (activeTreatments && activeTreatments.length > 0) {
+          activeTreatments.forEach(t => {
+              alerts.push(
+                  <div key={`withdrawal-${t.medication_name}`} className="bg-purple-500/20 border border-purple-500/50 rounded-lg p-3 flex items-start gap-3">
+                      <Ban className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                      <div>
+                          <h4 className="font-bold text-purple-300 text-sm uppercase">⛔ KARENCJA - MIÓD SKAŻONY (Lek: {t.medication_name})</h4>
+                          <p className="text-purple-200 text-xs mt-1">
+                              Do {t.withdrawal_end_date ? new Date(t.withdrawal_end_date).toLocaleDateString() : '???'} miód jest niezdatny do spożycia. Tylko dla pszczół.
+                          </p>
+                      </div>
+                  </div>
+              );
+          });
+      }
+
+      if (!latest) {
+          if (alerts.length > 0) return <div className="space-y-3">{alerts}</div>;
+          return null;
+      }
+
+      const pests = latest.pests_detected || [];
+      const activePests = pests.filter(p => p !== 'HEALTHY' && p !== 'NONE' && p !== 'None');
+      const hasDisease = activePests.length > 0;
+      const isQueenMissing = latest.is_queen_seen === false;
       const honeySupers = latest.honey_supers_count || 0;
       const framesSealed = latest.frames_sealed_percent || 0;
-      const isQueenMissing = latest.is_queen_seen === false;
+      const isHarvestReady = framesSealed >= 65 || (framesSealed === 0 && honeySupers > 0);
+      const isWithdrawalActive = activeTreatments.length > 0;
 
-      // Date Logic for Robbing Season (After July 20th)
-      const now = new Date();
-      const currentMonth = now.getMonth() + 1; // 1-12
-      const currentDay = now.getDate();
-      const isAfterJuly20 = (currentMonth > 7) || (currentMonth === 7 && currentDay > 20);
+      // 2. CRITICAL: DISEASE DETECTED (If not covered by treatment - simplified logic: just show alert)
+      if (hasDisease) {
+           alerts.push(
+              <div key="disease" className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex items-start gap-3">
+                  <Bug className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  <div>
+                      <h4 className="font-bold text-red-400 text-sm uppercase">☣️ WYKRYTO CHOROBĘ ({activePests.join(', ')})</h4>
+                      <p className="text-red-200 text-xs mt-1">Rozpocznij leczenie natychmiast.</p>
+                  </div>
+              </div>
+          );
+      }
 
-      // 1. CRITICAL: Missing Queen
+      // 3. WARNING: MISSING QUEEN
       if (isQueenMissing) {
-          return (
-              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                  <div>
-                      <h4 className="font-bold text-red-400 text-sm">BRAK MATKI</h4>
-                      <p className="text-red-200 text-xs mt-1">Wymagana natychmiastowa interwencja.</p>
-                  </div>
-              </div>
-          );
-      }
-
-      // 2. ACTION: Harvest Ready
-      if (framesSealed >= 65 || (framesSealed === 0 && honeySupers > 0)) {
-           return (
-              <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-3 flex items-start gap-3">
-                  <Activity className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
-                  <div>
-                      <h4 className="font-bold text-yellow-400 text-sm">MIODNIA GOTOWA {framesSealed > 0 ? `(>65%)` : ''}</h4>
-                      <p className="text-yellow-200 text-xs mt-1">Zaplanuj miodobranie w najbliższym czasie.</p>
-                  </div>
-              </div>
-          );
-      }
-
-      // 3. WARNING: Robbing Season
-      if (isAfterJuly20 && (honeySupers > 0 || framesSealed > 0)) {
-           return (
-              <div className="bg-orange-500/20 border border-orange-500/50 rounded-lg p-3 flex items-start gap-3">
+          alerts.push(
+              <div key="missing-queen" className="bg-orange-500/20 border border-orange-500/50 rounded-lg p-3 flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
                   <div>
-                      <h4 className="font-bold text-orange-400 text-sm">KONIEC POŻYTKU</h4>
-                      <p className="text-orange-200 text-xs mt-1">Ryzyko rabunków! Zbierz miód i zabezpiecz wylotek.</p>
+                      <h4 className="font-bold text-orange-400 text-sm uppercase">⚠️ BRAK MATKI</h4>
+                      <p className="text-orange-200 text-xs mt-1">Sprawdź obecność jajeczek lub mateczników.</p>
                   </div>
               </div>
           );
       }
 
-      // 4. NORMAL
-      return (
-          <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 flex items-start gap-3">
-              <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-              <div>
-                  <h4 className="font-bold text-green-400 text-sm">STAN STABILNY</h4>
-                  <p className="text-green-200 text-xs mt-1">Brak pilnych zaleceń. Rodzina rozwija się prawidłowo.</p>
+      // 4. INFO: HARVEST READY (Only if NO Food Safety Alert)
+      if (isHarvestReady && !isWithdrawalActive) {
+           alerts.push(
+              <div key="harvest" className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-3 flex items-start gap-3">
+                  <Activity className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
+                  <div>
+                      <h4 className="font-bold text-yellow-400 text-sm uppercase">🍯 MIODOBRANIE</h4>
+                      <p className="text-yellow-200 text-xs mt-1">Miodnia gotowa do zbioru.</p>
+                  </div>
               </div>
-          </div>
-      );
+          );
+      }
+
+      // 5. NORMAL (Only if NO alerts at all)
+      if (alerts.length === 0) {
+          return (
+              <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 flex items-start gap-3">
+                  <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                  <div>
+                      <h4 className="font-bold text-green-400 text-sm uppercase">STAN STABILNY</h4>
+                      <p className="text-green-200 text-xs mt-1">Brak pilnych zaleceń. Rodzina rozwija się prawidłowo.</p>
+                  </div>
+              </div>
+          );
+      }
+
+      return <div className="space-y-3">{alerts}</div>;
   };
 
   const queen = hive.queen;
   const latest = hive.latest_inspection;
   const recent = hive.recent_inspections || [];
   const previous = recent.length > 1 ? recent[1] : undefined;
+  const activeTreatments = hive.active_treatments || [];
 
   const statusColorClass = getColonyStatusColor(latest, previous);
 
@@ -230,8 +256,8 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
                 {latest ? (
                    <div className="flex-1 flex flex-col gap-6">
                       {/* Smart Alert Section */}
-                      <div>
-                          {getSmartAlert(latest)}
+                      <div className="mt-4">
+                          {getStackedAlerts(latest, activeTreatments)}
                       </div>
 
                       {/* Vital Stats Grid */}
