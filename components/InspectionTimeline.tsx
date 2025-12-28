@@ -151,75 +151,83 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
                     ${borderClass}
                  `}>
 
-                    <div className="flex justify-between items-center mb-3">
-                       <div className="flex items-center gap-3">
-                          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                             <Activity className="w-3 h-3" />
-                             {new Date(inspection.inspection_date).toLocaleDateString()}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            {isQueenSeen && (
-                               <div className="flex items-center justify-center w-6 h-6 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400" title="Matka widziana">
-                                  <Crown className="w-3.5 h-3.5" />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                       {/* Left Panel */}
+                       <div className={hasNextVisitTasks ? "md:col-span-2" : "md:col-span-3"}>
+                           <div className="flex justify-between items-center mb-3">
+                              <div className="flex items-center gap-3">
+                                 <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                                    <Activity className="w-3 h-3" />
+                                    {new Date(inspection.inspection_date).toLocaleDateString()}
+                                 </span>
+                                 <div className="flex items-center gap-2">
+                                   {isQueenSeen && (
+                                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400" title="Matka widziana">
+                                         <Crown className="w-3.5 h-3.5" />
+                                      </div>
+                                   )}
+                                   {hasHoney && (
+                                      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-500 text-xs font-bold" title={`Miodobranie: ${honeyCount}`}>
+                                         <Package className="w-3.5 h-3.5" /> {honeyCount}
+                                      </div>
+                                   )}
+                                   {hasTreatment && (
+                                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" title="Leczenie zastosowane">
+                                         <Pill className="w-3.5 h-3.5" />
+                                      </div>
+                                   )}
+                                 </div>
+                              </div>
+                           </div>
+
+                           <div className="flex justify-between items-start mb-2 pr-2 relative">
+                              <div>
+                                 <h4 className="font-bold text-lg text-gray-900 dark:text-gray-100">
+                                    Przegląd {strengthLabel ? `(${strengthLabel})` : ''}
+                                 </h4>
+                                 <div className="flex flex-wrap gap-2 mt-1">
+                                    {moodLabel && (
+                                       <span className={`text-xs px-2 py-0.5 rounded-full border ${isAggressive ? 'border-red-200 bg-red-50 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400' : 'border-green-200 bg-green-50 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400'}`}>
+                                         {moodLabel}
+                                       </span>
+                                    )}
+                                    {hasPests && pests.map((p) => (
+                                       <span key={p} className="text-xs px-2 py-0.5 rounded-full border border-red-200 bg-red-50 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
+                                          {translatePest(p)}
+                                       </span>
+                                    ))}
+                                 </div>
+                              </div>
+                           </div>
+
+                           {alertMessage && (
+                              <div className={`mt-3 mb-1 text-sm md:text-base font-bold uppercase tracking-wide ${alertColorClass}`}>
+                                 {alertMessage}
+                              </div>
+                           )}
+
+                           <div className="mt-2 text-gray-600 dark:text-gray-300 text-sm leading-relaxed line-clamp-2">
+                              {inspection.notes || 'Brak notatek.'}
+                           </div>
+                       </div>
+
+                       {/* Right Panel (Tasks) */}
+                       {hasNextVisitTasks && (
+                           <div className="md:col-span-1">
+                               <div className="h-full bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-900/30 flex flex-col justify-center">
+                                  <h5 className="flex items-center gap-2 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase mb-3">
+                                     <ClipboardList className="w-4 h-4" />
+                                     Do zrobienia:
+                                  </h5>
+                                  <ul className="list-disc list-inside text-sm text-blue-900 dark:text-blue-200 space-y-1.5">
+                                     {inspection.next_visit_tasks?.map((task, i) => (
+                                        <li key={i} className="leading-snug">{task}</li>
+                                     ))}
+                                  </ul>
                                </div>
-                            )}
-                            {hasHoney && (
-                               <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-500 text-xs font-bold" title={`Miodobranie: ${honeyCount}`}>
-                                  <Package className="w-3.5 h-3.5" /> {honeyCount}
-                               </div>
-                            )}
-                            {hasTreatment && (
-                               <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" title="Leczenie zastosowane">
-                                  <Pill className="w-3.5 h-3.5" />
-                               </div>
-                            )}
-                          </div>
-                       </div>
+                           </div>
+                       )}
                     </div>
-
-                    <div className="flex justify-between items-start mb-2 pr-2 relative">
-                       <div>
-                          <h4 className="font-bold text-lg text-gray-900 dark:text-gray-100">
-                             Przegląd {strengthLabel ? `(${strengthLabel})` : ''}
-                          </h4>
-                          <div className="flex flex-wrap gap-2 mt-1">
-                             {moodLabel && (
-                                <span className={`text-xs px-2 py-0.5 rounded-full border ${isAggressive ? 'border-red-200 bg-red-50 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400' : 'border-green-200 bg-green-50 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400'}`}>
-                                  {moodLabel}
-                                </span>
-                             )}
-                             {hasPests && pests.map((p) => (
-                                <span key={p} className="text-xs px-2 py-0.5 rounded-full border border-red-200 bg-red-50 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
-                                   {translatePest(p)}
-                                </span>
-                             ))}
-                          </div>
-                       </div>
-                    </div>
-
-                    {alertMessage && (
-                       <div className={`mt-3 mb-1 text-sm md:text-base font-bold uppercase tracking-wide ${alertColorClass}`}>
-                          {alertMessage}
-                       </div>
-                    )}
-
-                    <div className="mt-2 text-gray-600 dark:text-gray-300 text-sm leading-relaxed line-clamp-2">
-                       {inspection.notes || 'Brak notatek.'}
-                    </div>
-
-                    {hasNextVisitTasks && (
-                       <div className="mt-4 mb-2 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-900/30">
-                          <h5 className="flex items-center gap-2 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase mb-2">
-                             <ClipboardList className="w-4 h-4" />
-                             Zaplanowane na następną wizytę:
-                          </h5>
-                          <ul className="list-disc list-inside text-sm text-blue-900 dark:text-blue-200 space-y-1">
-                             {inspection.next_visit_tasks?.map((task, i) => (
-                                <li key={i}>{task}</li>
-                             ))}
-                          </ul>
-                       </div>
-                    )}
 
                     <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700/50">
                         <div className="flex items-center gap-2">
