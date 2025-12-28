@@ -77,6 +77,7 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
             const previousInspection = sourceIndex !== -1 ? inspections[sourceIndex + 1] : undefined;
 
             const isAggressive = inspection.mood === 'AGGRESSIVE';
+            const isWeak = inspection.colony_strength === 'WEAK';
             const pests = inspection.pests_detected || [];
             const activePests = pests.filter(p => p !== 'HEALTHY' && p !== 'NONE' && p !== 'None');
             const hasPests = activePests.length > 0;
@@ -95,12 +96,15 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
             } else if (isAggressive) {
                alertMessage = "⚠️ AGRESYWNA RODZINA";
                alertColorClass = "text-red-500";
+            } else if (isWeak) {
+               alertMessage = "⚠️ SŁABA RODZINA";
+               alertColorClass = "text-red-500";
             } else if (!isQueenSeen) {
                alertMessage = "❓ BRAK MATKI - DO SPRAWDZENIA";
                alertColorClass = "text-orange-500";
             }
 
-            const isCritical = hasPests || isAggressive || isQueenMissingTwice;
+            const isCritical = hasPests || isAggressive || isQueenMissingTwice || isWeak;
             const isWarning = !isQueenSeen && !isCritical;
 
             let borderClass = 'border-gray-200 dark:border-gray-700 shadow-sm';
