@@ -27,38 +27,64 @@ DECLARE
     v_treatment text;
     v_counter integer := 0;
 
-    -- Loops
+    -- Loop Variables
     i integer;
     y integer;
     d date;
+    t text; -- temp for iterating breeder arrays
 BEGIN
     -- 1. CLEAN SLATE
-    -- Truncate main tables. Skipped inventory as schema is not verified in context.
+    -- Truncate tables, CASCADE to clear deps. Profiles are NOT truncated.
     TRUNCATE inspections, queens, hives, apiaries, medications_global CASCADE;
 
-    -- 2. GET USER
+    -- 2. GET MAIN USER
     SELECT id INTO v_user_id FROM profiles LIMIT 1;
     IF v_user_id IS NULL THEN
         RAISE EXCEPTION 'No profile found in profiles table.';
     END IF;
 
-    -- 3. MEDICATIONS
+    -- 3. CREATE REAL BREEDERS (PRO_PLUS)
+    -- Insert Good Breeders
+    FOREACH t IN ARRAY v_good_breeders LOOP
+        INSERT INTO profiles (id, full_name, email, subscription_plan, system_role)
+        VALUES (
+            uuid_generate_v4(),
+            t,
+            lower(replace(t, ' ', '')) || '@example.com',
+            'PRO_PLUS'::subscription_plan_type,
+            'USER'::app_role
+        ) ON CONFLICT DO NOTHING;
+    END LOOP;
+
+    -- Insert Bad Breeders
+    FOREACH t IN ARRAY v_bad_breeders LOOP
+        INSERT INTO profiles (id, full_name, email, subscription_plan, system_role)
+        VALUES (
+            uuid_generate_v4(),
+            t,
+            lower(replace(t, ' ', '')) || '@example.com',
+            'PRO_PLUS'::subscription_plan_type,
+            'USER'::app_role
+        ) ON CONFLICT DO NOTHING;
+    END LOOP;
+
+    -- 4. MEDICATIONS
     INSERT INTO medications_global (id, name, active_substance, withdrawal_period_days) VALUES
         (uuid_generate_v4(), 'Apiwarol', 'Amitraz', 2),
         (uuid_generate_v4(), 'Biowar 500', 'Amitraz', 0),
         (uuid_generate_v4(), 'Apiguard', 'Thymol', 0)
     ON CONFLICT DO NOTHING;
 
-    -- 4. APIARIES
+    -- 5. APIARIES (For Main User)
     v_apiary1_id := uuid_generate_v4();
     INSERT INTO apiaries (id, owner_id, name, location_geo, type, is_deleted)
-    VALUES (v_apiary1_id, v_user_id, 'Pasieka Wedrowna (Las)', '52.2297,21.0122', 'MIGRATORY', false); -- Assuming MIGRATORY is valid if STATIONARY is
+    VALUES (v_apiary1_id, v_user_id, 'Pasieka Wedrowna (Las)', '52.2297,21.0122', 'MIGRATORY', false);
 
     v_apiary2_id := uuid_generate_v4();
     INSERT INTO apiaries (id, owner_id, name, location_geo, type, is_deleted)
     VALUES (v_apiary2_id, v_user_id, 'Pasieka Stacjonarna (ogrod)', '52.2297,21.0122', 'STATIONARY', false);
 
-    -- 5. HIVE LOOP (100)
+    -- 6. HIVE LOOP (100)
     FOR i IN 1..100 LOOP
         v_hive_id := uuid_generate_v4();
 
@@ -79,8 +105,8 @@ BEGIN
         INSERT INTO hives (id, apiary_id, hive_number, type, bottom_board_type, installation_date, current_queen_id)
         VALUES (v_hive_id, v_apiary_id, to_char(i, 'FM000'), v_hive_type, 'mesh', '2022-03-01', NULL);
 
-        -- 6. QUEENS LOOP (History vs Current)
-        -- We loop twice: 1=Old Queen (2022), 2=Current Queen (2024)
+        -- 7. QUEENS LOOP (History vs Current)
+        -- 1=Old Queen (2022), 2=Current Queen (2024)
         FOR y IN 1..2 LOOP
             v_queen_id := uuid_generate_v4();
 
@@ -106,7 +132,7 @@ BEGIN
                 UPDATE hives SET current_queen_id = v_queen_id WHERE id = v_hive_id;
             END IF;
 
-            -- 7. INSPECTIONS LOOP (Years)
+            -- 8. INSPECTIONS LOOP (Years)
             -- If Old Queen: Inspections in 2022, 2023
             -- If Current Queen: Inspections in 2024, 2025
             DECLARE
@@ -168,5 +194,5 @@ BEGIN
 
     END LOOP; -- Hive Loop
 
-    -- Inventory skipped to prevent schema errors.
+    -- Inventory skipped (schema unverified)
 END $$;
