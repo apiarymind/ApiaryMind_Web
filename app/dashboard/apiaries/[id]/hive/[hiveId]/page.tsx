@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import HiveDetailsTabs from '@/app/components/HiveDetailsTabs';
+import AddInspectionButton from '@/app/components/AddInspectionButton';
 
 export default async function HiveDetailsPage({ params }: { params: { id: string; hiveId: string } }) {
   const supabase = createClient();
@@ -53,9 +54,10 @@ export default async function HiveDetailsPage({ params }: { params: { id: string
                  </p>
              </div>
              
-             <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg font-bold shadow-md transition-all">
-                Dodaj Przegląd
-             </button>
+             <AddInspectionButton
+                hiveId={hive.id}
+                previousInspection={hive.latest_inspection}
+             />
           </div>
        </div>
 
