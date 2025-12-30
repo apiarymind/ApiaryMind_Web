@@ -11,10 +11,12 @@ export interface Queen {
   lineage: string | null;
   status: string | null;
   is_clipped: boolean;
+  inspections?: { mood: string | null }[];
 }
 
 export interface HiveDetails extends Hive {
   queen: Queen | null;
+  queens_history: Queen[];
   inspections: Inspection[]; // Add inspections for full history
   recent_inspections: Array<{
     inspection_date: string;
@@ -66,7 +68,22 @@ export async function getHiveDetails(hiveId: string): Promise<{ data: HiveDetail
           breeder_name,
           lineage,
           status,
-          is_clipped
+          is_clipped,
+          inspections (
+            mood
+          )
+        ),
+        queens_history:queens!hive_id (
+          id,
+          marking_code,
+          year,
+          breeder_name,
+          lineage,
+          status,
+          is_clipped,
+          inspections (
+            mood
+          )
         ),
         inspections (
           id,
@@ -142,12 +159,21 @@ export async function getHiveDetails(hiveId: string): Promise<{ data: HiveDetail
         }
     }
 
+    // Process queens history
+    let queensHistory: Queen[] = [];
+    if (rawData.queens_history) {
+        queensHistory = Array.isArray(rawData.queens_history) ? rawData.queens_history : [rawData.queens_history];
+        // Sort by year descending
+        queensHistory.sort((a: any, b: any) => (b.year || 0) - (a.year || 0));
+    }
+
     const hiveDetails: HiveDetails = {
         ...rawData,
         inspections: processedInspections, // Add full inspections list
         recent_inspections: recent,
         latest_inspection: latest,
         queen: processedQueen,
+        queens_history: queensHistory,
         active_treatments: activeTreatments
     } as unknown as HiveDetails;
 

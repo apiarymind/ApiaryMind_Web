@@ -5,8 +5,9 @@ import { HiveDetails } from '@/app/actions/get-hive-details';
 import { Inspection } from '@/types/supabase';
 import { InspectionTimeline } from '@/components/InspectionTimeline';
 import { GlassCard } from '@/app/components/ui/GlassCard';
-import { Check, X, Calendar, Crown, Activity, AlertTriangle, Layers, Thermometer, Bug, Lightbulb, Ban } from 'lucide-react';
+import { Check, X, Calendar, Crown, Activity, AlertTriangle, Layers, Thermometer, Bug, Lightbulb, Ban, Star, History } from 'lucide-react';
 import { translateColonyStrength, translateMood } from '@/utils/inspectionTranslations';
+import { calculateQueenScore } from '@/utils/queenScoring';
 
 interface HiveDetailsTabsProps {
   hive: HiveDetails;
@@ -344,36 +345,58 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
         )}
 
         {activeTab === 'QUEEN' && (
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-             <GlassCard className="p-8 max-w-2xl mx-auto">
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-8">
+             {/* Section A: Active Queen */}
+             <GlassCard className="p-8 max-w-3xl mx-auto relative overflow-hidden">
                 {queen ? (
-                   <div className="space-y-8">
-                      <div className="flex justify-between items-start">
+                   <div className="space-y-8 relative z-10">
+                      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                          <div>
                             <h3 className="text-2xl font-bold text-white flex items-center gap-2 mb-1">
                                <Crown className="text-yellow-500 w-6 h-6" />
-                               Matka Pszczela
+                               Aktualna Matka
                             </h3>
-                            <p className="text-neutral-400 text-sm">Szczegółowe informacje o matce w tym ulu.</p>
+                            <p className="text-neutral-400 text-sm">Szczegółowe informacje o obecnej matce w ulu.</p>
                          </div>
-                         {getQueenStatusBadge(queen.status)}
+                         <div className="flex flex-col items-end gap-2">
+                            {getQueenStatusBadge(queen.status)}
+                            {/* Calculated Score Display */}
+                            {(() => {
+                                const { score, label } = calculateQueenScore(queen);
+                                return (
+                                    <div className="flex flex-col items-end">
+                                        <div className="flex items-center gap-1">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star 
+                                                    key={i} 
+                                                    className={`w-4 h-4 ${i < score ? 'text-yellow-400 fill-yellow-400' : 'text-neutral-600'}`} 
+                                                />
+                                            ))}
+                                        </div>
+                                        <span className={`text-xs font-bold mt-1 ${score >= 4 ? 'text-green-400' : score >= 3 ? 'text-yellow-400' : 'text-red-400'}`}>
+                                            {label}
+                                        </span>
+                                    </div>
+                                );
+                            })()}
+                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
-                         {/* RESTORED: Oznakowanie (Text) */}
-                         <div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-8">
+                         {/* Oznakowanie (Text) */}
+                         <div className="bg-white/5 p-4 rounded-xl border border-white/10">
                             <span className="block text-xs font-bold text-neutral-500 uppercase mb-1">Oznakowanie</span>
                             <div className="flex items-center gap-2">
-                               <span className="text-xl font-bold text-white">{queen.marking_code || 'Brak'}</span>
+                               <span className="text-2xl font-bold text-white tracking-wide">{queen.marking_code || 'Brak'}</span>
                             </div>
                          </div>
 
-                         {/* KEPT: Rocznik (Year) with Opalitek (Dot) */}
-                         <div>
+                         {/* Rocznik (Year) with Opalitek (Dot) */}
+                         <div className="bg-white/5 p-4 rounded-xl border border-white/10">
                             <span className="block text-xs font-bold text-neutral-500 uppercase mb-1">Rocznik</span>
-                            <div className="flex items-center gap-2">
-                               <span className="text-xl font-bold text-white">{queen.year}</span>
-                               <span className={`w-4 h-4 rounded-full inline-block ${getQueenColorClass(queen.year)}`} title="Oznakowanie (Opalitek)"></span>
+                            <div className="flex items-center gap-3">
+                               <span className="text-2xl font-bold text-white">{queen.year}</span>
+                               <span className={`w-6 h-6 rounded-full inline-block shadow-lg border-2 border-white/20 ${getQueenColorClass(queen.year)}`} title="Oznakowanie (Opalitek)"></span>
                             </div>
                          </div>
 
@@ -386,23 +409,25 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
                             <span className="block text-xs font-bold text-neutral-500 uppercase mb-1">Linia Genetyczna</span>
                             <span className="text-lg font-medium text-white">{queen.lineage || '--'}</span>
                          </div>
+                      </div>
 
-                         <div className="sm:col-span-2 pt-4 border-t border-neutral-800 flex items-center gap-3">
-                            <span className="text-neutral-400 font-medium">Przycięta skrzydełka:</span>
-                            {queen.is_clipped ? (
-                               <span className="flex items-center gap-1 text-red-400 font-bold bg-red-900/20 px-2 py-1 rounded">
-                                  <Check className="w-4 h-4" /> TAK
-                               </span>
-                            ) : (
-                               <span className="flex items-center gap-1 text-green-400 font-bold bg-green-900/20 px-2 py-1 rounded">
-                                  <X className="w-4 h-4" /> NIE
-                               </span>
-                            )}
-                         </div>
+                      <div className="pt-6 border-t border-neutral-800 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <span className="text-neutral-400 font-medium">Przycięta skrzydełka:</span>
+                                {queen.is_clipped ? (
+                                <span className="flex items-center gap-1 text-red-400 font-bold bg-red-900/20 px-2 py-1 rounded">
+                                    <Check className="w-4 h-4" /> TAK
+                                </span>
+                                ) : (
+                                <span className="flex items-center gap-1 text-green-400 font-bold bg-green-900/20 px-2 py-1 rounded">
+                                    <X className="w-4 h-4" /> NIE
+                                </span>
+                                )}
+                            </div>
                       </div>
                    </div>
                 ) : (
-                   <div className="text-center py-10">
+                   <div className="text-center py-10 relative z-10">
                       <div className="w-16 h-16 bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-4">
                          <Crown className="w-8 h-8 text-neutral-600" />
                       </div>
@@ -413,7 +438,68 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
                       </button>
                    </div>
                 )}
+                {/* Decorative Background Element */}
+                <div className="absolute -top-20 -right-20 w-64 h-64 bg-yellow-500/10 rounded-full blur-3xl pointer-events-none"></div>
              </GlassCard>
+
+             {/* Section B: Queen History (Archiwum Matek) */}
+             {hive.queens_history && hive.queens_history.length > 0 && (
+                 <GlassCard className="p-8 max-w-3xl mx-auto">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
+                        <History className="text-neutral-400 w-5 h-5" />
+                        Archiwum Matek (Historia)
+                    </h3>
+                    
+                    <div className="overflow-hidden rounded-xl border border-neutral-800">
+                        <table className="w-full text-left text-sm text-neutral-400">
+                            <thead className="bg-neutral-900 text-neutral-300 uppercase font-bold text-xs">
+                                <tr>
+                                    <th className="px-4 py-3">Oznakowanie</th>
+                                    <th className="px-4 py-3">Rocznik</th>
+                                    <th className="px-4 py-3 hidden sm:table-cell">Linia</th>
+                                    <th className="px-4 py-3 text-right">Ocena Łagodności</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-neutral-800 bg-neutral-900/50">
+                                {hive.queens_history.map((q) => {
+                                    // Skip current queen in history if desired, or show all. 
+                                    // Requirement: "Show a list of ALL past queens". 
+                                    // Usually "past" implies excluding current, but "ALL past" might mean "History of assignments".
+                                    // Let's show all for completeness, maybe highlight current.
+                                    const isCurrent = hive.queen?.id === q.id;
+                                    const { score } = calculateQueenScore(q);
+                                    
+                                    return (
+                                        <tr key={q.id} className={`hover:bg-white/5 transition-colors ${isCurrent ? 'bg-yellow-900/10' : ''}`}>
+                                            <td className="px-4 py-3 font-medium text-white flex items-center gap-2">
+                                                {q.marking_code || '--'}
+                                                {isCurrent && <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded border border-yellow-500/30">AKTUALNA</span>}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center gap-2">
+                                                    {q.year}
+                                                    <span className={`w-3 h-3 rounded-full ${getQueenColorClass(q.year)}`}></span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 hidden sm:table-cell">{q.lineage || '--'}</td>
+                                            <td className="px-4 py-3 text-right">
+                                                <div className="flex justify-end gap-0.5">
+                                                    {[...Array(5)].map((_, i) => (
+                                                        <Star 
+                                                            key={i} 
+                                                            className={`w-3 h-3 ${i < score ? 'text-yellow-400 fill-yellow-400' : 'text-neutral-700'}`} 
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                 </GlassCard>
+             )}
           </div>
         )}
       </div>
