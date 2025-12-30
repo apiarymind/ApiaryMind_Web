@@ -2,215 +2,172 @@ DO $$
 DECLARE
     -- IDs
     v_main_user_id uuid;
-    v_apiary1_id uuid;
-    v_apiary2_id uuid;
+    v_apiary_id uuid;
     v_hive_id uuid;
-    v_old_queen_id uuid;
-    v_new_queen_id uuid;
+    v_queen_id uuid;
 
-    -- Breeder Arrays
-    v_good_emails text[] := ARRAY['top1@demo.pl', 'top2@demo.pl', 'top3@demo.pl', 'top4@demo.pl', 'top5@demo.pl'];
-    v_good_names text[] := ARRAY['Mellifera Center', 'Pasieka Zarodowa', 'Krolowa Beskid', 'Apis Polonia', 'Zloty Roj'];
-    v_bad_emails text[] := ARRAY['bad1@demo.pl', 'bad2@demo.pl', 'bad3@demo.pl', 'bad4@demo.pl', 'bad5@demo.pl'];
-    v_bad_names text[] := ARRAY['U Zdziska', 'Szara Strefa', 'Anonim', 'Agro-Mix', 'Import NoName'];
-
-    v_good_breeder_ids uuid[] := '{}';
-    v_bad_breeder_ids uuid[] := '{}';
-
-    -- Loop Variables
-    i integer;
-    y integer;
-    d date;
-    v_email text;
-    v_uid uuid;
+    -- Users Management
+    v_all_users uuid[];
+    v_breeder_users uuid[] := '{}';
     v_breeder_id uuid;
-    v_breeder_name text;
-    v_is_good boolean;
+    v_temp_user uuid;
 
-    -- Data Vars
+    -- Breeder Data Arrays (Name, City, Quality)
+    -- Quality: 1=TOP, 2=MID, 3=BAD
+    v_top_names text[] := ARRAY['Pasieka Mistrz', 'Krolowe Premium', 'Zlota Pszczola'];
+    v_mid_names text[] := ARRAY['Pasieka Nowaka', 'Miodoland', 'Pszczeli Raj', 'Pasieka Wzgorze'];
+    v_bad_names text[] := ARRAY['Pasieka u Zdzicha', 'Tanie Matki', 'Import NoName'];
+
+    -- Lines (2 per breeder category for simplicity, or we generate dynamically)
+    v_top_lines text[] := ARRAY['Krainka Gold', 'Singer'];
+    v_mid_lines text[] := ARRAY['Nieska', 'Alpejka'];
+    v_bad_lines text[] := ARRAY['Agresor', 'Rojliwa'];
+
+    -- Variables
+    i integer;
+    j integer;
+    k integer;
+    v_breeder_idx integer;
+    v_quality integer; -- 1, 2, 3
+    v_breeder_name text;
+    v_lineage text;
+    v_city text := 'Warszawa';
+
+    -- Inspection Vars
     v_mood text;
+    v_strength text;
+    v_swarming boolean;
+    v_supers integer;
+    v_date timestamp;
 
 BEGIN
     -- 1. CLEANUP
-    -- Truncate tables we know exist.
-    TRUNCATE inspections, queens, hives, apiaries, medications_global, treatments_log CASCADE;
-    -- Skipped: inventory, sales_log, products (Schema not verified in codebase)
+    TRUNCATE inspections, queens, hives, apiaries, medications_global CASCADE;
 
-    -- 2. SETUP PROFILES (Binding & Config)
+    -- 2. FETCH USERS (Need 11: 1 Main + 10 Breeders)
+    SELECT array_agg(id) INTO v_all_users FROM profiles LIMIT 11;
 
-    -- Good Breeders
-    FOR i IN 1..5 LOOP
-        v_email := v_good_emails[i];
-
-        -- Fetch UUID from auth.users
-        SELECT id INTO v_uid FROM auth.users WHERE email = v_email;
-
-        IF v_uid IS NOT NULL THEN
-            -- Update Profile: Name, Plan, Role, Balance
-            UPDATE profiles
-            SET full_name = v_good_names[i],
-                subscription_plan = 'PRO_PLUS'::subscription_plan_type,
-                system_role = 'USER'::app_role,
-                eyescoin_balance = 10000
-            WHERE id = v_uid;
-
-            -- Add to Array
-            v_good_breeder_ids := array_append(v_good_breeder_ids, v_uid);
-        END IF;
-    END LOOP;
-
-    -- Bad Breeders
-    FOR i IN 1..5 LOOP
-        v_email := v_bad_emails[i];
-
-        -- Fetch UUID
-        SELECT id INTO v_uid FROM auth.users WHERE email = v_email;
-
-        IF v_uid IS NOT NULL THEN
-            -- Update Profile
-            UPDATE profiles
-            SET full_name = v_bad_names[i],
-                subscription_plan = 'PRO_PLUS'::subscription_plan_type,
-                system_role = 'USER'::app_role,
-                eyescoin_balance = 10000
-            WHERE id = v_uid;
-
-            -- Add to Array
-            v_bad_breeder_ids := array_append(v_bad_breeder_ids, v_uid);
-        END IF;
-    END LOOP;
-
-    -- 3. SETUP RESOURCES (Main User)
-    -- Find main user (not a breeder)
-    SELECT id INTO v_main_user_id FROM profiles
-    WHERE id != ALL(v_good_breeder_ids) AND id != ALL(v_bad_breeder_ids)
-    LIMIT 1;
-
-    -- Fallback
-    IF v_main_user_id IS NULL THEN
-        v_main_user_id := v_good_breeder_ids[1];
+    IF array_length(v_all_users, 1) < 2 THEN
+        RAISE EXCEPTION 'Not enough users in profiles table. Need at least 2 (1 Breeder + 1 Main). Found %', array_length(v_all_users, 1);
     END IF;
 
-    -- Medications
-    INSERT INTO medications_global (id, name, active_substance, withdrawal_period_days) VALUES
-        (uuid_generate_v4(), 'Apiwarol', 'Amitraz', 2),
-        (uuid_generate_v4(), 'Biowar 500', 'Amitraz', 0),
-        (uuid_generate_v4(), 'Apiguard', 'Thymol', 0)
-    ON CONFLICT DO NOTHING;
+    -- Assign Main User (Last one)
+    v_main_user_id := v_all_users[array_length(v_all_users, 1)];
 
-    -- 4. APIARIES
-    v_apiary1_id := uuid_generate_v4();
+    -- Assign Breeders (First 10, or less if fewer users)
+    -- We loop up to 10 or max available - 1
+    FOR i IN 1..(array_length(v_all_users, 1) - 1) LOOP
+        v_temp_user := v_all_users[i];
+        v_breeder_users := array_append(v_breeder_users, v_temp_user);
+
+        -- Determine Quality based on index
+        -- 1-3: TOP (3)
+        -- 4-7: MID (4)
+        -- 8-10: BAD (3)
+        IF i <= 3 THEN
+            v_quality := 1; -- TOP
+            v_breeder_name := v_top_names[i];
+        ELSIF i <= 7 THEN
+            v_quality := 2; -- MID
+            v_breeder_name := v_mid_names[i - 3];
+        ELSE
+            v_quality := 3; -- BAD
+            v_breeder_name := v_bad_names[i - 7];
+        END IF;
+
+        -- Default/Fallback logic for names if index out of bounds (e.g. if we have only 2 users)
+        IF v_breeder_name IS NULL THEN v_breeder_name := 'Breeder ' || i; END IF;
+
+        -- Update Profile
+        -- Note: description skipped as not in schema. Using company_name for Business Name.
+        UPDATE profiles
+        SET subscription_plan = 'BUSINESS'::subscription_plan_type,
+            company_name = v_breeder_name,
+            city = CASE WHEN v_quality=1 THEN 'Krakow' WHEN v_quality=2 THEN 'Poznan' ELSE 'Radom' END,
+            nip = '123456789' || i,
+            phone_number = '500-000-00' || i,
+            rhd_number = 'RHD-' || i
+        WHERE id = v_temp_user;
+
+    END LOOP;
+
+    -- 3. CREATE MAIN APIARY (100 Hives)
+    v_apiary_id := uuid_generate_v4();
     INSERT INTO apiaries (id, owner_id, name, location_geo, type, is_deleted)
-    VALUES (v_apiary1_id, v_main_user_id, 'Pasieka Las', '52.0,21.0', 'MIGRATORY', false);
+    VALUES (v_apiary_id, v_main_user_id, 'Moja Wielka Pasieka', '52.0,21.0', 'STATIONARY', false);
 
-    v_apiary2_id := uuid_generate_v4();
-    INSERT INTO apiaries (id, owner_id, name, location_geo, type, is_deleted)
-    VALUES (v_apiary2_id, v_main_user_id, 'Pasieka Ogrod', '52.1,21.1', 'STATIONARY', false);
-
-    -- 5. MAIN LOOP (100 HIVES)
+    -- 4. HIVE LOOP (100)
     FOR i IN 1..100 LOOP
         v_hive_id := uuid_generate_v4();
 
+        -- Assign Breeder (Round Robin among available breeders)
+        v_breeder_idx := (i % array_length(v_breeder_users, 1)) + 1;
+        v_breeder_id := v_breeder_users[v_breeder_idx];
+
+        -- Re-Determine Quality/Name from DB to ensure consistency or derive from index logic again
+        -- Logic:
+        -- If breeder_idx <= 3 -> TOP
+        -- If breeder_idx <= 7 -> MID
+        -- Else -> BAD
+        IF v_breeder_idx <= 3 THEN
+            v_quality := 1;
+            v_breeder_name := v_top_names[v_breeder_idx];
+            v_lineage := v_top_lines[(i % 2) + 1];
+        ELSIF v_breeder_idx <= 7 THEN
+            v_quality := 2;
+            v_breeder_name := v_mid_names[v_breeder_idx - 3];
+            v_lineage := v_mid_lines[(i % 2) + 1];
+        ELSE
+            v_quality := 3;
+            v_breeder_name := v_bad_names[v_breeder_idx - 7];
+            v_lineage := v_bad_lines[(i % 2) + 1];
+        END IF;
+
         -- Create Hive
         INSERT INTO hives (id, apiary_id, hive_number, type, bottom_board_type, installation_date, current_queen_id)
-        VALUES (
-            v_hive_id,
-            CASE WHEN i % 2 <> 0 THEN v_apiary1_id ELSE v_apiary2_id END,
-            to_char(i, 'FM000'),
-            CASE WHEN i % 2 <> 0 THEN 'Wielkopolski' ELSE 'Dadant' END,
-            'mesh', '2022-01-01', NULL
-        );
+        VALUES (v_hive_id, v_apiary_id, to_char(i, 'FM000'), 'Wielkopolski', 'mesh', '2023-01-01', NULL);
 
-        -- PHASE 1: OLD QUEEN (2022-2023)
-        -- Random Breeder Selection
-        IF random() < 0.5 THEN
-             v_breeder_id := v_good_breeder_ids[floor(random()*array_length(v_good_breeder_ids, 1) + 1)::int];
-             v_is_good := true;
-        ELSE
-             v_breeder_id := v_bad_breeder_ids[floor(random()*array_length(v_bad_breeder_ids, 1) + 1)::int];
-             v_is_good := false;
-        END IF;
-
-        SELECT full_name INTO v_breeder_name FROM profiles WHERE id = v_breeder_id;
-
-        -- Insert Old Queen
-        v_old_queen_id := uuid_generate_v4();
-        -- Using breeder_name text. original_breeder_id skipped as verified missing in codebase.
+        -- Create Queen
+        v_queen_id := uuid_generate_v4();
         INSERT INTO queens (id, owner_id, hive_id, year, marking_code, lineage, breeder_name, status)
-        VALUES (v_old_queen_id, v_main_user_id, v_hive_id, 2022, 'YEL-' || i, 'Carnica', v_breeder_name, 'DECEASED'::queen_status_type);
+        VALUES (v_queen_id, v_main_user_id, v_hive_id, 2023, 'RED-' || i, v_lineage, v_breeder_name, 'ACTIVE'::queen_status_type);
 
-        -- Inspections 2022-2023
-        FOR y IN 2022..2023 LOOP
-             FOR d IN SELECT generate_series((y || '-05-01')::date, (y || '-08-30')::date, '14 days'::interval) LOOP
-                 -- Logic: Bad -> Aggressive
-                 IF v_is_good THEN
-                     v_mood := CASE WHEN random() < 0.9 THEN 'CALM' ELSE 'AGGRESSIVE' END;
-                 ELSE
-                     v_mood := CASE WHEN random() < 0.2 THEN 'CALM' ELSE 'AGGRESSIVE' END;
-                 END IF;
+        UPDATE hives SET current_queen_id = v_queen_id WHERE id = v_hive_id;
 
-                 INSERT INTO inspections (
-                    id, hive_id, queen_id, inspection_date, mood, colony_strength,
-                    weather_condition, laying_pattern, pests_detected, treatment_applied,
-                    is_queen_seen, user_id
-                 ) VALUES (
-                    uuid_generate_v4(), v_hive_id, v_old_queen_id, d + time '12:00',
-                    v_mood::mood_type, 'STRONG'::colony_strength_type, 'SUNNY'::weather_condition_type,
-                    'SOLID'::laying_pattern_type, '{}', NULL,
-                    TRUE, -- UI Fix
-                    v_main_user_id
-                 );
-             END LOOP;
+        -- 5. INSPECTIONS (3-5 per hive)
+        FOR j IN 1..(3 + (i % 3)) LOOP
+            -- Date: Spring to Now (Simple logic: May, June, July, Aug)
+            v_date := (format('2023-0%s-15 12:00:00', 4+j)::timestamp);
+
+            -- Quality Logic
+            IF v_quality = 1 THEN -- TOP
+                v_mood := 'CALM';
+                v_strength := 'STRONG';
+                v_supers := 3;
+                v_swarming := false;
+            ELSIF v_quality = 3 THEN -- BAD
+                v_mood := 'AGGRESSIVE';
+                v_strength := CASE WHEN random() < 0.5 THEN 'WEAK' ELSE 'MEDIUM' END;
+                v_supers := 1;
+                v_swarming := true;
+            ELSE -- MID
+                v_mood := CASE WHEN random() < 0.8 THEN 'CALM' ELSE 'AGGRESSIVE' END;
+                v_strength := 'MEDIUM';
+                v_supers := 2;
+                v_swarming := false;
+            END IF;
+
+            INSERT INTO inspections (
+                id, hive_id, queen_id, inspection_date,
+                mood, colony_strength, honey_supers_count, swarming_mood,
+                weather_condition, laying_pattern, pests_detected, treatment_applied, user_id
+            ) VALUES (
+                uuid_generate_v4(), v_hive_id, v_queen_id, v_date,
+                v_mood::mood_type, v_strength::colony_strength_type, v_supers, v_swarming,
+                'SUNNY'::weather_condition_type, 'SOLID'::laying_pattern_type, '{}', NULL, v_main_user_id
+            );
         END LOOP;
 
-
-        -- PHASE 2: NEW QUEEN (2024-2025) - REPLACEMENT
-        -- If Old was Bad, REPLACE with Good.
-        IF NOT v_is_good THEN
-            v_breeder_id := v_good_breeder_ids[floor(random()*array_length(v_good_breeder_ids, 1) + 1)::int];
-            v_is_good := true;
-        ELSE
-            -- Keep Good (pick random good)
-            v_breeder_id := v_good_breeder_ids[floor(random()*array_length(v_good_breeder_ids, 1) + 1)::int];
-            v_is_good := true;
-        END IF;
-
-        SELECT full_name INTO v_breeder_name FROM profiles WHERE id = v_breeder_id;
-
-        v_new_queen_id := uuid_generate_v4();
-        INSERT INTO queens (id, owner_id, hive_id, year, marking_code, lineage, breeder_name, status)
-        VALUES (v_new_queen_id, v_main_user_id, v_hive_id, 2024, 'GRN-' || i, 'Carnica', v_breeder_name, 'ACTIVE'::queen_status_type);
-
-        UPDATE hives SET current_queen_id = v_new_queen_id WHERE id = v_hive_id;
-
-        -- Inspections 2024-2025 (Calm)
-        FOR y IN 2024..2025 LOOP
-             FOR d IN SELECT generate_series((y || '-05-01')::date, (y || '-08-30')::date, '10 days'::interval) LOOP
-
-                 INSERT INTO inspections (
-                    id, hive_id, queen_id, inspection_date, mood, colony_strength,
-                    weather_condition, laying_pattern, pests_detected, treatment_applied,
-                    is_queen_seen, user_id
-                 ) VALUES (
-                    uuid_generate_v4(), v_hive_id, v_new_queen_id, d + time '12:00',
-                    'CALM'::mood_type, 'STRONG'::colony_strength_type, 'SUNNY'::weather_condition_type,
-                    'SOLID'::laying_pattern_type, '{}', NULL,
-                    TRUE,
-                    v_main_user_id
-                 );
-             END LOOP;
-
-             -- Insert Treatment Log (Sept)
-             INSERT INTO treatments_log (id, hive_id, medication_name, application_date, withdrawal_end_date)
-             VALUES (
-                uuid_generate_v4(),
-                v_hive_id,
-                'Apiwarol',
-                (y || '-09-15')::date,
-                (y || '-09-17')::date
-             );
-        END LOOP;
-
-    END LOOP;
+    END LOOP; -- Hive Loop
 
 END $$;
