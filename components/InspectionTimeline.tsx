@@ -92,8 +92,19 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
                alertMessage = "☣️ WYKRYTO ZAGROŻENIE";
                alertColorClass = "text-red-500";
             } else if (isQueenMissingTwice) {
-               alertMessage = "⚠️ BRAK MATKI (x2) - ZAMÓW NOWĄ!";
-               alertColorClass = "text-red-500";
+               // Check Brood Trend before panicking (Biological Check)
+               const currentBrood = inspection.brood_frames_count || 0;
+               const prevBrood = previousInspection?.brood_frames_count || 0;
+
+               if (currentBrood >= prevBrood && currentBrood > 0) {
+                  // Queen likely hiding, brood stable/growing
+                  alertMessage = "⚠️ Matka ukryta (Czerw stabilny/rośnie). Do obserwacji.";
+                  alertColorClass = "text-yellow-600 dark:text-yellow-500";
+               } else {
+                  // Brood dropping -> Critical
+                  alertMessage = "⚠️ BRAK MATKI! Czerwiu ubywa. Zamów nową!";
+                  alertColorClass = "text-red-500";
+               }
             } else if (isAggressive) {
                alertMessage = "⚠️ AGRESYWNA RODZINA";
                alertColorClass = "text-red-500";
