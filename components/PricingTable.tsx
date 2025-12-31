@@ -185,14 +185,18 @@ export default function PricingTable() {
         </div>
       </div>
 
-      {/* Informacje o migracji - stopka */}
+      {/* Informacje o migracji - stopka (Translated) */}
       <div className="mt-8 p-6 rounded-2xl bg-white/5 border border-white/10 text-sm text-white/60">
         <h4 className="text-white font-bold mb-2 flex items-center gap-2">
             <Info size={16} className="text-amber-500" /> Informacje o zmianie planu:
         </h4>
         <ul className="space-y-1 ml-6 list-disc">
-            <li><span className="text-white">Upgrade:</span> Natychmiastowe zdjęcie blokady LOCKED z odkładów (jeśli mieszczą się w nowym limicie).</li>
-            <li><span className="text-white">Downgrade:</span> Blokada dodawania nowych uli powyżej limitu. Nadmiarowe ule przechodzą w tryb "Read-only".</li>
+            <li>
+                <span className="text-white font-bold">Przejście na wyższy plan:</span> Natychmiastowe zdjęcie blokady LOCKED z odkładów (jeśli mieszczą się w nowym limicie).
+            </li>
+            <li>
+                <span className="text-white font-bold">Przejście na niższy plan:</span> Blokada dodawania nowych uli powyżej limitu. Nadmiarowe ule przechodzą w tryb &quot;Tylko do odczytu&quot;.
+            </li>
         </ul>
       </div>
     </div>

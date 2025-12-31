@@ -14,7 +14,7 @@ export interface Queen {
   inspections?: { mood: string | null }[];
 }
 
-export interface HiveDetails extends Hive {
+export interface HiveDetails extends Omit<Hive, 'apiary'> {
   queen: Queen | null;
   queens_history: Queen[];
   inspections: Inspection[]; // Add inspections for full history
@@ -33,7 +33,7 @@ export interface HiveDetails extends Hive {
   apiary: {
     id: string;
     name: string;
-  };
+  } | undefined;
   active_treatments: Pick<TreatmentsLog, 'medication_name' | 'withdrawal_end_date'>[];
 }
 

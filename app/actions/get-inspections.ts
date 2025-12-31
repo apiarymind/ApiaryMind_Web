@@ -4,7 +4,7 @@ import { createClient } from '@/utils/supabase/server';
 import { Inspection } from '@/types/supabase';
 
 // Extend Inspection type to include nested hive and apiary data
-export interface ExtendedInspection extends Omit<Inspection, 'performed_by'> {
+export interface ExtendedInspection extends Omit<Inspection, 'performed_by' | 'hive'> {
   colony_strength?: string;
   hive: {
     id: string;

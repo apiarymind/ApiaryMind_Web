@@ -66,8 +66,10 @@ export async function getSickBayInspections() {
 
   const sickBay = Array.from(latestMap.values()).filter(insp => {
     const isWeak = insp.colony_strength === 'WEAK' || insp.laying_pattern === 'SPOTTY' || (insp.pests_detected && insp.pests_detected.length > 0);
-    const isQueenMissing = insp.is_queen_seen === false && (insp.eggs_detected === false || insp.laying_pattern === 'WEAK'); 
-    const isStarving = insp.honey_supers_count === 0 && insp.food_stores_status === 'LOW'; 
+    // Removed eggs_detected as it does not exist in Inspection type
+    const isQueenMissing = insp.is_queen_seen === false && (insp.laying_pattern === 'WEAK' || insp.laying_pattern === 'NO_BROOD');
+    // Removed food_stores_status as it does not exist in Inspection type, rely on honey_supers_count and potentially low brood frames as proxy for stress
+    const isStarving = insp.honey_supers_count === 0 && (insp.brood_frames_count !== undefined && insp.brood_frames_count < 2);
     
     return isWeak || isQueenMissing || isStarving;
   });
