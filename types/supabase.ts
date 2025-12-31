@@ -8,6 +8,7 @@ export interface Profile {
   full_name?: string;
   avatar_url?: string;
   phone_number?: string;
+  role?: string; // e.g. 'super_admin', 'admin', 'beekeeper'
   
   // Company Data
   company_name?: string;
@@ -26,6 +27,8 @@ export interface Profile {
   // Subscription
   subscription_plan: SubscriptionPlan;
   eyescoin_balance: number;
+  isRhdActive?: boolean; // Derived or stored
+  plan?: string; // derived
   
   created_at: string;
   updated_at: string;
@@ -108,6 +111,7 @@ export interface Inspection {
   created_at?: string;
   // Joins
   performed_by?: Profile;
+  hive?: Hive;
 }
 
 export interface Hive {
@@ -118,6 +122,8 @@ export interface Hive {
   bottom_board_type?: string;
   installation_date?: string;
   status?: string; // Not in schema list but often used in UI, keep optional
+  // Joins
+  apiary?: Apiary;
 }
 
 export interface Apiary {
@@ -136,4 +142,47 @@ export interface TreatmentsLog {
   application_date: string;
   withdrawal_end_date?: string;
   created_at: string;
+  // Join
+  hive?: Hive;
+}
+
+// --- NEW TYPES FOR DASHBOARD V2 ---
+
+export interface ForageType {
+  id: string;
+  name: string;
+  typical_start_month: number; // 1-12
+  typical_end_month: number; // 1-12
+  color_code?: string;
+}
+
+export interface ApiaryForageFlow {
+  id: string;
+  apiary_id: string;
+  forage_type_id: string;
+  intensity: 'WEAK' | 'MODERATE' | 'STRONG';
+  is_active: boolean;
+  start_date: string;
+  end_date?: string;
+  // Join
+  forage_type?: ForageType;
+  apiary?: Apiary;
+}
+
+export interface SystemMessage {
+  id: string;
+  title: string;
+  content: string;
+  priority: 'INFO' | 'WARNING' | 'CRITICAL';
+  created_at: string;
+  expires_at?: string;
+}
+
+export interface AssociationAnnouncement {
+  id: string;
+  association_id: string;
+  title: string;
+  content: string;
+  created_at: string;
+  author_id?: string;
 }

@@ -1,6 +1,6 @@
 import { getCmsPageBySlug } from "../../lib/api";
 import { notFound } from "next/navigation";
-import VideoSection from "../../components/VideoSection";
+// import VideoSection from "../../components/VideoSection"; // REMOVED
 import { GlassCard } from "@/app/components/ui/GlassCard";
 import { getDynamicPage } from "@/app/actions/dynamic-pages";
 import { getPublicSettings } from "@/app/actions/get-public-settings";
@@ -103,13 +103,8 @@ export default async function DynamicPage({ params }: { params: { slug: string }
                  </section>
                );
             case 'VIDEO':
-               return (
-                 <div key={section.id} className="max-w-6xl mx-auto px-4 py-12">
-                    <GlassCard className="p-4">
-                        <VideoSection />
-                    </GlassCard>
-                 </div>
-               );
+                // Video Section was deleted, show nothing or placeholder
+                return null;
             default:
                return (
                  <section key={section.id} className="py-8 max-w-4xl mx-auto px-4">
