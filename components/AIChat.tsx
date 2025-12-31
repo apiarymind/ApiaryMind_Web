@@ -27,10 +27,10 @@ export default function AIChat() {
     return (
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-amber-500 rounded-full shadow-xl flex items-center justify-center text-2xl hover:scale-110 transition-transform z-40 text-brown-900 border-2 border-brown-900"
+        className="fixed bottom-6 right-6 w-14 h-14 rounded-full backdrop-blur-md shadow-lg border transition-all bg-white/60 border-amber-900/10 dark:bg-black/40 dark:border-white/10 hover:bg-white/80 dark:hover:bg-black/60 flex items-center justify-center hover:scale-110 z-40 overflow-hidden p-2"
         title="Asystent AI"
       >
-        🤖
+        <img src="/assets/beeAI-3d-icon.png" alt="AI" className="w-full h-full object-contain" />
       </button>
     );
   }

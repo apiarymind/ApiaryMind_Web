@@ -62,20 +62,17 @@ function UserMenu() {
 
 export default function Header() {
   return (
-    <header className="fixed top-4 left-0 right-0 mx-auto w-[95%] max-w-7xl z-50 rounded-full backdrop-blur-xl border border-white/20 shadow-2xl bg-black/60 transition-all duration-300">
+    <header className="fixed top-4 left-0 right-0 mx-auto w-[95%] max-w-7xl z-50 rounded-full backdrop-blur-xl border border-amber-900/10 dark:border-white/20 shadow-2xl bg-white/60 dark:bg-black/60 transition-all duration-300">
       <div className="flex items-center justify-between px-6 py-3">
         <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center gap-2 no-underline">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow">
-              <span className="text-xl">🐝</span>
-            </div>
-            <span className="font-heading font-bold tracking-tight text-white">
-              ApiaryMind
-            </span>
+          <Link href="/" className="flex items-center gap-1 font-bold text-xl tracking-tight no-underline">
+            <span className="text-amber-950 dark:text-white">Apiary</span>
+            <img src="/assets/bee-3d-icon.png" alt="Logo" width={32} height={32} />
+            <span className="text-amber-500">Mind</span>
           </Link>
         </div>
         
-        <nav className="flex gap-6 text-sm font-sans items-center text-white">
+        <nav className="flex gap-6 text-sm font-sans items-center text-amber-950 dark:text-white">
           <Link href="/" className="hover:text-primary transition-colors hidden md:block">Strona główna</Link>
           <UserMenu />
           <ThemeToggle />
