@@ -9,24 +9,6 @@ import {
 } from '@/types/supabase';
 
 // Mock data helpers (in case tables don't exist in the actual DB during this session)
-const getMockForageData = (): ApiaryForageFlow[] => [
-  {
-    id: '1',
-    apiary_id: 'mock-apiary-1',
-    forage_type_id: 'ft-1',
-    intensity: 'STRONG',
-    is_active: true,
-    start_date: new Date().toISOString(),
-    forage_type: {
-      id: 'ft-1',
-      name: 'Akacja',
-      typical_start_month: 5,
-      typical_end_month: 6,
-      color_code: '#F4B524'
-    }
-  }
-];
-
 const getMockSystemMessages = (): SystemMessage[] => [
   {
     id: '1',
@@ -51,13 +33,6 @@ const getMockAnnouncements = (): AssociationAnnouncement[] => [
 
 export async function getSickBayInspections() {
   const supabase = createClient();
-
-  // Logic: Get latest inspection for each hive where issues are detected
-  // Since SQL 'DISTINCT ON' is tricky with Supabase JS client efficiently without RPC,
-  // we'll fetch recent inspections and filter in JS for this "dashboard" view
-  // or use a smart query if volume is low.
-  // For scalability, this should be a DB view or RPC.
-  // Here we will fetch inspections from the last 30 days that have flags.
 
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -90,19 +65,11 @@ export async function getSickBayInspections() {
   });
 
   const sickBay = Array.from(latestMap.values()).filter(insp => {
-    const hasDisease = insp.pests_detected && insp.pests_detected.length > 0;
-    const isQueenMissing = insp.is_queen_seen === false && (insp.eggs_detected === false || insp.laying_pattern === 'WEAK'); // simplified inference
-    const isStarving = insp.honey_supers_count === 0 && insp.food_stores_status === 'LOW'; // hypothetical fields, using available types
-
-    // Using what we have in types:
-    // pests_detected: string[]
-    // colony_strength: string (e.g. 'WEAK')
-    // mood: string (e.g. 'AGGRESSIVE')
-    // laying_pattern: string ('WEAK', etc)
-
     const isWeak = insp.colony_strength === 'WEAK' || insp.laying_pattern === 'SPOTTY' || (insp.pests_detected && insp.pests_detected.length > 0);
+    const isQueenMissing = insp.is_queen_seen === false && (insp.eggs_detected === false || insp.laying_pattern === 'WEAK');
+    const isStarving = insp.honey_supers_count === 0 && insp.food_stores_status === 'LOW';
 
-    return isWeak;
+    return isWeak || isQueenMissing || isStarving;
   });
 
   return sickBay;
@@ -147,30 +114,18 @@ export async function getForageData(apiaryIds?: string[]) {
       `)
       .eq('is_active', true);
 
-     if (!error && data && data.length > 0) return data as ApiaryForageFlow[];
+     if (!error && data) return data as ApiaryForageFlow[];
   } catch (e) {
      // Ignore, table might not exist
   }
 
-  // Return Mock if DB fails (since we can't create tables)
-  return getMockForageData();
+  return [];
 }
 
 // --- ZONE 3: OPERATIONS ---
 
 export async function getUserTasks(userId: string, role: string) {
   const supabase = createClient();
-
-  // If Business, maybe fetch team tasks.
-  // For now, fetch inspections tasks for this user's hives or assigned hives.
-
-  // Logic: Get inspections with "next_visit_tasks" that are not "done" (we don't have a done flag in inspection tasks array usually,
-  // usually it implies tasks for the *next* visit. So we just show the tasks from the *latest* inspection of each hive.)
-
-  // Re-using logic: Fetch latest inspections, check 'next_visit_tasks'.
-
-  // Optimally: There should be a 'tasks' table.
-  // Fallback: Show tasks from recent inspections.
 
   const { data: inspections, error } = await supabase
     .from('inspections')
