@@ -2,7 +2,7 @@
 
 import { useAuth, UserRole } from "@/lib/AuthContext";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useEffect, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -14,40 +14,33 @@ function ProtectedRouteContent({ children, allowedRoles }: ProtectedRouteProps) 
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    if (loading) return;
-
-    if (!user) {
-      // If not logged in, redirect to login with return url
-      const currentUrl = encodeURIComponent(`${pathname}?${searchParams.toString()}`);
-      router.replace(`/login?redirect=${currentUrl}`);
-      return;
+    if (!loading) {
+      if (!user) {
+        // Redirect to login if not authenticated
+        const queryString = searchParams.toString();
+        const fullPath = queryString ? `${pathname}?${queryString}` : pathname;
+        router.push(`/login?redirect=${encodeURIComponent(fullPath)}`);
+      } else if (allowedRoles && role && !allowedRoles.includes(role)) {
+        // Redirect to unauthorized page or dashboard if role doesn't match
+        router.push('/dashboard'); 
+      } else {
+        setIsAuthorized(true);
+      }
     }
+  }, [user, role, loading, router, allowedRoles, pathname, searchParams]);
 
-    // If logged in but role is restricted
-    if (allowedRoles && role && !allowedRoles.includes(role)) {
-      if (role === 'super_admin') router.replace('/dashboard/admin');
-      else if (role === 'admin') router.replace('/dashboard/association');
-      else router.replace('/dashboard/beekeeper');
-    }
-
-  }, [user, role, loading, router, pathname, searchParams, allowedRoles]);
-
-  if (loading) {
+  if (loading || !isAuthorized) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-brown-900 text-amber-500">
-        Loading...
+      <div className="min-h-screen flex items-center justify-center bg-neutral-900 text-amber-500">
+        <div className="flex flex-col items-center gap-4">
+             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+             <p className="font-mono text-sm">Autoryzacja...</p>
+        </div>
       </div>
     );
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  if (allowedRoles && role && !allowedRoles.includes(role)) {
-    return null;
   }
 
   return <>{children}</>;
@@ -55,7 +48,7 @@ function ProtectedRouteContent({ children, allowedRoles }: ProtectedRouteProps) 
 
 export default function ProtectedRoute(props: ProtectedRouteProps) {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-brown-900 text-amber-500">Loading auth...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-neutral-900 text-amber-500">Loading auth...</div>}>
       <ProtectedRouteContent {...props} />
     </Suspense>
   );

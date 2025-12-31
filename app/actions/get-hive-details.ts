@@ -29,17 +29,7 @@ export interface HiveDetails extends Hive {
     honey_supers_count: number | null;
     frames_sealed_percent: number | null;
   }>;
-  latest_inspection: {
-    colony_strength: string | null;
-    mood: string | null;
-    swarming_mood: boolean | null;
-    brood_frames_count: number | null;
-    is_queen_seen: boolean | null;
-    pests_detected: string[] | null;
-    honey_supers_count: number | null;
-    frames_sealed_percent: number | null;
-    treatment_applied?: string | null; // Add missing field for safety logic
-  } | null;
+  latest_inspection: Inspection | null; // Corrected: Use full Inspection type or compatible partial
   apiary: {
     id: string;
     name: string;
@@ -87,6 +77,7 @@ export async function getHiveDetails(hiveId: string): Promise<{ data: HiveDetail
         ),
         inspections (
           id,
+          hive_id,
           inspection_date,
           colony_strength,
           mood,
@@ -171,7 +162,7 @@ export async function getHiveDetails(hiveId: string): Promise<{ data: HiveDetail
         ...rawData,
         inspections: processedInspections, // Add full inspections list
         recent_inspections: recent,
-        latest_inspection: latest,
+        latest_inspection: latest as unknown as Inspection, // Cast to Inspection
         queen: processedQueen,
         queens_history: queensHistory,
         active_treatments: activeTreatments
