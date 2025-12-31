@@ -1,7 +1,5 @@
 import { notFound } from "next/navigation";
 import VideoSection from "../../components/VideoSection";
-// IMPORTUJEMY NOWY KOMPONENT:
-import PricingTable from "../../components/PricingTable";
 import Link from "next/link";
 import { Hexagon, ShieldCheck, BarChart3, FlaskConical } from "lucide-react";
 
@@ -17,9 +15,7 @@ export default async function DynamicPage({ params }: { params: { slug: string }
       title: 'Witaj w ApiaryMind',
       sections: [
         { id: 'hero', type: 'HERO', content: 'Zarządzaj swoją pasieką.' },
-        { id: 'features', type: 'FEATURES', content: 'Funkcje systemu' },
-        // DODANO NOWĄ SEKCJĘ CENNIKA:
-        { id: 'pricing', type: 'PRICING', content: 'Cennik' }
+        { id: 'features', type: 'FEATURES', content: 'Funkcje systemu' }
       ]
     };
   } else if (['demo', 'regulamin', 'polityka-prywatnosci'].includes(params.slug)) {
@@ -32,6 +28,7 @@ export default async function DynamicPage({ params }: { params: { slug: string }
   if (!page) return notFound();
 
   return (
+    // CRITICAL: bg-transparent to show global background
     <div className="min-h-screen bg-transparent selection:bg-amber-500 selection:text-black">
       
       {page.sections?.map((section: any) => {
@@ -39,6 +36,8 @@ export default async function DynamicPage({ params }: { params: { slug: string }
             case 'HERO':
                return (
                  <div key={section.id} className="relative pt-32 pb-20 sm:pt-40 sm:pb-24 overflow-hidden flex justify-center px-4">
+
+                    {/* --- RESTORED GLASS TILE CONTAINER --- */}
                     <div className="relative z-10 max-w-4xl w-full py-12 px-6 sm:px-12 rounded-3xl shadow-2xl backdrop-blur-xl text-center transition-colors duration-300
                                     bg-white/60 border border-amber-900/10 text-amber-950
                                     dark:bg-black/40 dark:border-white/10 dark:text-white">
@@ -65,6 +64,7 @@ export default async function DynamicPage({ params }: { params: { slug: string }
                         Wszystko w jednym miejscu.
                       </p>
                       
+                      {/* --- RESTORED SINGLE BETA BUTTON --- */}
                       <div className="flex justify-center">
                         <Link 
                           href="/beta"
@@ -99,14 +99,6 @@ export default async function DynamicPage({ params }: { params: { slug: string }
                        ))}
                     </div>
                  </div>
-               );
-
-            // NOWA SEKCJA CENNIKA
-            case 'PRICING':
-               return (
-                 <section key={section.id} className="py-20 border-t border-white/5 bg-transparent">
-                   <PricingTable />
-                 </section>
                );
 
             case 'TEXT':

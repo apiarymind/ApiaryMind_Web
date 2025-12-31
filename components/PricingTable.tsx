@@ -1,16 +1,16 @@
 import React from 'react';
-import { Check, Info } from 'lucide-react';
+import { Check, Info, Sparkles } from 'lucide-react';
 
 export default function PricingTable() {
   return (
     <div className="w-full max-w-7xl mx-auto px-4 py-8">
-      {/* Nagłówek sekcji - Adaptacyjny */}
+      {/* Nagłówek sekcji */}
       <div className="text-center mb-10">
         <h2 className="text-3xl md:text-4xl font-bold text-amber-950 dark:text-white mb-4">Plany i Cennik</h2>
         <p className="text-amber-900/70 dark:text-white/60">Wybierz rozwiązanie dopasowane do wielkości Twojej pasieki</p>
       </div>
 
-      {/* Wrapper tabeli - Adaptacyjne Szkło */}
+      {/* Tabela - Adaptacyjne Szkło */}
       <div className="relative rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl border transition-colors
                       bg-white/60 border-amber-900/10
                       dark:bg-black/40 dark:border-white/10">
@@ -18,39 +18,38 @@ export default function PricingTable() {
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-sm text-left border-collapse min-w-[1000px]">
             <thead>
-              {/* Nagłówki kolumn */}
               <tr className="border-b border-amber-900/10 dark:border-white/10">
                 <th className="p-6 font-medium w-1/6 text-amber-900/60 bg-amber-900/5 dark:text-white/50 dark:bg-white/5">Funkcja / Pakiet</th>
 
-                {/* PLAN FREE */}
+                {/* FREE */}
                 <th className="p-6 text-center w-1/6 relative group transition-colors hover:bg-amber-900/5 dark:hover:bg-white/5">
                   <div className="absolute top-0 left-0 w-full h-1 bg-green-500"></div>
                   <div className="text-xl font-bold text-green-600 dark:text-green-400 mb-1">FREE</div>
                   <div className="text-xs text-amber-900/50 dark:text-white/40 uppercase tracking-wider">Start</div>
                 </th>
 
-                {/* PLAN PLUS */}
+                {/* PLUS */}
                 <th className="p-6 text-center w-1/6 relative group transition-colors hover:bg-amber-900/5 dark:hover:bg-white/5">
                   <div className="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
                   <div className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-1">PLUS</div>
                   <div className="text-xs text-amber-900/50 dark:text-white/40 uppercase tracking-wider">Hobby</div>
                 </th>
 
-                {/* PLAN PRO */}
+                {/* PRO */}
                 <th className="p-6 text-center w-1/6 relative group transition-colors bg-amber-900/5 dark:bg-white/5 hover:bg-amber-900/10 dark:hover:bg-white/10">
                   <div className="absolute top-0 left-0 w-full h-1 bg-purple-500"></div>
                   <div className="text-xl font-bold text-purple-600 dark:text-purple-400 mb-1">PRO</div>
                   <div className="text-xs text-amber-900/50 dark:text-white/40 uppercase tracking-wider">Zawodowiec</div>
                 </th>
 
-                {/* PLAN PRO+ */}
+                {/* PRO+ (HODOWCA) */}
                 <th className="p-6 text-center w-1/6 relative group transition-colors hover:bg-amber-900/5 dark:hover:bg-white/5">
                   <div className="absolute top-0 left-0 w-full h-1 bg-yellow-500 dark:bg-yellow-400"></div>
                   <div className="text-xl font-bold text-yellow-600 dark:text-yellow-400 mb-1">PRO+</div>
                   <div className="text-xs text-amber-900/50 dark:text-white/40 uppercase tracking-wider">Hodowca</div>
                 </th>
 
-                {/* PLAN BUSINESS */}
+                {/* BUSINESS */}
                 <th className="p-6 text-center w-1/6 relative group transition-colors hover:bg-amber-900/5 dark:hover:bg-white/5">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gray-500"></div>
                   <div className="text-xl font-bold text-gray-600 dark:text-gray-400 mb-1">BUSINESS</div>
@@ -59,7 +58,6 @@ export default function PricingTable() {
               </tr>
             </thead>
 
-            {/* Ciało tabeli - Adaptacyjne kolory tekstu i teł */}
             <tbody className="divide-y divide-amber-900/5 dark:divide-white/10 text-amber-900/80 dark:text-white/80">
               {/* CENA */}
               <tr className="hover:bg-amber-900/5 dark:hover:bg-white/5 transition-colors">
@@ -67,7 +65,13 @@ export default function PricingTable() {
                 <td className="p-4 text-center font-bold text-xl text-amber-950 dark:text-white">0 zł</td>
                 <td className="p-4 text-center"><div className="font-bold text-xl text-amber-950 dark:text-white">~99 zł</div><div className="text-xs opacity-60">/ rok</div></td>
                 <td className="p-4 text-center bg-amber-900/5 dark:bg-white/5"><div className="font-bold text-xl text-amber-950 dark:text-white">~249 zł</div><div className="text-xs opacity-60">/ rok</div></td>
-                <td className="p-4 text-center"><div className="font-bold text-xl text-amber-950 dark:text-white">&gt; 249 zł</div><div className="text-xs opacity-60">/ rok</div></td>
+
+                {/* CENA PRO+ z gwiazdką */}
+                <td className="p-4 text-center">
+                    <div className="font-bold text-xl text-amber-950 dark:text-white">250 zł*</div>
+                    <div className="text-xs opacity-60">/ rok</div>
+                </td>
+
                 <td className="p-4 text-center"><div className="font-bold text-amber-950 dark:text-white">Wycena</div><div className="text-xs opacity-60">B2B</div></td>
               </tr>
 
@@ -191,21 +195,42 @@ export default function PricingTable() {
         </div>
       </div>
 
-      {/* Informacje o migracji - stopka (Adaptacyjna + Tłumaczenie PL) */}
-      <div className="mt-8 p-6 rounded-2xl border backdrop-blur-md text-sm transition-colors
-                      bg-white/60 border-amber-900/10 text-amber-900/80
-                      dark:bg-white/5 dark:border-white/10 dark:text-white/70">
-        <h4 className="font-bold mb-2 flex items-center gap-2 text-amber-950 dark:text-white">
-            <Info size={16} className="text-amber-600 dark:text-amber-500" /> Informacje o zmianie planu:
-        </h4>
-        <ul className="space-y-1 ml-6 list-disc">
-            <li>
-                <span className="font-bold text-amber-950 dark:text-white">Przejście na wyższy plan:</span> Natychmiastowe zdjęcie blokady LOCKED z odkładów (jeśli mieszczą się w nowym limicie).
-            </li>
-            <li>
-                <span className="font-bold text-amber-950 dark:text-white">Przejście na niższy plan:</span> Blokada dodawania nowych uli powyżej limitu. Nadmiarowe ule przechodzą w tryb &quot;Tylko do odczytu&quot;.
-            </li>
-        </ul>
+      {/* STOPKA: Informacje o migracji + Legenda Scoringu */}
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+
+        {/* LEWA KOLUMNA: Migracja */}
+        <div className="p-6 rounded-2xl border backdrop-blur-md transition-colors
+                        bg-white/60 border-amber-900/10 text-amber-900/80
+                        dark:bg-white/5 dark:border-white/10 dark:text-white/70">
+            <h4 className="font-bold mb-3 flex items-center gap-2 text-amber-950 dark:text-white">
+                <Info size={16} className="text-amber-600 dark:text-amber-500" /> Zmiana planu:
+            </h4>
+            <ul className="space-y-2 ml-4 list-disc">
+                <li>
+                    <span className="font-bold text-amber-950 dark:text-white">Wyższy plan:</span> Natychmiastowe zdjęcie blokady LOCKED z odkładów.
+                </li>
+                <li>
+                    <span className="font-bold text-amber-950 dark:text-white">Niższy plan:</span> Nadmiarowe ule przechodzą w tryb &quot;Tylko do odczytu&quot;.
+                </li>
+            </ul>
+        </div>
+
+        {/* PRAWA KOLUMNA: AI Scoring (Zaktualizowane) */}
+        <div className="p-6 rounded-2xl border backdrop-blur-md transition-colors
+                        bg-white/60 border-amber-900/10 text-amber-900/80
+                        dark:bg-white/5 dark:border-white/10 dark:text-white/70">
+            <h4 className="font-bold mb-3 flex items-center gap-2 text-amber-950 dark:text-white">
+                <Sparkles size={16} className="text-yellow-500" /> * AI Scoring:
+            </h4>
+            <p className="mb-2 text-xs opacity-90">
+               Cena 250 zł obowiązuje od momentu pełnego uruchomienia modułu AI Scoring.
+            </p>
+            <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs italic">
+                &quot;Scoring to ocena wartości hodowlanej matek (Miodność, Łagodność, Rojliwość, Zimowla) na podstawie anonimowych danych zbieranych od użytkowników.
+                Matka otrzymuje od hodowcy unikalny Wirtualny Paszport, który pszczelarz dodaje do swojej pasieki – na tej podstawie system agreguje wyniki danej linii.&quot;
+            </div>
+        </div>
+
       </div>
     </div>
   );
