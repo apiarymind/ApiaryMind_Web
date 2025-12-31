@@ -3,7 +3,6 @@ import { getSessionUid } from '@/app/actions/auth-session';
 import {
   getSickBayInspections,
   getWithdrawalGuardHives,
-  getForageData,
   getUserTasks,
   getSystemMessages,
   getAssociationAnnouncements
@@ -30,7 +29,6 @@ export default async function DashboardPage() {
       stats,
       sickBay,
       withdrawals,
-      forage,
       tasks,
       sysMessages,
       assocAnnouncements
@@ -39,7 +37,6 @@ export default async function DashboardPage() {
     getDashboardOverview(),
     getSickBayInspections(),
     getWithdrawalGuardHives(),
-    getForageData(),
     getUserTasks(uid, 'BEEKEEPER'),
     getSystemMessages(),
     getAssociationAnnouncements()
@@ -99,9 +96,9 @@ export default async function DashboardPage() {
             </div>
         )}
 
-        {/* ZONE 2: BIO-CONTEXT (Green/Blue) - Restored DB Source */}
+        {/* ZONE 2: BIO-CONTEXT (Green/Blue) - DB Source removed as per instruction, relying on seasonality logic */}
         <div className="col-span-1 md:col-span-1 lg:col-span-1">
-             <ForageRadarWidget flows={forage} />
+             <ForageRadarWidget stats={stats?.forageStatus} />
         </div>
 
         {/* ZONE 3: OPERATIONS (White/Grey) */}
