@@ -2,7 +2,8 @@ import { getWarehouseData } from '@/app/actions/get-warehouse-data';
 import { getSessionUid } from '@/app/actions/auth-session';
 import { redirect } from 'next/navigation';
 import { GlassCard } from '@/app/components/ui/GlassCard';
-import { Package, Archive, Layers, PlusCircle } from 'lucide-react';
+import { Package, Archive, Layers } from 'lucide-react';
+import AddStockModal from '@/app/components/warehouse/AddStockModal';
 
 export default async function WarehousePage() {
   const uid = await getSessionUid();
@@ -28,11 +29,7 @@ export default async function WarehousePage() {
       <div className="flex justify-between items-center">
          <h1 className="text-3xl font-heading font-bold text-primary">Magazyn</h1>
 
-         {/* Button visible only on MD screens and up */}
-         <button className="hidden md:flex items-center gap-2 bg-primary hover:bg-primary/90 text-black font-bold py-2 px-4 rounded-xl transition-all shadow-lg hover:shadow-primary/20">
-            <PlusCircle size={20} />
-            Dodaj Dostawę
-         </button>
+         <AddStockModal />
       </div>
 
       <GlassCard className="p-4 border-l-4 border-primary">
