@@ -1,25 +1,28 @@
 "use client";
 
 import { useAuth, UserRole } from "@/lib/AuthContext";
-import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: UserRole[];
 }
 
-export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+function ProtectedRouteContent({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, role, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
     if (!loading) {
       if (!user) {
         // Redirect to login if not authenticated
-        router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+        const queryString = searchParams.toString();
+        const fullPath = queryString ? `${pathname}?${queryString}` : pathname;
+        router.push(`/login?redirect=${encodeURIComponent(fullPath)}`);
       } else if (allowedRoles && role && !allowedRoles.includes(role)) {
         // Redirect to unauthorized page or dashboard if role doesn't match
         router.push('/dashboard');
@@ -27,7 +30,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
         setIsAuthorized(true);
       }
     }
-  }, [user, role, loading, router, allowedRoles, pathname]);
+  }, [user, role, loading, router, allowedRoles, pathname, searchParams]);
 
   if (loading || !isAuthorized) {
     return (
@@ -41,4 +44,12 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   }
 
   return <>{children}</>;
+}
+
+export default function ProtectedRoute(props: ProtectedRouteProps) {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-neutral-900 text-amber-500">Loading auth...</div>}>
+      <ProtectedRouteContent {...props} />
+    </Suspense>
+  );
 }

@@ -1,5 +1,4 @@
 import { getCurrentUserProfile } from '@/app/actions/get-user';
-import { getDashboardStats } from '@/app/actions/get-dashboard-stats';
 import { getSessionUid } from '@/app/actions/auth-session';
 import {
   getSickBayInspections,
@@ -9,10 +8,10 @@ import {
   getSystemMessages,
   getAssociationAnnouncements
 } from '@/app/actions/dashboard-widgets';
+import { getDashboardOverview } from '@/app/actions/get-dashboard-overview';
 
 import Link from "next/link";
 import { redirect } from 'next/navigation';
-import { GlassCard } from '@/app/components/ui/GlassCard';
 
 // Widgets
 import { SickBayWidget } from '@/components/dashboard/SickBayWidget';
@@ -37,7 +36,7 @@ export default async function DashboardPage() {
       assocAnnouncements
   ] = await Promise.all([
     getCurrentUserProfile(uid),
-    getDashboardStats(uid),
+    getDashboardOverview(),
     getSickBayInspections(),
     getWithdrawalGuardHives(),
     getForageData(),
@@ -68,14 +67,14 @@ export default async function DashboardPage() {
             </p>
         </div>
 
-        {/* Subtle Stats Bar */}
+        {/* Subtle Stats Bar (Restored) */}
         <div className="flex gap-6 text-xs font-mono text-gray-500 dark:text-gray-400 bg-white/50 dark:bg-black/20 px-4 py-2 rounded-full border border-white/10">
             <div className="flex gap-2">
-                <span className="font-bold text-primary">{stats?.hiveCount || 0}</span> RODZIN
+                <span className="font-bold text-primary">{stats?.hivesCount || 0}</span> RODZIN
             </div>
             <div className="w-px h-full bg-gray-300 dark:bg-gray-700 mx-1"></div>
             <div className="flex gap-2">
-                <span className="font-bold text-primary">{stats?.apiaryCount || 0}</span> PASIEK
+                <span className="font-bold text-primary">{stats?.apiariesCount || 0}</span> PASIEK
             </div>
         </div>
       </header>
@@ -100,7 +99,7 @@ export default async function DashboardPage() {
             </div>
         )}
 
-        {/* ZONE 2: BIO-CONTEXT (Green/Blue) */}
+        {/* ZONE 2: BIO-CONTEXT (Green/Blue) - Restored DB Source */}
         <div className="col-span-1 md:col-span-1 lg:col-span-1">
              <ForageRadarWidget flows={forage} />
         </div>
