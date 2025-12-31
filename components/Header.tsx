@@ -66,11 +66,9 @@ export default function Header() {
       <div className="flex items-center justify-between px-6 py-3">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2 no-underline">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow">
-              <span className="text-xl">🐝</span>
-            </div>
+            <img src="/assets/bee-3d-icon.png" alt="Logo" width={32} height={32} />
             <span className="font-heading font-bold tracking-tight text-white">
-              ApiaryMind
+              Apiary<span className="text-amber-500">Mind</span>
             </span>
           </Link>
         </div>
