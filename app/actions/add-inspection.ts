@@ -81,7 +81,7 @@ export async function addInspection(data: InspectionFormData) {
             medication_name: data.treatment_applied,
             application_date: data.inspection_date,
             withdrawal_end_date: withdrawalEndDate.toISOString(),
-            inspection_id: inspectionData.id // Optional linkage if schema supports it
+            // inspection_id: inspectionData.id // Removing optional linkage as it might not be in schema based on memory
         });
       
       if (treatmentError) {
