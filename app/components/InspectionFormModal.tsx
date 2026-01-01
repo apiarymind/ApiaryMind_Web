@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Save, AlertTriangle, Pill, Calendar, Thermometer, Bug, Crown } from "lucide-react";
+import { X, Save, AlertTriangle, Pill, Calendar, Thermometer, Bug, Crown, ListTodo, AlertOctagon } from "lucide-react";
 import { getMedications, Medication } from "@/app/actions/get-medications";
 import { addInspection } from "@/app/actions/add-inspection";
 
@@ -10,6 +10,28 @@ interface InspectionFormModalProps {
   onClose: () => void;
   hiveId: string;
 }
+
+const COMMON_TASKS = [
+  "Sprawdź gniazdo",
+  "Podaj syrop",
+  "Wymiana matki",
+  "Leczenie",
+  "Miodobranie",
+  "Dokarmienie",
+  "Ocena czerwiu",
+  "Wymiana ramek",
+  "Poszerzenie gniazda"
+];
+
+const PEST_OPTIONS = [
+  { id: "VARROA", label: "Varroa" },
+  { id: "AFB", label: "Zgnilec Amerykański" },
+  { id: "EFB", label: "Zgnilec Europejski" },
+  { id: "WAX_MOTH", label: "Barciak" },
+  { id: "SMALL_HIVE_BEETLE", label: "Chrząszcz Ulowy" },
+  { id: "NOSEMA", label: "Nosema" },
+  { id: "ANTS", label: "Mrówki" }
+];
 
 export default function InspectionFormModal({ isOpen, onClose, hiveId }: InspectionFormModalProps) {
   const [medications, setMedications] = useState<Medication[]>([]);
@@ -23,13 +45,17 @@ export default function InspectionFormModal({ isOpen, onClose, hiveId }: Inspect
   const [temp, setTemp] = useState(20);
   const [strength, setStrength] = useState("MEDIUM");
   const [mood, setMood] = useState("CALM");
+
+  // Missing Fields Implementation
   const [broodCount, setBroodCount] = useState(5);
   const [swarming, setSwarming] = useState(false);
+  const [swarmingDate, setSwarmingDate] = useState<string>("");
   const [queenSeen, setQueenSeen] = useState(true);
   const [queenMarked, setQueenMarked] = useState(true);
   const [layingPattern, setLayingPattern] = useState("SOLID");
   const [honeySupers, setHoneySupers] = useState(0);
   const [pests, setPests] = useState<string[]>([]);
+  const [nextTasks, setNextTasks] = useState<string[]>([]);
   
   // Treatment Logic
   const [selectedMedicationId, setSelectedMedicationId] = useState("");
@@ -59,6 +85,22 @@ export default function InspectionFormModal({ isOpen, onClose, hiveId }: Inspect
     }
   }, [selectedMedicationId, date, medications]);
 
+  const togglePest = (pestId: string) => {
+    setPests(prev =>
+      prev.includes(pestId)
+        ? prev.filter(p => p !== pestId)
+        : [...prev, pestId]
+    );
+  };
+
+  const toggleTask = (task: string) => {
+    setNextTasks(prev =>
+      prev.includes(task)
+        ? prev.filter(t => t !== task)
+        : [...prev, task]
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -77,6 +119,7 @@ export default function InspectionFormModal({ isOpen, onClose, hiveId }: Inspect
       mood: mood,
       brood_frames_count: broodCount,
       swarming_mood: swarming,
+      swarming_date: swarming ? swarmingDate : undefined,
       is_queen_seen: queenSeen,
       is_queen_marked: queenMarked,
       laying_pattern: layingPattern,
@@ -84,7 +127,7 @@ export default function InspectionFormModal({ isOpen, onClose, hiveId }: Inspect
       pests_detected: pests,
       treatment_applied: treatmentName,
       withdrawal_days: withdrawalDays,
-      next_visit_tasks: [] // Could add UI for this
+      next_visit_tasks: nextTasks
     });
 
     setIsSubmitting(false);
@@ -93,8 +136,6 @@ export default function InspectionFormModal({ isOpen, onClose, hiveId }: Inspect
        alert("Błąd zapisu: " + result.error);
     } else {
        onClose();
-       //Ideally trigger a toast
-       // toast.success("Zapisano przegląd!");
     }
   };
 
@@ -125,6 +166,7 @@ export default function InspectionFormModal({ isOpen, onClose, hiveId }: Inspect
                    <option value="SUNNY">Słonecznie</option>
                    <option value="CLOUDY">Pochmurno</option>
                    <option value="RAINY">Deszczowo</option>
+                   <option value="WINDY">Wietrznie</option>
                 </select>
              </div>
              <div>
@@ -135,28 +177,122 @@ export default function InspectionFormModal({ isOpen, onClose, hiveId }: Inspect
 
           <div className="h-px bg-neutral-800" />
 
-          {/* 2. Colony Status */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             <div>
-                <label className="block text-xs font-bold text-neutral-500 uppercase mb-1">Siła Rodziny</label>
-                <select value={strength} onChange={e => setStrength(e.target.value)} className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-2 text-white">
-                   <option value="WEAK">Słaba</option>
-                   <option value="MEDIUM">Średnia</option>
-                   <option value="STRONG">Silna</option>
-                </select>
-             </div>
-             <div>
-                <label className="block text-xs font-bold text-neutral-500 uppercase mb-1">Nastrój</label>
-                <select value={mood} onChange={e => setMood(e.target.value)} className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-2 text-white">
-                   <option value="CALM">Spokojny</option>
-                   <option value="AGGRESSIVE">Agresywny</option>
-                </select>
-             </div>
+          {/* 2. Colony Status & Queen */}
+          <div className="space-y-4">
+            <h3 className="font-bold text-yellow-500 flex items-center gap-2">
+                <Crown className="w-5 h-5" /> Matka i Czerw
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div>
+                    <label className="block text-xs font-bold text-neutral-500 uppercase mb-1">Siła Rodziny</label>
+                    <select value={strength} onChange={e => setStrength(e.target.value)} className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-2 text-white">
+                       <option value="WEAK">Słaba</option>
+                       <option value="MEDIUM">Średnia</option>
+                       <option value="STRONG">Silna</option>
+                    </select>
+                 </div>
+                 <div>
+                    <label className="block text-xs font-bold text-neutral-500 uppercase mb-1">Nastrój</label>
+                    <select value={mood} onChange={e => setMood(e.target.value)} className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-2 text-white">
+                       <option value="CALM">Spokojny</option>
+                       <option value="AGGRESSIVE">Agresywny</option>
+                    </select>
+                 </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <div>
+                    <label className="block text-xs font-bold text-neutral-500 uppercase mb-1">Ramki z Czerwiem</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="20"
+                      value={broodCount}
+                      onChange={e => setBroodCount(Number(e.target.value))}
+                      className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-2 text-white"
+                    />
+                 </div>
+
+                 <div className="flex items-center justify-between bg-neutral-800 p-2 rounded-lg border border-neutral-700">
+                    <span className="text-sm font-medium text-gray-300">Matka widziana?</span>
+                    <button
+                        type="button"
+                        onClick={() => setQueenSeen(!queenSeen)}
+                        className={`w-12 h-6 rounded-full transition-colors relative ${queenSeen ? 'bg-green-500' : 'bg-neutral-600'}`}
+                    >
+                        <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${queenSeen ? 'translate-x-6' : 'translate-x-0'}`} />
+                    </button>
+                 </div>
+
+                 <div className="flex items-center justify-between bg-neutral-800 p-2 rounded-lg border border-neutral-700">
+                    <span className="text-sm font-medium text-gray-300">Matka znakowana?</span>
+                    <button
+                        type="button"
+                        onClick={() => setQueenMarked(!queenMarked)}
+                        className={`w-12 h-6 rounded-full transition-colors relative ${queenMarked ? 'bg-blue-500' : 'bg-neutral-600'}`}
+                    >
+                        <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${queenMarked ? 'translate-x-6' : 'translate-x-0'}`} />
+                    </button>
+                 </div>
+            </div>
+
+            <div className="bg-neutral-800/50 p-4 rounded-xl border border-neutral-700">
+                <div className="flex items-center justify-between mb-2">
+                     <span className="font-bold text-red-400 flex items-center gap-2">
+                        <AlertOctagon className="w-4 h-4" /> Nastrój Rojowy
+                     </span>
+                     <button
+                        type="button"
+                        onClick={() => setSwarming(!swarming)}
+                        className={`w-12 h-6 rounded-full transition-colors relative ${swarming ? 'bg-red-500' : 'bg-neutral-600'}`}
+                    >
+                        <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${swarming ? 'translate-x-6' : 'translate-x-0'}`} />
+                    </button>
+                </div>
+                {swarming && (
+                    <div className="mt-3 animate-in fade-in slide-in-from-top-2">
+                        <label className="block text-xs font-bold text-red-300 uppercase mb-1">Przewidywana data wyjścia roju</label>
+                        <input
+                            type="date"
+                            value={swarmingDate}
+                            onChange={e => setSwarmingDate(e.target.value)}
+                            className="w-full bg-neutral-900 border border-red-500/50 rounded-lg p-2 text-white"
+                            required={swarming}
+                        />
+                    </div>
+                )}
+            </div>
           </div>
 
           <div className="h-px bg-neutral-800" />
 
-          {/* 3. Treatment Section (INTELLIGENT) */}
+          {/* Pests Section */}
+          <div>
+            <h3 className="font-bold text-red-400 mb-3 flex items-center gap-2">
+                <Bug className="w-5 h-5" /> Szkodniki
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {PEST_OPTIONS.map(pest => (
+                    <button
+                        key={pest.id}
+                        type="button"
+                        onClick={() => togglePest(pest.id)}
+                        className={`text-xs p-2 rounded-lg border transition-all ${
+                            pests.includes(pest.id)
+                            ? 'bg-red-500/20 border-red-500 text-red-200'
+                            : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:bg-neutral-700'
+                        }`}
+                    >
+                        {pest.label}
+                    </button>
+                ))}
+            </div>
+          </div>
+
+          <div className="h-px bg-neutral-800" />
+
+          {/* 3. Treatment Section */}
           <div className="bg-purple-900/10 border border-purple-500/30 p-4 rounded-xl">
               <h3 className="font-bold text-purple-400 mb-3 flex items-center gap-2">
                   <Pill className="w-5 h-5" /> Leczenie i Profilaktyka
@@ -194,6 +330,28 @@ export default function InspectionFormModal({ isOpen, onClose, hiveId }: Inspect
                       </div>
                   )}
               </div>
+          </div>
+
+          <div className="h-px bg-neutral-800" />
+
+          {/* Next Visit Tasks */}
+          <div>
+            <h3 className="font-bold text-blue-400 mb-3 flex items-center gap-2">
+                <ListTodo className="w-5 h-5" /> Do wykonania przy następnym przeglądzie
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                {COMMON_TASKS.map(task => (
+                    <label key={task} className="flex items-center space-x-2 bg-neutral-800 p-2 rounded-lg cursor-pointer hover:bg-neutral-700 transition-colors">
+                        <input
+                            type="checkbox"
+                            checked={nextTasks.includes(task)}
+                            onChange={() => toggleTask(task)}
+                            className="rounded border-neutral-600 bg-neutral-700 text-blue-500 focus:ring-blue-500"
+                        />
+                        <span className="text-xs text-gray-300">{task}</span>
+                    </label>
+                ))}
+            </div>
           </div>
 
           <div className="h-px bg-neutral-800" />
