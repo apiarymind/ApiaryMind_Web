@@ -13,6 +13,7 @@ interface InspectionFormData {
   mood: string;
   brood_frames_count?: number;
   swarming_mood: boolean;
+  swarming_date?: string;
   is_queen_seen: boolean;
   is_queen_marked: boolean;
   laying_pattern: string;
@@ -34,15 +35,6 @@ export async function addInspection(data: InspectionFormData) {
     return { error: "User not authenticated" };
   }
 
-  // Calculate Alert Level based on data
-  let alert_level = 'LOW';
-  if (data.swarming_mood) alert_level = 'HIGH';
-  if (data.pests_detected.some(p => ['VARROA', 'AFB', 'ZGNILEC'].includes(p.toUpperCase()))) alert_level = 'CRITICAL';
-  if (data.treatment_applied) {
-      // User request: "Auto-set the alert_level to 'MEDIUM' or 'HIGH' if a treatment is applied."
-      if (alert_level !== 'CRITICAL') alert_level = 'MEDIUM'; 
-  }
-
   // 1. Insert Inspection
   const { data: inspectionData, error: inspectionError } = await supabase
     .from('inspections')
@@ -57,6 +49,7 @@ export async function addInspection(data: InspectionFormData) {
       mood: data.mood,
       brood_frames_count: data.brood_frames_count,
       swarming_mood: data.swarming_mood,
+      swarming_date: data.swarming_date,
       is_queen_seen: data.is_queen_seen,
       is_queen_marked: data.is_queen_marked,
       laying_pattern: data.laying_pattern,
@@ -65,8 +58,7 @@ export async function addInspection(data: InspectionFormData) {
       frames_sealed_percent: data.frames_sealed_percent,
       pests_detected: data.pests_detected,
       treatment_applied: data.treatment_applied,
-      next_visit_tasks: data.next_visit_tasks,
-      alert_level: alert_level // Ensure DB has this column or ignore if it generates it. Schema wasn't fully explicit but 'alert_level' is used in Dashboard query.
+      next_visit_tasks: data.next_visit_tasks
     })
     .select()
     .single();
