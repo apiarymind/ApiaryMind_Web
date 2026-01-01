@@ -42,11 +42,11 @@ function LoginForm() {
 
   return (
     // CONTAINER
-    // Light Mode: Marble texture background.
-    // Dark Mode: "Smoke/Fog" effect using Radial Gradient.
+    // Light Mode: Light pattern background.
+    // Dark Mode: Dark pattern background.
     <div className="min-h-screen w-full flex items-center justify-center font-sans px-4 
-                    bg-[url('/assets/marble-texture.jpg')] bg-cover bg-center 
-                    dark:bg-[image:none] dark:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] dark:from-gray-800 dark:via-gray-950 dark:to-black">
+                    bg-[url('/assets/bg-light-pattern.png')] bg-cover bg-center
+                    dark:bg-[url('/assets/bg-dark-pattern.png')]">
       
       {/* OVERLAY for Light Mode only (adds warmth to marble). Hidden in Dark Mode. */}
       <div className="absolute inset-0 bg-amber-50/30 pointer-events-none dark:hidden" />
