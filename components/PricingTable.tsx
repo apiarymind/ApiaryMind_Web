@@ -223,7 +223,7 @@ export default function PricingTable() {
                 <Sparkles size={16} className="text-yellow-500" /> * AI Scoring:
             </h4>
             <p className="mb-2 text-xs opacity-90">
-               Cena 250 zł obowiązuje od momentu pełnego uruchomienia modułu AI Scoring.
+               Cena 250 zł obowiązuje do momentu pełnego uruchomienia modułu AI Scoring.
             </p>
             <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs italic">
                 &quot;Scoring to ocena wartości hodowlanej matek (Miodność, Łagodność, Rojliwość, Zimowla) na podstawie anonimowych danych zbieranych od użytkowników.
