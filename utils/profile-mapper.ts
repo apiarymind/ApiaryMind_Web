@@ -1,6 +1,7 @@
 export type RawProfile = {
   id: string;
   email: string | null;
+  full_name?: string | null;
   subscription_plan: string | null; // Database has mixed case: 'plus', 'FREE', 'Pro'
   system_role: string | null; // Changed to system_role from DB
   role?: string | null; // Keep for backward compat if needed, but primary is system_role
@@ -13,6 +14,7 @@ export type RawProfile = {
 export type UserProfile = {
   id: string;
   email: string;
+  full_name?: string | null;
   plan: 'FREE' | 'PLUS' | 'PRO' | 'BUSINESS'; // Normalized to uppercase
   role: 'super_admin' | 'admin' | 'user'; // Normalized role
   rhd: string | null;
@@ -54,6 +56,7 @@ export function normalizeProfile(raw: RawProfile): UserProfile {
   return {
     id: raw.id,
     email: raw.email || '',
+    full_name: raw.full_name,
     plan: cleanPlan,
     role: cleanRole,
     rhd: raw.rhd_number,
