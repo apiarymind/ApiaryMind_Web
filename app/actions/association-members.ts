@@ -79,7 +79,23 @@ export async function getAssociationMembers(associationId?: string): Promise<{ d
       return { data: [], error: error.message };
     }
 
-    return { data: (data || []) as AssociationMember[], error: null };
+    // Przetwórz dane: Supabase zwraca relację user jako tablicę, a interfejs oczekuje pojedynczego obiektu
+    const processedData: AssociationMember[] = (data || []).map((item: any) => {
+      // Sprawdź czy user jest tablicą i wyciągnij pierwszy element
+      const userData = Array.isArray(item.user) ? item.user[0] : item.user;
+      
+      return {
+        id: item.id,
+        association_id: item.association_id,
+        user_id: item.user_id,
+        role: item.role,
+        joined_at: item.joined_at,
+        notes: item.notes,
+        user: userData || undefined
+      } as AssociationMember;
+    });
+
+    return { data: processedData, error: null };
   } catch (err: any) {
     return { data: [], error: err.message || 'Unknown error' };
   }
