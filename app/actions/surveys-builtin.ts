@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { getSessionUid } from './auth-session';
 import { getCurrentUserProfile } from './get-user';
+import { getUserAssociations } from './association-members';
 import { revalidatePath } from 'next/cache';
 
 export interface SurveyQuestion {

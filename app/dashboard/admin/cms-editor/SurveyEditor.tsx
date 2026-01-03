@@ -33,7 +33,7 @@ export default function SurveyEditor({ survey, onClose, onSave }: SurveyEditorPr
   const [description, setDescription] = useState(survey.description || '');
   const [displayType, setDisplayType] = useState<'banner' | 'card'>((survey as any).display_type || 'banner');
   const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
-  const [targets, setTargets] = useState<Array<{ target_type: string; association_id?: string }>>([]);
+  const [targets, setTargets] = useState<Array<{ target_type: 'dashboard' | 'association' | 'landing' | 'all'; association_id?: string }>>([]);
   const [associations, setAssociations] = useState<Association[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -131,7 +131,7 @@ export default function SurveyEditor({ survey, onClose, onSave }: SurveyEditorPr
           (associationId ? t.association_id === associationId : !t.association_id))
       ));
     } else {
-      setTargets([...targets, { target_type: targetType, association_id: associationId }]);
+      setTargets([...targets, { target_type: targetType as 'dashboard' | 'association' | 'landing' | 'all', association_id: associationId }]);
     }
   };
 

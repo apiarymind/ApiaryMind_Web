@@ -128,6 +128,10 @@ export async function getQueenPublic(queenId: string): Promise<{ data: PublicQue
       };
     }
 
+    // Przetwórz dane: Supabase zwraca relacje jako tablice, a interfejs oczekuje pojedynczych obiektów
+    const batchData = Array.isArray(queen.batch) ? queen.batch[0] : queen.batch;
+    const breederData = Array.isArray(queen.original_breeder) ? queen.original_breeder[0] : queen.original_breeder;
+
     const result: PublicQueenData = {
       id: queen.id,
       marking_code: queen.marking_code,
@@ -136,8 +140,8 @@ export async function getQueenPublic(queenId: string): Promise<{ data: PublicQue
       lineage: queen.lineage,
       status: queen.status,
       is_clipped: queen.is_clipped || false,
-      batch: queen.batch || null,
-      original_breeder: queen.original_breeder || null,
+      batch: batchData || null,
+      original_breeder: breederData || null,
       current_hive: currentHive ? {
         id: currentHive.id,
         hive_number: currentHive.hive_number,

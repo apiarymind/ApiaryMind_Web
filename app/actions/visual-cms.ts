@@ -4,7 +4,10 @@ import { createClient } from '@/utils/supabase/server';
 import { getSessionUid } from './auth-session';
 import { getCurrentUserProfile } from './get-user';
 import { revalidatePath } from 'next/cache';
-import { CMSPage, CMSBlock } from '@/types/cms-blocks';
+import { CMSPage, CMSBlock } from '@/app/types/cms-blocks';
+
+// Re-export for convenience
+export type { CMSPage, CMSBlock };
 
 const VISUAL_CMS_PAGES_KEY = 'visual_cms_pages';
 

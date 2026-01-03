@@ -108,14 +108,13 @@ export async function getUserAssociationRole(userId: string, associationId?: str
     let query = supabase
       .from('association_members')
       .select('role')
-      .eq('user_id', userId)
-      .maybeSingle();
+      .eq('user_id', userId);
 
     if (associationId) {
       query = query.eq('association_id', associationId);
     }
 
-    const { data, error } = await query;
+    const { data, error } = await query.maybeSingle();
 
     if (error || !data) {
       return null;

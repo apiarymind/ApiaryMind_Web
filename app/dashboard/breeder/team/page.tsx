@@ -46,7 +46,7 @@ const MOCK_TEAM_MEMBERS: BusinessTeamMember[] = [
       email: 'pracownik@pasieka.pl',
       full_name: 'Michał Pszczoła',
       subscription_plan: 'FREE',
-      eyescoin_balance: 0,
+      eyes_coin_balance: 0,
       created_at: '',
       updated_at: ''
     }
@@ -63,7 +63,7 @@ const MOCK_TEAM_MEMBERS: BusinessTeamMember[] = [
       email: 'nowy@pasieka.pl',
       full_name: 'Anna Miód',
       subscription_plan: 'FREE',
-      eyescoin_balance: 0,
+      eyes_coin_balance: 0,
       created_at: '',
       updated_at: ''
     }
@@ -78,7 +78,7 @@ export default function BreederTeamPage() {
   const [inviteEmail, setInviteEmail] = useState('');
 
   // Access Control
-  const hasAccess = profile?.plan === 'PRO_PLUS' || profile?.plan === 'BUSINESS' || profile?.role === 'SUPER_ADMIN';
+  const hasAccess = profile?.plan === 'PRO_PLUS' || profile?.plan === 'BUSINESS' || profile?.system_role === 'SUPER_ADMIN';
 
   if (!hasAccess && profile) { // If profile loaded and no access
     return (

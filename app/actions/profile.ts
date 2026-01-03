@@ -16,21 +16,30 @@ export async function updateProfile(data: Partial<Profile>) {
   // For safety, we explicitly pick fields.
   const updates: Partial<Profile> = {
     full_name: data.full_name,
+    first_name: data.first_name,
+    last_name: data.last_name,
     avatar_url: data.avatar_url,
     phone_number: data.phone_number,
     
     // Company Data
     company_name: data.company_name,
     nip: data.nip,
-    regon: data.regon,
-    address_street: data.address_street,
-    zip_code: data.zip_code,
+    description: data.description,
     city: data.city,
+    voivodeship: data.voivodeship,
+    delivery_info: data.delivery_info,
+    
+    // Links
+    website_url: data.website_url,
+    facebook_link: data.facebook_link,
+    allegro_link: data.allegro_link,
+    olx_link: data.olx_link,
     
     // Veterinary Data
     wni_number: data.wni_number,
     rhd_number: data.rhd_number,
     shp_number: data.shp_number,
+    kchz_number: data.kchz_number,
     arimr_ep_number: data.arimr_ep_number,
     
     updated_at: new Date().toISOString(),

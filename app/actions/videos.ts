@@ -4,7 +4,8 @@ import { createClient } from '@/utils/supabase/server';
 import { getSessionUid } from './auth-session';
 import { getCurrentUserProfile } from './get-user';
 import { revalidatePath } from 'next/cache';
-import { getGlobalSettings, updateGlobalSetting } from './admin/get-global-settings';
+import { getGlobalSettings } from './admin/get-global-settings';
+import { updateGlobalSetting } from './admin/update-global-setting';
 
 export interface Video {
   id: string;

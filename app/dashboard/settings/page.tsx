@@ -53,9 +53,6 @@ export default function SettingsPage() {
             ...data,
             company_name: data.company_name || '',
             nip: data.nip || '',
-            regon: data.regon || '',
-            address_street: data.address_street || '',
-            zip_code: data.zip_code || '',
             city: data.city || '',
             wni_number: data.wni_number || '',
             rhd_number: data.rhd_number || '',
@@ -234,30 +231,6 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-white/80">REGON</label>
-                <input 
-                  {...register('regon')}
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500" 
-                  placeholder="123456789"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2 text-white/80">Ulica i Numer</label>
-                <input 
-                  {...register('address_street')}
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500" 
-                  placeholder="ul. Miodowa 1"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2 text-white/80">Kod Pocztowy</label>
-                <input 
-                  {...register('zip_code')}
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500" 
-                  placeholder="00-001"
-                />
               </div>
 
               <div>

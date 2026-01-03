@@ -18,7 +18,7 @@ export default function DashboardSidebar({ userProfile, newsContent, newsPositio
   
   // Prefer server-fetched userProfile, fall back to clientProfile
   const profile = userProfile || clientProfile;
-  const role = profile?.role || 'user';
+  const role = (profile as any)?.role || (profile as any)?.system_role?.toLowerCase() || 'user';
   // Use 'any' cast because UserProfile might not have 'plan' in some contexts or types might differ slightly, but we know it should be there.
   // Actually, let's try to access it safely. If it's missing, assume FREE.
   const plan = (profile as any)?.plan || 'FREE';

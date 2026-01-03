@@ -265,7 +265,7 @@ export async function getRhdReport(startDate?: string, endDate?: string): Promis
 
   const result = await getSalesLog(undefined, yearStart, yearEnd);
   if (result.error) {
-    return { ...result, totalRevenue: 0, totalQuantity: 0 };
+    return { data: [], error: result.error, totalRevenue: 0, totalQuantity: 0 };
   }
 
   const allData = result.data;
@@ -352,7 +352,7 @@ export async function getSbReport(month?: string, year?: number): Promise<{ data
 
   const result = await getSalesLog(undefined, startDate, endDate);
   if (result.error) {
-    return { ...result, totalQuantity: 0 };
+    return { data: [], error: result.error, totalQuantity: 0 };
   }
 
   const filteredData = result.data;
@@ -375,9 +375,10 @@ export async function getSbReport(month?: string, year?: number): Promise<{ data
   });
 
   // Convert to array and sort by product name
-  const report = Object.values(groupedByProduct)
+  const report: SalesReportEntry[] = Object.values(groupedByProduct)
     .map((product, index) => ({
       lp: index + 1,
+      sale_date: '', // SB report doesn't use sale_date, but it's required in interface
       product_name: product.name,
       quantity: product.totalQuantity,
       unit: 'szt',

@@ -22,13 +22,13 @@ export default function AdminSupportClient() {
   const [adminNotes, setAdminNotes] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
-  useEffect(() => {
-    loadTickets();
-  }, []);
-
-  useEffect(() => {
-    filterTickets();
-  }, [filterTickets]);
+  const filterTickets = useCallback(() => {
+    if (filterStatus === 'all') {
+      setFilteredTickets(tickets);
+    } else {
+      setFilteredTickets(tickets.filter(t => t.status === filterStatus));
+    }
+  }, [tickets, filterStatus]);
 
   const loadTickets = async () => {
     setLoading(true);
@@ -42,13 +42,13 @@ export default function AdminSupportClient() {
     setLoading(false);
   };
 
-  const filterTickets = useCallback(() => {
-    if (filterStatus === 'all') {
-      setFilteredTickets(tickets);
-    } else {
-      setFilteredTickets(tickets.filter(t => t.status === filterStatus));
-    }
-  }, [tickets, filterStatus]);
+  useEffect(() => {
+    loadTickets();
+  }, []);
+
+  useEffect(() => {
+    filterTickets();
+  }, [filterTickets]);
 
   const handleViewTicket = async (ticketId: string) => {
     setLoading(true);

@@ -24,10 +24,6 @@ export default function UsersClient() {
     loadUsers();
   }, []);
 
-  useEffect(() => {
-    filterUsers();
-  }, [filterUsers]);
-
   const loadUsers = async () => {
     setLoading(true);
     setError(null);

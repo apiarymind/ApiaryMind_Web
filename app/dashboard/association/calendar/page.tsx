@@ -9,12 +9,12 @@ export default function AssociationCalendarPage() {
   const router = useRouter();
 
   useEffect(() => {
-     if (!loading && profile?.role !== 'ADMIN' && profile?.role !== 'SUPER_ADMIN') {
+      if (!loading && profile?.system_role !== 'ADMIN' && profile?.system_role !== 'SUPER_ADMIN') {
        router.push("/dashboard");
     }
   }, [loading, profile, router]);
 
-  if (profile?.role !== 'ADMIN' && profile?.role !== 'SUPER_ADMIN') return null;
+  if (profile?.system_role !== 'ADMIN' && profile?.system_role !== 'SUPER_ADMIN') return null;
 
   return (
     <div>

@@ -18,7 +18,8 @@ export interface UserProfile {
   id: string;
   email: string;
   displayName: string;
-  role: UserRole;
+  role: UserRole; // For backward compatibility (małe litery)
+  system_role?: 'SUPER_ADMIN' | 'ADMIN' | 'USER'; // Z bazy danych (wielkie litery)
   plan: UserPlan;
   associationId?: number;
   avatar_url?: string;
@@ -69,7 +70,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: data.id,
           email: data.email,
           displayName: data.full_name || data.email,
-          role: appRole,
+          role: appRole, // For backward compatibility
+          system_role: data.system_role as 'SUPER_ADMIN' | 'ADMIN' | 'USER' | undefined, // Z bazy (wielkie litery)
           plan: data.subscription_plan || 'FREE',
           avatar_url: data.avatar_url,
         };
