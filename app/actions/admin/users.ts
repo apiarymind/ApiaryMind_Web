@@ -27,7 +27,7 @@ export async function getAllUsers(): Promise<{ data: AdminUser[]; error: string 
   }
 
   const profile = await getCurrentUserProfile(uid);
-  if (!profile || profile.role !== 'super_admin') {
+  if (!profile || profile.role !== 'SUPER_ADMIN') {
     return { data: [], error: 'Forbidden: Only Super Admin can view all users' };
   }
 
@@ -88,7 +88,7 @@ export async function updateUserRole(userId: string, role: string): Promise<{ su
   if (!uid) return { success: false, error: 'Unauthorized' };
 
   const profile = await getCurrentUserProfile(uid);
-  if (!profile || profile.role !== 'super_admin') {
+  if (!profile || profile.role !== 'SUPER_ADMIN') {
     return { success: false, error: 'Forbidden: Only Super Admin can update roles' };
   }
 
@@ -96,8 +96,8 @@ export async function updateUserRole(userId: string, role: string): Promise<{ su
 
   // Map role to system_role
   let systemRole = 'USER';
-  if (role === 'super_admin') systemRole = 'SUPER_ADMIN';
-  else if (role === 'admin') systemRole = 'ADMIN';
+  if (role === 'SUPER_ADMIN') systemRole = 'SUPER_ADMIN';
+  else if (role === 'ADMIN') systemRole = 'ADMIN';
 
   const { error } = await supabase
     .from('profiles')
@@ -118,7 +118,7 @@ export async function updateUserPlan(userId: string, plan: string): Promise<{ su
   if (!uid) return { success: false, error: 'Unauthorized' };
 
   const profile = await getCurrentUserProfile(uid);
-  if (!profile || profile.role !== 'super_admin') {
+  if (!profile || profile.role !== 'SUPER_ADMIN') {
     return { success: false, error: 'Forbidden: Only Super Admin can update plans' };
   }
 
@@ -143,7 +143,7 @@ export async function toggleBetaTester(userId: string, isBeta: boolean, expiresA
   if (!uid) return { success: false, error: 'Unauthorized' };
 
   const profile = await getCurrentUserProfile(uid);
-  if (!profile || profile.role !== 'super_admin') {
+  if (!profile || profile.role !== 'SUPER_ADMIN') {
     return { success: false, error: 'Forbidden: Only Super Admin can manage beta testers' };
   }
 
@@ -175,7 +175,7 @@ export async function blockUser(userId: string, blocked: boolean): Promise<{ suc
   if (!uid) return { success: false, error: 'Unauthorized' };
 
   const profile = await getCurrentUserProfile(uid);
-  if (!profile || profile.role !== 'super_admin') {
+  if (!profile || profile.role !== 'SUPER_ADMIN') {
     return { success: false, error: 'Forbidden: Only Super Admin can block users' };
   }
 

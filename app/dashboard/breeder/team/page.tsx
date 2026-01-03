@@ -78,7 +78,7 @@ export default function BreederTeamPage() {
   const [inviteEmail, setInviteEmail] = useState('');
 
   // Access Control
-  const hasAccess = profile?.plan === 'PRO_PLUS' || profile?.plan === 'BUSINESS' || profile?.role === 'super_admin';
+  const hasAccess = profile?.plan === 'PRO_PLUS' || profile?.plan === 'BUSINESS' || profile?.role === 'SUPER_ADMIN';
 
   if (!hasAccess && profile) { // If profile loaded and no access
     return (

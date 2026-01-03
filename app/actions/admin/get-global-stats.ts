@@ -14,7 +14,7 @@ export async function getGlobalStats(): Promise<GlobalStats> {
   if (!uid) return { totalUsers: 0, totalHives: 0 };
 
   const profile = await getCurrentUserProfile(uid);
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
+  if (!profile || (profile.role !== 'ADMIN' && profile.role !== 'SUPER_ADMIN')) {
     return { totalUsers: 0, totalHives: 0 };
   }
 

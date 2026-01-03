@@ -171,7 +171,7 @@ export async function getAllTickets(): Promise<{ data: SupportTicket[]; error?: 
   if (!uid) return { data: [], error: 'Unauthorized' };
 
   const profile = await getCurrentUserProfile(uid);
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
+  if (!profile || (profile.role !== 'ADMIN' && profile.role !== 'SUPER_ADMIN')) {
     return { data: [], error: 'Forbidden: Only admins can view all tickets' };
   }
 
@@ -194,7 +194,7 @@ export async function getTicket(ticketId: string): Promise<{ data: SupportTicket
   }
 
   const profile = await getCurrentUserProfile(uid);
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
+  const isAdmin = profile?.role === 'ADMIN' || profile?.role === 'SUPER_ADMIN';
 
   // User can only see their own tickets, admin can see all
   if (!isAdmin && ticket.user_id !== uid) {
@@ -216,7 +216,7 @@ export async function updateTicketStatus(
   if (!uid) return { success: false, error: 'Unauthorized' };
 
   const profile = await getCurrentUserProfile(uid);
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
+  if (!profile || (profile.role !== 'ADMIN' && profile.role !== 'SUPER_ADMIN')) {
     return { success: false, error: 'Forbidden: Only admins can update ticket status' };
   }
 
@@ -269,7 +269,7 @@ export async function addTicketReply(
   }
 
   const ticket = tickets[ticketIndex];
-  const isAdmin = profile.role === 'admin' || profile.role === 'super_admin';
+  const isAdmin = profile.role === 'ADMIN' || profile.role === 'SUPER_ADMIN';
 
   // User can only reply to their own tickets, admin can reply to any
   if (!isAdmin && ticket.user_id !== uid) {

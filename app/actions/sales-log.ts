@@ -75,7 +75,7 @@ export async function getSalesLog(ownerId?: string, startDate?: string, endDate?
   const profile = await getCurrentUserProfile(uid);
   
   // "Ślepy Admin" - Check access for non-super-admin users
-  if (profile?.role !== 'super_admin') {
+  if (profile?.role !== 'SUPER_ADMIN') {
     const accessCheck = await canAccessFinancialData(ownerId || uid, 'sales_log');
     if (!accessCheck.allowed) {
       return { data: [], error: accessCheck.reason || 'Forbidden' };
@@ -226,7 +226,7 @@ export async function addSalesLogEntry(
   const profile = await getCurrentUserProfile(uid);
   
   // "Ślepy Admin" - Check access for non-super-admin users
-  if (profile?.role !== 'super_admin') {
+  if (profile?.role !== 'SUPER_ADMIN') {
     const accessCheck = await canAccessFinancialData(uid, 'sales_log');
     if (!accessCheck.allowed) {
       return { success: false, error: accessCheck.reason || 'Forbidden' };

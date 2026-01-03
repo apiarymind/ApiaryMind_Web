@@ -23,7 +23,7 @@ export async function canAccessFinancialData(
   }
 
   // Super Admin always has access
-  if (profile.role === 'super_admin') {
+  if (profile.role === 'SUPER_ADMIN') {
     return { allowed: true };
   }
 
@@ -33,7 +33,7 @@ export async function canAccessFinancialData(
   }
 
   // Regular admin (technical admin, content moderator) - NO ACCESS to financial data
-  if (profile.role === 'admin') {
+  if (profile.role === 'ADMIN') {
     return {
       allowed: false,
       reason: 'Forbidden: Technical admins and content moderators cannot access financial data. Only Super Admin and data owners have access.'
@@ -72,7 +72,7 @@ export async function canAccessAssociationFinances(associationId: string): Promi
   if (!profile) return false;
 
   // Super Admin always has access
-  if (profile.role === 'super_admin') return true;
+  if (profile.role === 'SUPER_ADMIN') return true;
 
   // For association finances, we rely on isAssociationPresidentOrTreasurer check
   // This is just an extra layer

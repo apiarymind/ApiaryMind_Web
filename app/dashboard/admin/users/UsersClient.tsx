@@ -56,10 +56,10 @@ export default function UsersClient() {
     // Role filter
     if (filterRole !== 'all') {
       filtered = filtered.filter(u => {
-        const role = u.system_role?.toLowerCase() || 'user';
-        if (filterRole === 'super_admin') return role === 'super_admin';
-        if (filterRole === 'admin') return role === 'admin';
-        return role === 'user';
+        const role = u.system_role || 'USER';
+        if (filterRole === 'SUPER_ADMIN') return role === 'SUPER_ADMIN';
+        if (filterRole === 'ADMIN') return role === 'ADMIN';
+        return role === 'USER';
       });
     }
 
@@ -77,8 +77,8 @@ export default function UsersClient() {
   const handleEdit = (user: AdminUser) => {
     setEditingId(user.id);
     setEditData({
-      role: user.system_role?.toLowerCase() === 'super_admin' ? 'super_admin' : 
-            user.system_role?.toLowerCase() === 'admin' ? 'admin' : 'user',
+      role: user.system_role?.toLowerCase() === 'SUPER_ADMIN' ? 'SUPER_ADMIN' : 
+            user.system_role?.toLowerCase() === 'ADMIN' ? 'ADMIN' : 'user',
       plan: user.subscription_plan?.toUpperCase() || 'FREE',
       isBeta: user.is_beta_tester || false,
       betaExpires: user.beta_access_expires_at ? new Date(user.beta_access_expires_at).toISOString().split('T')[0] : ''
@@ -104,10 +104,10 @@ export default function UsersClient() {
 
   const getRoleBadge = (role: string | null) => {
     const r = role?.toLowerCase() || 'user';
-    if (r === 'super_admin') {
+    if (r === 'SUPER_ADMIN') {
       return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"><Crown className="w-3 h-3" />Super Admin</span>;
     }
-    if (r === 'admin') {
+    if (r === 'ADMIN') {
       return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30"><Shield className="w-3 h-3" />Admin</span>;
     }
     return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-gray-500/20 text-gray-400 border border-gray-500/30"><User className="w-3 h-3" />Użytkownik</span>;
@@ -178,8 +178,8 @@ export default function UsersClient() {
               className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
               <option value="all">Wszystkie</option>
-              <option value="super_admin">Super Admin</option>
-              <option value="admin">Admin</option>
+              <option value="SUPER_ADMIN">Super Admin</option>
+              <option value="ADMIN">Admin</option>
               <option value="user">Użytkownik</option>
             </select>
           </div>
@@ -234,8 +234,8 @@ export default function UsersClient() {
                         className="px-3 py-1 bg-white/10 border border-white/20 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                       >
                         <option value="user">Użytkownik</option>
-                        <option value="admin">Admin</option>
-                        <option value="super_admin">Super Admin</option>
+                        <option value="ADMIN">Admin</option>
+                        <option value="SUPER_ADMIN">Super Admin</option>
                       </select>
                     ) : (
                       getRoleBadge(user.system_role)

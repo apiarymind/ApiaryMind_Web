@@ -9,12 +9,12 @@ export default function AdminApprovalsPage() {
   const router = useRouter();
 
   useEffect(() => {
-     if (!loading && profile?.role !== 'super_admin') {
+     if (!loading && profile?.role !== 'SUPER_ADMIN') {
        router.push("/dashboard");
     }
   }, [loading, profile, router]);
 
-  if (profile?.role !== 'super_admin') return null;
+  if (profile?.role !== 'SUPER_ADMIN') return null;
 
   return (
     <div>
