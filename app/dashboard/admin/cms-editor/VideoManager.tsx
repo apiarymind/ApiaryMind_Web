@@ -207,16 +207,18 @@ export default function VideoManager() {
             className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl p-4 border border-white/10 dark:border-white/5 flex items-start gap-4"
           >
             {/* Thumbnail */}
-            <div className="flex-shrink-0 w-32 h-20 rounded-lg overflow-hidden bg-black">
+            <div className="flex-shrink-0 w-32 h-20 rounded-lg overflow-hidden bg-black relative">
               {(() => {
                 // Extract YouTube ID from URL
                 const youtubeIdMatch = video.youtube_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
                 const youtubeId = youtubeIdMatch ? youtubeIdMatch[1] : '';
                 return youtubeId ? (
-                  <img
+                  <Image
                     src={`https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`}
                     alt={video.title}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    unoptimized
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-white/30 text-xs">Brak</div>

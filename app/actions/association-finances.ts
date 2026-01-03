@@ -72,7 +72,7 @@ export async function addAssociationFinance(
   const profile = await getCurrentUserProfile(uid);
   
   // "Ślepy Admin" - Block regular admins
-  if (profile && profile.role === 'admin' && profile.role !== 'super_admin') {
+  if (profile && profile.role === 'admin') {
     return { success: false, error: 'Forbidden: Technical admins cannot access financial data' };
   }
 
@@ -123,7 +123,7 @@ export async function updateAssociationFinance(
   const profile = await getCurrentUserProfile(uid);
   
   // "Ślepy Admin" - Block regular admins
-  if (profile && profile.role === 'admin' && profile.role !== 'super_admin') {
+  if (profile && profile.role === 'admin') {
     return { success: false, error: 'Forbidden: Technical admins cannot access financial data' };
   }
 
@@ -176,7 +176,7 @@ export async function deleteAssociationFinance(financeId: string): Promise<{ suc
   const profile = await getCurrentUserProfile(uid);
   
   // "Ślepy Admin" - Block regular admins
-  if (profile && profile.role === 'admin' && profile.role !== 'super_admin') {
+  if (profile && profile.role === 'admin') {
     return { success: false, error: 'Forbidden: Technical admins cannot access financial data' };
   }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
+import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -66,7 +67,7 @@ function LoginForm() {
             <span className="text-3xl font-bold text-amber-950 dark:text-gray-100 tracking-tight">Apiary</span>
             
             <div className="w-10 h-10 relative drop-shadow-md">
-                 <img src="/assets/beeAI-3d-icon.png" alt="Logo" className="w-full h-full object-contain" />
+                 <Image src="/assets/beeAI-3d-icon.png" alt="Logo" width={40} height={40} className="w-full h-full object-contain" />
             </div>
 
             <span className="text-3xl font-bold text-amber-500 dark:text-amber-400 tracking-tight">Mind</span>
