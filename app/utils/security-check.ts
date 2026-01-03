@@ -22,18 +22,19 @@ export async function canAccessFinancialData(
     return { allowed: false, reason: 'Profile not found' };
   }
 
-  // Super Admin always has access
-  if (profile.role === 'SUPER_ADMIN') {
-    return { allowed: true };
+  // Block all administrators from accessing financial data
+  // "Ślepy Admin" - No administrative personnel can access financial data
+  if (profile.system_role === 'SUPER_ADMIN' || profile.system_role === 'ADMIN') {
+    return {
+      allowed: false,
+      reason: 'Forbidden: Administrators cannot access financial data. Only data owners have access.'
+    };
   }
 
   // Owner of the data has access
   if (resourceOwnerId && resourceOwnerId === uid) {
     return { allowed: true };
   }
-
-  // Regular admin (technical admin, content moderator) - NO ACCESS to financial data
-  if (profile.role === 'ADMIN') {
     return {
       allowed: false,
       reason: 'Forbidden: Technical admins and content moderators cannot access financial data. Only Super Admin and data owners have access.'
@@ -71,8 +72,8 @@ export async function canAccessAssociationFinances(associationId: string): Promi
   const profile = await getCurrentUserProfile(uid);
   if (!profile) return false;
 
-  // Super Admin always has access
-  if (profile.role === 'SUPER_ADMIN') return true;
+  // Block all administrators from accessing financial data
+  if (profile.system_role === 'SUPER_ADMIN' || profile.system_role === 'ADMIN') return false;
 
   // For association finances, we rely on isAssociationPresidentOrTreasurer check
   // This is just an extra layer

@@ -46,7 +46,7 @@ export async function toggleBetaBanner(enabled: boolean): Promise<{ success: boo
   }
 
   const profile = await getCurrentUserProfile(uid);
-  if (!profile || (profile.role !== 'ADMIN' && profile.role !== 'SUPER_ADMIN')) {
+  if (!profile || (profile.system_role !== 'ADMIN' && profile.system_role !== 'SUPER_ADMIN')) {
     return { success: false, error: 'Brak uprawnień' };
   }
 

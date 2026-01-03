@@ -76,7 +76,7 @@ export async function updateSurveyBuiltIn(surveyId: number, isBuiltIn: boolean):
   if (!uid) return { success: false, error: 'Unauthorized' };
 
   const profile = await getCurrentUserProfile(uid);
-  if (!profile || (profile.role !== 'ADMIN' && profile.role !== 'SUPER_ADMIN')) {
+  if (!profile || (profile.system_role !== 'ADMIN' && profile.system_role !== 'SUPER_ADMIN')) {
     return { success: false, error: 'Forbidden' };
   }
 
@@ -143,7 +143,7 @@ export async function updateSurvey(
   if (!uid) return { success: false, error: 'Unauthorized' };
 
   const profile = await getCurrentUserProfile(uid);
-  if (!profile || (profile.role !== 'ADMIN' && profile.role !== 'SUPER_ADMIN')) {
+  if (!profile || (profile.system_role !== 'ADMIN' && profile.system_role !== 'SUPER_ADMIN')) {
     return { success: false, error: 'Forbidden' };
   }
 

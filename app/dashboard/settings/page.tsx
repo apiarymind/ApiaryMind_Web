@@ -350,7 +350,7 @@ export default function SettingsPage() {
                 <div className="bg-white/5 border border-white/10 p-6 rounded-xl">
                   <h3 className="text-sm uppercase tracking-wide text-white/80 font-bold mb-2">Saldo EyesCoin</h3>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-extrabold text-white">{watch('eyescoin_balance') || 0}</span>
+                    <span className="text-3xl font-extrabold text-white">{watch('eyes_coin_balance') || 0}</span>
                     <span className="text-sm font-medium text-white/60">EYC</span>
                   </div>
                   <p className="text-sm text-white/70 mt-2">

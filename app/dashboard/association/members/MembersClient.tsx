@@ -91,8 +91,7 @@ export default function MembersClient() {
       'PRESIDENT': 'Prezes',
       'VICE_PRESIDENT': 'Wiceprezes',
       'TREASURER': 'Skarbnik',
-      'SECRETARY': 'Sekretarz',
-      'AUDIT_MEMBER': 'Członek Komisji Rewizyjnej',
+      'AUDIT_COMMITTEE': 'Członek Komisji Rewizyjnej',
       'MEMBER': 'Członek'
     };
     return labels[role] || role;
@@ -160,8 +159,7 @@ export default function MembersClient() {
                 <option value="PRESIDENT">Prezes</option>
                 <option value="VICE_PRESIDENT">Wiceprezes</option>
                 <option value="TREASURER">Skarbnik</option>
-                <option value="SECRETARY">Sekretarz</option>
-                <option value="AUDIT_MEMBER">Członek Komisji Rewizyjnej</option>
+                <option value="AUDIT_COMMITTEE">Członek Komisji Rewizyjnej</option>
               </select>
             </div>
             <div>
@@ -234,8 +232,7 @@ export default function MembersClient() {
                         <option value="PRESIDENT">Prezes</option>
                         <option value="VICE_PRESIDENT">Wiceprezes</option>
                         <option value="TREASURER">Skarbnik</option>
-                        <option value="SECRETARY">Sekretarz</option>
-                        <option value="AUDIT_MEMBER">Członek Komisji Rewizyjnej</option>
+                        <option value="AUDIT_COMMITTEE">Członek Komisji Rewizyjnej</option>
                       </select>
                     ) : (
                       <span className={`inline-flex px-2 py-1 rounded-full text-xs font-bold border ${getRoleBadgeColor(member.role)}`}>

@@ -16,7 +16,7 @@ export async function getVisualCMSPages(): Promise<{ data: CMSPage[]; error?: st
   if (!uid) return { data: [], error: 'Unauthorized' };
 
   const profile = await getCurrentUserProfile(uid);
-  if (!profile || (profile.role !== 'ADMIN' && profile.role !== 'SUPER_ADMIN')) {
+  if (!profile || (profile.system_role !== 'ADMIN' && profile.system_role !== 'SUPER_ADMIN')) {
     return { data: [], error: 'Forbidden' };
   }
 
@@ -122,7 +122,7 @@ export async function saveVisualCMSPage(
   if (!uid) return { success: false, error: 'Unauthorized' };
 
   const profile = await getCurrentUserProfile(uid);
-  if (!profile || (profile.role !== 'ADMIN' && profile.role !== 'SUPER_ADMIN')) {
+  if (!profile || (profile.system_role !== 'ADMIN' && profile.system_role !== 'SUPER_ADMIN')) {
     return { success: false, error: 'Forbidden' };
   }
 
@@ -173,7 +173,7 @@ export async function deleteVisualCMSPage(pageId: string): Promise<{ success: bo
   if (!uid) return { success: false, error: 'Unauthorized' };
 
   const profile = await getCurrentUserProfile(uid);
-  if (!profile || (profile.role !== 'ADMIN' && profile.role !== 'SUPER_ADMIN')) {
+  if (!profile || (profile.system_role !== 'ADMIN' && profile.system_role !== 'SUPER_ADMIN')) {
     return { success: false, error: 'Forbidden' };
   }
 

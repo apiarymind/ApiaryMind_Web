@@ -27,13 +27,16 @@ export async function getAssociationFinances(associationId: string): Promise<{ d
 
   const profile = await getCurrentUserProfile(uid);
   
-  // Security check: Only President, Treasurer, or Super Admin can view finances
-  // "Ślepy Admin" - regular admin (not super_admin) cannot access financial data
-  if (profile?.role !== 'SUPER_ADMIN') {
-    const hasPermission = await isAssociationPresidentOrTreasurer(uid, associationId);
-    if (!hasPermission) {
-      return { data: [], error: 'Forbidden: Only President, Treasurer, or Super Admin can view finances' };
-    }
+  // Security check: Block all administrators from accessing financial data
+  // "Ślepy Admin" - No administrative personnel (ADMIN or SUPER_ADMIN) can view financial data
+  if (profile?.system_role === 'SUPER_ADMIN' || profile?.system_role === 'ADMIN') {
+    return { data: [], error: 'Access Denied: Administrators cannot view financial data.' };
+  }
+  
+  // Check if user is President or Treasurer in the association
+  const hasPermission = await isAssociationPresidentOrTreasurer(uid, associationId);
+  if (!hasPermission) {
+    return { data: [], error: 'Forbidden: Only President or Treasurer can view finances' };
   }
 
   const supabase = createClient();
@@ -71,17 +74,16 @@ export async function addAssociationFinance(
 
   const profile = await getCurrentUserProfile(uid);
   
-  // "Ślepy Admin" - Block regular admins
-  if (profile && profile.role === 'ADMIN') {
-    return { success: false, error: 'Forbidden: Technical admins cannot access financial data' };
+  // Security check: Block all administrators from accessing financial data
+  // "Ślepy Admin" - No administrative personnel (ADMIN or SUPER_ADMIN) can access financial data
+  if (profile && (profile.system_role === 'ADMIN' || profile.system_role === 'SUPER_ADMIN')) {
+    return { success: false, error: 'Access Denied: Administrators cannot access financial data.' };
   }
 
-  // Security check: Only President, Treasurer, or Super Admin
-  if (profile?.role !== 'SUPER_ADMIN') {
-    const hasPermission = await isAssociationPresidentOrTreasurer(uid, associationId);
-    if (!hasPermission) {
-      return { success: false, error: 'Forbidden: Only President or Treasurer can manage finances' };
-    }
+  // Check if user is President or Treasurer in the association
+  const hasPermission = await isAssociationPresidentOrTreasurer(uid, associationId);
+  if (!hasPermission) {
+    return { success: false, error: 'Forbidden: Only President or Treasurer can manage finances' };
   }
 
   const supabase = createClient();
@@ -122,9 +124,10 @@ export async function updateAssociationFinance(
 
   const profile = await getCurrentUserProfile(uid);
   
-  // "Ślepy Admin" - Block regular admins
-  if (profile && profile.role === 'ADMIN') {
-    return { success: false, error: 'Forbidden: Technical admins cannot access financial data' };
+  // Security check: Block all administrators from accessing financial data
+  // "Ślepy Admin" - No administrative personnel (ADMIN or SUPER_ADMIN) can access financial data
+  if (profile && (profile.system_role === 'ADMIN' || profile.system_role === 'SUPER_ADMIN')) {
+    return { success: false, error: 'Access Denied: Administrators cannot access financial data.' };
   }
 
   const supabase = createClient();
@@ -140,12 +143,10 @@ export async function updateAssociationFinance(
     return { success: false, error: 'Finance record not found' };
   }
 
-  // Security check: Only President, Treasurer, or Super Admin
-  if (profile?.role !== 'SUPER_ADMIN') {
-    const hasPermission = await isAssociationPresidentOrTreasurer(uid, finance.association_id);
-    if (!hasPermission) {
-      return { success: false, error: 'Forbidden: Only President or Treasurer can manage finances' };
-    }
+  // Check if user is President or Treasurer in the association
+  const hasPermission = await isAssociationPresidentOrTreasurer(uid, finance.association_id);
+  if (!hasPermission) {
+    return { success: false, error: 'Forbidden: Only President or Treasurer can manage finances' };
   }
 
   const updateData: any = {};
@@ -175,9 +176,10 @@ export async function deleteAssociationFinance(financeId: string): Promise<{ suc
 
   const profile = await getCurrentUserProfile(uid);
   
-  // "Ślepy Admin" - Block regular admins
-  if (profile && profile.role === 'ADMIN') {
-    return { success: false, error: 'Forbidden: Technical admins cannot access financial data' };
+  // Security check: Block all administrators from accessing financial data
+  // "Ślepy Admin" - No administrative personnel (ADMIN or SUPER_ADMIN) can access financial data
+  if (profile && (profile.system_role === 'ADMIN' || profile.system_role === 'SUPER_ADMIN')) {
+    return { success: false, error: 'Access Denied: Administrators cannot access financial data.' };
   }
 
   const supabase = createClient();
@@ -193,12 +195,10 @@ export async function deleteAssociationFinance(financeId: string): Promise<{ suc
     return { success: false, error: 'Finance record not found' };
   }
 
-  // Security check: Only President, Treasurer, or Super Admin
-  if (profile?.role !== 'SUPER_ADMIN') {
-    const hasPermission = await isAssociationPresidentOrTreasurer(uid, finance.association_id);
-    if (!hasPermission) {
-      return { success: false, error: 'Forbidden: Only President or Treasurer can manage finances' };
-    }
+  // Check if user is President or Treasurer in the association
+  const hasPermission = await isAssociationPresidentOrTreasurer(uid, finance.association_id);
+  if (!hasPermission) {
+    return { success: false, error: 'Forbidden: Only President or Treasurer can manage finances' };
   }
 
   const { error } = await supabase

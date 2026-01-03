@@ -29,7 +29,7 @@ const MOCK_TEAM_MEMBERS: BusinessTeamMember[] = [
       email: 'szef@pasieka.pl',
       full_name: 'Janusz Truteń',
       subscription_plan: 'BUSINESS',
-      eyescoin_balance: 1000,
+      eyes_coin_balance: 1000,
       created_at: '',
       updated_at: ''
     }

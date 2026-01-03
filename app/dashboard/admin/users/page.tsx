@@ -10,7 +10,7 @@ export default async function AdminUsersPage() {
   }
 
   const profile = await getCurrentUserProfile(uid);
-  if (!profile || profile.role !== 'SUPER_ADMIN') {
+  if (!profile || profile.system_role !== 'SUPER_ADMIN') {
     redirect('/dashboard');
   }
 

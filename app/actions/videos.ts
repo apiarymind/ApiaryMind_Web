@@ -71,7 +71,7 @@ export async function saveVideos(videos: Video[]): Promise<{ success: boolean; e
   if (!uid) return { success: false, error: 'Unauthorized' };
 
   const profile = await getCurrentUserProfile(uid);
-  if (!profile || (profile.role !== 'ADMIN' && profile.role !== 'SUPER_ADMIN')) {
+  if (!profile || (profile.system_role !== 'ADMIN' && profile.system_role !== 'SUPER_ADMIN')) {
     return { success: false, error: 'Forbidden' };
   }
 

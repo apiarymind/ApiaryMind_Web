@@ -1,32 +1,44 @@
 export type SubscriptionPlan = 'FREE' | 'PLUS' | 'PRO' | 'PRO_PLUS' | 'BUSINESS';
 
-export type AssociationRole = 'PRESIDENT' | 'VICE_PRESIDENT' | 'TREASURER' | 'SECRETARY' | 'AUDIT_MEMBER' | 'MEMBER';
+export type AssociationRole = 'PRESIDENT' | 'VICE_PRESIDENT' | 'TREASURER' | 'AUDIT_COMMITTEE' | 'MEMBER';
 
 export interface Profile {
   id: string;
-  email: string;
+  email?: string;
   full_name?: string;
+  first_name?: string;
+  last_name?: string;
   avatar_url?: string;
   phone_number?: string;
   role?: string; // e.g. 'super_admin', 'admin', 'beekeeper'
+  system_role?: string; // USER-DEFINED type from database
   
   // Company Data
   company_name?: string;
   nip?: string;
-  regon?: string;
-  address_street?: string;
-  zip_code?: string;
+  description?: string;
   city?: string;
+  voivodeship?: string;
+  delivery_info?: string;
+  
+  // Links
+  website_url?: string;
+  facebook_link?: string;
+  allegro_link?: string;
+  olx_link?: string;
   
   // Veterinary Data
   wni_number?: string;
   rhd_number?: string;
   shp_number?: string;
+  kchz_number?: string;
   arimr_ep_number?: string;
   
   // Subscription
   subscription_plan: SubscriptionPlan;
-  eyescoin_balance: number;
+  eyes_coin_balance?: number; // Fixed: schema has eyes_coin_balance not eyescoin_balance
+  is_beta_tester?: boolean;
+  beta_access_expires_at?: string;
   isRhdActive?: boolean; // Derived or stored
   plan?: string; // derived
   
@@ -36,8 +48,9 @@ export interface Profile {
 
 export interface BusinessTeam {
   id: string;
-  name: string;
-  owner_id: string;
+  employer_id?: string; // Fixed: schema has employer_id not owner_id
+  employee_id?: string; // Fixed: schema has employee_id
+  role?: string; // USER-DEFINED type
   created_at: string;
 }
 
@@ -74,19 +87,22 @@ export interface Association {
 
 export interface AssociationFinance {
   id: string;
-  association_id: string;
+  association_id?: string;
+  title: string; // Fixed: schema has title not just description
   amount: number;
-  type: 'INCOME' | 'EXPENSE';
-  description: string;
-  date: string;
-  created_at: string;
+  transaction_date?: string; // Fixed: schema has transaction_date not date
+  type?: string; // Fixed: schema shows type as text, not enum
+  description?: string;
+  created_by?: string;
+  created_at?: string;
 }
 
 export interface Inspection {
   id: string;
-  hive_id: string;
+  hive_id?: string;
+  queen_id?: string; // Added: schema shows queen_id column
   user_id?: string; // Foreign key to profiles
-  inspection_date: string; // timestamp
+  inspection_date?: string; // timestamp
   notes?: string;
   
   // Expanded fields based on Schema Map
@@ -107,7 +123,6 @@ export interface Inspection {
   treatment_applied?: string;
   next_visit_tasks?: string[]; // array of strings
   
-  batch_id?: string;
   created_at?: string;
   // Joins
   performed_by?: Profile;
