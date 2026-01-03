@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { getVideos } from "@/app/actions/videos";
 
 interface Video {
@@ -57,11 +58,12 @@ export default function VideoSection() {
               <div className="aspect-video bg-black flex items-center justify-center relative">
                  {youtubeId ? (
                    <>
-                     <img 
+                     <Image 
                        src={`https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`} 
                        alt={video.title}
-                       className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-                       onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/320x180?text=Video")}
+                       fill
+                       className="object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                       unoptimized
                      />
                      <div className="absolute inset-0 flex items-center justify-center">
                        <div className="w-12 h-12 bg-amber-500/80 rounded-full flex items-center justify-center text-brown-900 pl-1 group-hover:scale-110 transition-transform">

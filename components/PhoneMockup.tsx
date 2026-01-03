@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react';
+import Image from 'next/image';
 
 interface PhoneMockupProps {
   screenshot: string;
@@ -9,8 +9,6 @@ interface PhoneMockupProps {
 }
 
 export function PhoneMockup({ screenshot, title, color }: PhoneMockupProps) {
-  const [imageError, setImageError] = useState(false);
-
   return (
     <div className="flex flex-col items-center">
       {/* Phone Mockup Frame */}
@@ -23,21 +21,13 @@ export function PhoneMockup({ screenshot, title, color }: PhoneMockupProps) {
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl z-10"></div>
             {/* Screen Content */}
             <div className="aspect-[9/19.5] bg-gradient-to-br from-gray-900 to-black relative overflow-hidden">
-              {!imageError ? (
-                <img 
-                  src={screenshot} 
-                  alt={title}
-                  className="w-full h-full object-cover"
-                  onError={() => setImageError(true)}
-                />
-              ) : (
-                <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${color}`}>
-                  <div className="text-center p-4">
-                    <div className="text-4xl mb-2">📱</div>
-                    <div className="text-white/60 text-sm">Screenshot aplikacji</div>
-                  </div>
-                </div>
-              )}
+              <Image 
+                src={screenshot} 
+                alt={title}
+                fill
+                className="object-cover"
+                unoptimized
+              />
             </div>
           </div>
         </div>
@@ -46,5 +36,6 @@ export function PhoneMockup({ screenshot, title, color }: PhoneMockupProps) {
     </div>
   );
 }
+
 
 

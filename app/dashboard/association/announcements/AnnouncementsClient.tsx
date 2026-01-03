@@ -164,7 +164,7 @@ export default function AnnouncementsClient({
           <div className="text-white/60">Ładowanie...</div>
         ) : notifications.length === 0 ? (
           <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl p-6 border border-white/10 dark:border-white/5 text-center text-white/60">
-            Brak powiadomień. Kliknij "Wyślij Powiadomienie", aby wysłać pierwszą wiadomość do członków.
+            Brak powiadomień. Kliknij &quot;Wyślij Powiadomienie&quot;, aby wysłać pierwszą wiadomość do członków.
           </div>
         ) : (
           notifications.map((notification) => (
@@ -209,4 +209,5 @@ export default function AnnouncementsClient({
     </div>
   );
 }
+
 

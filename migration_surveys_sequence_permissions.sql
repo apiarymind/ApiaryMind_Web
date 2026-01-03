@@ -11,3 +11,4 @@ GRANT USAGE, SELECT ON SEQUENCE surveys_id_seq TO anon;
 -- Make sure the sequence owner has proper permissions
 -- This ensures the sequence can be used by the table's default value
 
+

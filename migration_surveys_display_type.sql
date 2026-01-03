@@ -7,3 +7,4 @@ ADD COLUMN IF NOT EXISTS display_type TEXT DEFAULT 'banner' CHECK (display_type 
 -- Update existing surveys to have banner as default
 UPDATE surveys SET display_type = 'banner' WHERE display_type IS NULL;
 
+

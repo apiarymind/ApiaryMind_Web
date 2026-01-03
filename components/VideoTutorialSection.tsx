@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 // Mock data
 const mockVideos = [
@@ -21,10 +22,12 @@ export default function VideoTutorialSection() {
               className="aspect-video bg-black relative cursor-pointer"
               onClick={() => setActiveVideo(video.youtubeId)}
             >
-              <img 
+              <Image 
                 src={`https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`} 
                 alt={video.title} 
-                className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                fill
+                className="object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                unoptimized
               />
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-12 h-12 bg-amber-500/80 rounded-full flex items-center justify-center pl-1 group-hover:scale-110 transition-transform">

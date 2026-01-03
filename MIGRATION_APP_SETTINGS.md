@@ -64,3 +64,4 @@ Jeśli nie można utworzyć tabeli, można użyć:
 ⚠️ **WYMAGANA MIGRACJA** - Bez tej tabeli funkcje CMS nie będą działać poprawnie.
 
 
+

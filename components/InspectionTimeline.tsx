@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Inspection } from '@/types/supabase';
 import { 
   Activity, 
@@ -244,9 +245,9 @@ export function InspectionTimeline({ inspections }: InspectionTimelineProps) {
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-gray-400 font-medium">Przegląd:</span>
                             <div className="flex items-center gap-1.5">
-                                <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex items-center justify-center text-[10px] font-bold text-gray-500">
+                                <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex items-center justify-center text-[10px] font-bold text-gray-500 relative">
                                     {performerAvatar ? (
-                                        <img src={performerAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                                        <Image src={performerAvatar} alt="Avatar" fill className="object-cover" />
                                     ) : (
                                         <span>{performerInitials}</span>
                                     )}

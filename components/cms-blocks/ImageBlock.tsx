@@ -22,12 +22,26 @@ export function ImageBlockRenderer({ block, preview = false }: Props) {
       <div className={`max-w-6xl mx-auto flex ${alignClass}`}>
         <figure>
           <div className="relative" style={{ width: width || 'auto', height: height || 'auto' }}>
-            <img
-              src={src}
-              alt={alt}
-              className="rounded-xl shadow-lg"
-              style={{ width: width || '100%', height: height || 'auto', objectFit: 'cover' }}
-            />
+            {width && height ? (
+              <Image
+                src={src}
+                alt={alt || ''}
+                width={typeof width === 'string' ? parseInt(width) : width}
+                height={typeof height === 'string' ? parseInt(height) : height}
+                className="rounded-xl shadow-lg object-cover"
+                unoptimized
+              />
+            ) : (
+              <div className="relative w-full" style={{ minHeight: '200px' }}>
+                <Image
+                  src={src}
+                  alt={alt || ''}
+                  fill
+                  className="rounded-xl shadow-lg object-cover"
+                  unoptimized
+                />
+              </div>
+            )}
           </div>
           {caption && (
             <figcaption className="text-sm text-amber-900/60 dark:text-gray-400 mt-2 text-center">
@@ -39,5 +53,6 @@ export function ImageBlockRenderer({ block, preview = false }: Props) {
     </section>
   );
 }
+
 
 
