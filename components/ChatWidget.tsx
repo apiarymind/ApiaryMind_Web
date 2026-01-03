@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { X, Send, Sparkles } from "lucide-react";
 
 type Message = {
@@ -58,9 +59,9 @@ export default function ChatWidget() {
           {/* NAGŁÓWEK - PSZCZOŁA (Zamiast robota) */}
           <div className="p-4 flex items-center justify-between bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border-b border-amber-900/10">
             <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center border border-amber-500/30 overflow-hidden p-1 shadow-sm">
+                <div className="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center border border-amber-500/30 overflow-hidden p-1 shadow-sm relative">
                     {/* IKONA: Bee Asset */}
-                    <img src="/assets/beeAI-3d-icon.png" alt="AI Pszczoła" className="w-full h-full object-cover" />
+                    <Image src="/assets/beeAI-3d-icon.png" alt="AI Pszczoła" fill className="object-cover" />
                 </div>
                 <div>
                     <h3 className="font-bold text-amber-950 dark:text-white flex items-center gap-2 text-sm">
@@ -134,7 +135,7 @@ export default function ChatWidget() {
         className="group relative w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 shadow-[0_4px_20px_rgba(245,158,11,0.4)] hover:shadow-[0_4px_25px_rgba(245,158,11,0.6)] flex items-center justify-center transition-all hover:scale-110 active:scale-95 z-50"
       >
         <div className={`transition-all duration-300 absolute inset-0 flex items-center justify-center ${isOpen ? 'opacity-0 rotate-90 scale-50' : 'opacity-100 rotate-0 scale-100'}`}>
-            <img src="/assets/beeAI-3d-icon.png" alt="Chat" className="w-8 h-8 object-contain drop-shadow-md" />
+            <Image src="/assets/beeAI-3d-icon.png" alt="Chat" width={32} height={32} className="object-contain drop-shadow-md" />
         </div>
         <X size={24} className={`text-white transition-all duration-300 absolute ${isOpen ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50'}`} />
       </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "../lib/AuthContext";
 import { ThemeToggle } from "@/app/components/ui/ThemeToggle";
 import { useState } from "react";
@@ -75,7 +76,7 @@ export default function Header() {
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-1 font-bold text-xl tracking-tight no-underline">
             <span className="text-amber-950 dark:text-white">Apiary</span>
-            <img src="/assets/bee-3d-icon.png" alt="Logo" width={32} height={32} />
+            <Image src="/assets/bee-3d-icon.png" alt="Logo" width={32} height={32} />
             <span className="text-amber-500">Mind</span>
           </Link>
         </div>

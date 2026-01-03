@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AssociationFinance, getAssociationFinances, addAssociationFinance, updateAssociationFinance, deleteAssociationFinance } from '@/app/actions/association-finances';
 import { Plus, Edit2, Trash2, Save, X, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
 
@@ -22,11 +22,7 @@ export default function FinancesClient({ associationId }: FinancesClientProps) {
     description: ''
   });
 
-  useEffect(() => {
-    loadFinances();
-  }, [associationId]);
-
-  const loadFinances = async () => {
+  const loadFinances = useCallback(async () => {
     setLoading(true);
     setError(null);
     const result = await getAssociationFinances(associationId);
@@ -36,7 +32,11 @@ export default function FinancesClient({ associationId }: FinancesClientProps) {
       setFinances(result.data);
     }
     setLoading(false);
-  };
+  }, [associationId]);
+
+  useEffect(() => {
+    loadFinances();
+  }, [loadFinances]);
 
   const handleAdd = async () => {
     if (!formData.title || !formData.amount || !formData.transaction_date) {

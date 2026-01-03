@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { X, Send, Sparkles } from "lucide-react";
 
 type Message = {
@@ -60,8 +61,8 @@ export default function AIChat() {
           <div className="p-4 flex items-center justify-between bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-b border-amber-900/5 dark:border-white/5">
             <div className="flex items-center gap-3">
                 {/* POPRAWKA 2: Usunięto szare tło (bg-white/50) i ramkę */}
-                <div className="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden transition-transform hover:scale-105">
-                    <img src="/assets/beeAI-3d-icon.png" alt="AI Pszczoła" className="w-full h-full object-cover drop-shadow-sm" />
+                <div className="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden transition-transform hover:scale-105 relative">
+                    <Image src="/assets/beeAI-3d-icon.png" alt="AI Pszczoła" fill className="object-cover drop-shadow-sm" />
                 </div>
                 <div>
                     <h3 className="font-bold text-amber-950 dark:text-white flex items-center gap-2 text-base">
@@ -136,7 +137,7 @@ export default function AIChat() {
       >
         {/* Ikona pszczoły */}
         <div className={`transition-all duration-500 absolute inset-0 flex items-center justify-center ${isOpen ? 'opacity-0 rotate-90 scale-50' : 'opacity-100 rotate-0 scale-100 drop-shadow-md'}`}>
-            <img src="/assets/beeAI-3d-icon.png" alt="Chat" className="w-9 h-9 object-contain" />
+            <Image src="/assets/beeAI-3d-icon.png" alt="Chat" width={36} height={36} className="object-contain" />
         </div>
         
         {/* Ikona zamknięcia (X) - kolor dopasowuje się do tła */}
