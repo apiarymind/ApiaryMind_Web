@@ -10,7 +10,7 @@ export async function updateGlobalSetting(key: string, value: string): Promise<{
   if (!uid) return { success: false, error: 'Unauthorized' };
 
   const profile = await getCurrentUserProfile(uid);
-  if (!profile || (profile.role !== 'ADMIN' && profile.role !== 'SUPER_ADMIN')) {
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
     return { success: false, error: 'Forbidden' };
   }
 
