@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   getAllTickets,
   getTicket,
@@ -28,7 +28,7 @@ export default function AdminSupportClient() {
 
   useEffect(() => {
     filterTickets();
-  }, [tickets, filterStatus]);
+  }, [filterTickets]);
 
   const loadTickets = async () => {
     setLoading(true);
@@ -42,13 +42,13 @@ export default function AdminSupportClient() {
     setLoading(false);
   };
 
-  const filterTickets = () => {
+  const filterTickets = useCallback(() => {
     if (filterStatus === 'all') {
       setFilteredTickets(tickets);
     } else {
       setFilteredTickets(tickets.filter(t => t.status === filterStatus));
     }
-  };
+  }, [tickets, filterStatus]);
 
   const handleViewTicket = async (ticketId: string) => {
     setLoading(true);

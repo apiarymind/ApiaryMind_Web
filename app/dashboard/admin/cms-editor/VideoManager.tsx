@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Video, getVideos, createVideo, updateVideo, deleteVideo } from '@/app/actions/videos';
 import { Plus, Edit2, Trash2, Eye, EyeOff, ArrowUp, ArrowDown, Save, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';

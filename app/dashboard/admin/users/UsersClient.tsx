@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AdminUser, getAllUsers, updateUserRole, updateUserPlan, toggleBetaTester } from '@/app/actions/admin/users';
 import { Search, Edit2, Save, X, Crown, Shield, User, Star, Filter } from 'lucide-react';
 
@@ -26,7 +26,7 @@ export default function UsersClient() {
 
   useEffect(() => {
     filterUsers();
-  }, [users, searchTerm, filterRole, filterPlan]);
+  }, [filterUsers]);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -40,7 +40,7 @@ export default function UsersClient() {
     setLoading(false);
   };
 
-  const filterUsers = () => {
+  const filterUsers = useCallback(() => {
     let filtered = [...users];
 
     // Search filter
@@ -72,7 +72,7 @@ export default function UsersClient() {
     }
 
     setFilteredUsers(filtered);
-  };
+  }, [users, searchTerm, filterRole, filterPlan]);
 
   const handleEdit = (user: AdminUser) => {
     setEditingId(user.id);

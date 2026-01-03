@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { submitSurveyResponse, getSurveyQuestions, getSurveyResultsPublic, SurveyQuestion } from '@/app/actions/surveys-builtin';
 import { Check, Star, X } from 'lucide-react';
 
@@ -21,7 +21,7 @@ export default function BuiltInSurveyForm({ surveyId, question, onClose }: Built
   const [loadingResults, setLoadingResults] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
 
-  const loadResults = async (questionId?: string) => {
+  const loadResults = useCallback(async (questionId?: string) => {
     const qId = questionId || (questions.length > 0 ? questions[0].id : null);
     if (!qId) {
       console.error('No question ID available');
@@ -44,7 +44,7 @@ export default function BuiltInSurveyForm({ surveyId, question, onClose }: Built
     } finally {
       setLoadingResults(false);
     }
-  };
+  }, [surveyId, questions]);
 
   // Get or create session ID for anonymous users
   useEffect(() => {
@@ -77,7 +77,7 @@ export default function BuiltInSurveyForm({ surveyId, question, onClose }: Built
       setLoading(false);
     };
     loadQuestions();
-  }, [surveyId]);
+  }, [surveyId, loadResults]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
