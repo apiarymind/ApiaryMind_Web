@@ -1,28 +1,22 @@
-"use client";
+import { getSessionUid } from '@/app/actions/auth-session';
+import { getCurrentUserProfile } from '@/app/actions/get-user';
+import { redirect } from 'next/navigation';
+import UsersClient from './UsersClient';
 
-import { useAuth } from "../../../../lib/AuthContext";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+export default async function AdminUsersPage() {
+  const uid = await getSessionUid();
+  if (!uid) {
+    redirect('/login');
+  }
 
-export default function AdminUsersPage() {
-  const { profile, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-     if (!loading && profile?.role !== 'super_admin') {
-       router.push("/dashboard");
-    }
-  }, [loading, profile, router]);
-
-  if (profile?.role !== 'super_admin') return null;
+  const profile = await getCurrentUserProfile(uid);
+  if (!profile || profile.role !== 'super_admin') {
+    redirect('/dashboard');
+  }
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-amber-500 mb-6">Zarządzanie Użytkownikami</h1>
-      <div className="bg-brown-800 rounded-xl border border-brown-700 p-6">
-        <p className="text-amber-100">Lista użytkowników (Stub)</p>
-        {/* Implement user table here fetching from /users */}
-      </div>
+    <div className="space-y-6">
+      <UsersClient />
     </div>
   );
 }

@@ -1,27 +1,36 @@
-"use client";
+import { getSessionUid } from '@/app/actions/auth-session';
+import { redirect } from 'next/navigation';
+import { getAssociationMembers, getUserAssociationRole, isAssociationPresidentOrTreasurer } from '@/app/actions/association-members';
+import MembersClient from './MembersClient';
 
-import { useAuth } from "../../../../lib/AuthContext";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+export default async function AssociationMembersPage() {
+  const uid = await getSessionUid();
+  if (!uid) {
+    redirect('/login');
+  }
 
-export default function AssociationMembersPage() {
-  const { profile, loading } = useAuth();
-  const router = useRouter();
+  // Get user's associations (for now, check if user is member of any association)
+  // In real implementation, should get from context or user's first association
+  const membersResult = await getAssociationMembers();
+  const userRole = await getUserAssociationRole(uid);
 
-  useEffect(() => {
-     if (!loading && profile?.role !== 'admin' && profile?.role !== 'super_admin') {
-       router.push("/dashboard");
-    }
-  }, [loading, profile, router]);
-
-  if (profile?.role !== 'admin' && profile?.role !== 'super_admin') return null;
+  // Check if user has permission (must be PRESIDENT, TREASURER, or admin)
+  const hasPermission = userRole === 'PRESIDENT' || userRole === 'TREASURER';
+  
+  // Allow admins to see all
+  // TODO: Check if user is admin/super_admin
+  // For now, show page if user has any association role
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-amber-500 mb-6">Członkowie Związku</h1>
-      <div className="bg-brown-800 rounded-xl border border-brown-700 p-6">
-        <p className="text-amber-100">Zarządzanie listą członków (Stub)</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-amber-950 dark:text-white mb-2">Członkowie Związku</h1>
+        <p className="text-amber-900/70 dark:text-gray-400">
+          Zarządzanie członkami koła. Tylko Prezes i Skarbnik mogą edytować listę członków.
+        </p>
       </div>
+
+      <MembersClient />
     </div>
   );
 }

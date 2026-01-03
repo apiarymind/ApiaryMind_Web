@@ -81,6 +81,18 @@ export default function DashboardSidebar({ userProfile, newsContent, newsPositio
           Magazyn
         </Link>
         <Link 
+          href="/dashboard/beekeeper/import"
+          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/beekeeper/import') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
+        >
+          Import Danych
+        </Link>
+        <Link 
+          href="/dashboard/marketplace"
+          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/marketplace') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
+        >
+          Marketplace
+        </Link>
+        <Link 
           href="/dashboard/beekeeper/reports"
           className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/beekeeper/reports') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
         >
@@ -91,6 +103,47 @@ export default function DashboardSidebar({ userProfile, newsContent, newsPositio
           className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/beekeeper/beta') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
         >
           Beta Testy
+        </Link>
+        {(plan === 'PLUS' || plan === 'PRO' || plan === 'PRO_PLUS' || plan === 'BUSINESS') && (
+          <Link 
+            href="/dashboard/support"
+            className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/support') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
+          >
+            Wsparcie Techniczne
+          </Link>
+        )}
+
+        {/* ASSOCIATION Menu - For association members */}
+        <div className="pt-6 px-4 pb-2 text-[10px] font-bold text-blue-400/80 uppercase tracking-widest">ZWIĄZEK / KOŁO</div>
+        <Link 
+          href="/dashboard/association"
+          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/association') && pathname === '/dashboard/association' ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
+        >
+          Pulpit Związku
+        </Link>
+        <Link 
+          href="/dashboard/association/members"
+          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/association/members') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
+        >
+          Członkowie
+        </Link>
+        <Link 
+          href="/dashboard/association/announcements"
+          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/association/announcements') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
+        >
+          Ogłoszenia
+        </Link>
+        <Link 
+          href="/dashboard/association/calendar"
+          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/association/calendar') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
+        >
+          Kalendarz
+        </Link>
+        <Link 
+          href="/dashboard/association/finances"
+          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/association/finances') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
+        >
+          Finanse
         </Link>
 
         {/* BREEDER Menu - For PRO_PLUS/BUSINESS */}
@@ -129,16 +182,28 @@ export default function DashboardSidebar({ userProfile, newsContent, newsPositio
               Zatwierdzenia
             </Link>
             <Link 
+              href="/dashboard/admin/surveys"
+              className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/admin/surveys') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
+            >
+              Ankiety
+            </Link>
+            <Link 
               href="/dashboard/admin/cms-editor"
               className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/admin/cms-editor') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
             >
               CMS Editor
             </Link>
-            <Link 
+            <Link
               href="/dashboard/admin/configuration"
               className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/admin/configuration') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
             >
               Konfiguracja
+            </Link>
+            <Link
+              href="/dashboard/admin/support"
+              className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/admin/support') ? 'bg-primary text-brown-900 font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
+            >
+              Zgłoszenia Wsparcia
             </Link>
           </>
         )}

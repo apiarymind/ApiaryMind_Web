@@ -4,8 +4,10 @@ import PricingTable from "../../components/PricingTable";
 import Link from "next/link";
 import { 
   Hexagon, ShieldCheck, BarChart3, FlaskConical, 
-  Mic, Dna, Moon, Gift, ArrowRight 
+  Mic, Dna, Moon, Gift, ArrowRight
 } from "lucide-react";
+import { isBetaBannerEnabled } from "@/app/actions/cms-features";
+import SurveyBanner from "@/app/components/SurveyBanner";
 
 export async function generateStaticParams() {
   return [{ slug: 'demo' }, { slug: 'regulamin' }, { slug: 'polityka-prywatnosci' }, { slug: 'landing' }];
@@ -16,14 +18,24 @@ export default async function DynamicPage({ params }: { params: { slug: string }
 
   // --- 1. LANDING PAGE CONFIGURATION ---
   if (params.slug === 'landing') {
+    const betaBannerEnabled = await isBetaBannerEnabled();
+    const sections: any[] = [
+      { id: 'hero', type: 'HERO' },
+      { id: 'features', type: 'FEATURES' },
+      { id: 'pricing', type: 'PRICING' }
+    ];
+    
+    // Add BETA_PROMO only if enabled
+    if (betaBannerEnabled) {
+      sections.push({ id: 'promo', type: 'BETA_PROMO' });
+    }
+    
+    // Add SURVEY section after pricing
+    sections.push({ id: 'survey', type: 'SURVEY' });
+    
     page = {
       title: 'Witaj w ApiaryMind',
-      sections: [
-        { id: 'hero', type: 'HERO' },
-        { id: 'features', type: 'FEATURES' },
-        { id: 'pricing', type: 'PRICING' },
-        { id: 'promo', type: 'BETA_PROMO' }
-      ]
+      sections
     };
   } 
   
@@ -130,10 +142,10 @@ export default async function DynamicPage({ params }: { params: { slug: string }
                         Zarządzaj głosowo i miej realny wpływ na rozwój narzędzia.
                       </p>
                       
-                      <div className="flex justify-center">
+                      <div className="flex flex-col sm:flex-row justify-center gap-4">
                         <Link 
                           href="/beta" 
-                          className="group relative px-6 py-3 md:px-8 md:py-4 bg-gradient-to-r from-amber-600 to-amber-500 text-white font-bold text-base md:text-lg rounded-xl transition-all hover:scale-105 shadow-lg flex items-center gap-2 overflow-hidden"
+                          className="group relative px-6 py-3 md:px-8 md:py-4 bg-gradient-to-r from-amber-600 to-amber-500 text-white font-bold text-base md:text-lg rounded-xl transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 overflow-hidden"
                         >
                           <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                           <FlaskConical size={20} className="md:w-6 md:h-6 animate-pulse" />
@@ -153,7 +165,8 @@ export default async function DynamicPage({ params }: { params: { slug: string }
                         <p className="text-sm md:text-base text-amber-900/60 dark:text-white/60">Tworzymy narzędzie, którego brakowało na rynku.</p>
                     </div>
                     
-                    {/* Grid automatically becomes 1 column on mobile */}
+
+                    {/* Feature Cards Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                        {[
                          { icon: Mic, title: "Sterowanie Głosem", desc: "Pracuj bez dotykania ekranu. Dyktuj notatki i oceny offline.", color: "text-amber-600 dark:text-amber-500" },
@@ -188,20 +201,19 @@ export default async function DynamicPage({ params }: { params: { slug: string }
             case 'BETA_PROMO':
                 return (
                   <div key={section.id} className="max-w-5xl mx-auto px-4 md:px-6 pb-16 md:pb-24 pt-8 md:pt-10">
-                    <div className="relative rounded-3xl p-6 md:p-12 overflow-hidden text-center border
-                                    bg-gradient-to-br from-amber-500/10 to-yellow-500/5 border-amber-500/20
-                                    dark:from-amber-900/20 dark:to-black/40 dark:border-amber-500/30">
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] md:w-[300px] h-[200px] md:h-[300px] bg-amber-500/20 blur-[100px] rounded-full pointer-events-none" />
+                    <div className="relative rounded-2xl p-6 md:p-12 overflow-hidden text-center border backdrop-blur-md transition-colors
+                                    bg-white/60 border-amber-900/10 text-amber-900/80
+                                    dark:bg-white/5 dark:border-white/10 dark:text-white/70">
                         <div className="relative z-10 flex flex-col items-center">
-                            <div className="bg-amber-500 text-black font-bold text-[10px] md:text-xs px-3 py-1 rounded-full mb-4 md:mb-6 flex items-center gap-2">
+                            <div className="bg-amber-500 text-black font-bold text-[10px] md:text-xs px-3 py-1 rounded-full mb-4 md:mb-6 flex items-center gap-2 shadow-lg">
                                 <Gift size={12} className="md:w-3.5 md:h-3.5" /> OFERTA SPECJALNA
                             </div>
-                            <h2 className="text-2xl md:text-5xl font-bold mb-4 md:mb-6 text-amber-950 dark:text-white">Zostań Pionierem ApiaryMind</h2>
-                            <p className="text-base md:text-xl max-w-2xl mx-auto mb-6 md:mb-8 text-amber-900/80 dark:text-gray-300">
+                            <h2 className="text-2xl md:text-5xl font-bold mb-4 md:mb-6 text-amber-950 dark:text-white drop-shadow-sm">Zostań Pionierem ApiaryMind</h2>
+                            <p className="text-base md:text-xl max-w-2xl mx-auto mb-6 md:mb-8 text-amber-900/80 dark:text-white/70">
                                 Wersja Beta to moment, w którym Twój głos liczy się najbardziej. 
                                 <br/>Dla <span className="text-amber-600 dark:text-amber-400 font-bold">50 wybranych testerów</span> przygotowaliśmy:
                             </p>
-                            <div className="mb-8 md:mb-10 p-4 md:p-6 rounded-2xl bg-white/50 dark:bg-black/50 border border-amber-500/30 backdrop-blur-sm">
+                            <div className="mb-8 md:mb-10 p-4 md:p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20">
                                 <span className="text-3xl md:text-5xl font-black text-amber-600 dark:text-amber-500 tracking-tight">2 LATA</span>
                                 <div className="text-xs md:text-sm font-bold uppercase tracking-widest text-amber-900/60 dark:text-white/60 mt-1 md:mt-2">Subskrypcji PRO+ Za Darmo</div>
                             </div>
@@ -210,6 +222,14 @@ export default async function DynamicPage({ params }: { params: { slug: string }
                             </Link>
                         </div>
                     </div>
+                  </div>
+                );
+            
+            // --- SURVEY SECTION ---
+            case 'SURVEY':
+                return (
+                  <div key={section.id}>
+                    <SurveyBanner />
                   </div>
                 );
 

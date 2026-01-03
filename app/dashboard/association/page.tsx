@@ -20,6 +20,11 @@ export default function AssociationDashboard() {
            <p className="text-amber-200/60 mb-4">Nadchodzące wydarzenia i szkolenia.</p>
            <Link href="/dashboard/association/calendar" className="btn-secondary text-sm">Zobacz</Link>
         </div>
+        <div className="bg-brown-800 p-6 rounded-xl border border-brown-700">
+           <h3 className="text-xl font-bold text-amber-100 mb-2">Finanse</h3>
+           <p className="text-amber-200/60 mb-4">Ewidencja składek i wpłat (tylko Prezes/Skarbnik).</p>
+           <Link href="/dashboard/association/finances" className="btn-secondary text-sm">Zarządzaj</Link>
+        </div>
       </div>
     </div>
   );

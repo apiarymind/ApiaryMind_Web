@@ -1,8 +1,14 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { User } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
+
+// Define User type locally to avoid ESM import issues
+type User = {
+  id: string;
+  email?: string;
+  [key: string]: any;
+};
 
 // Define user roles and plan types
 export type UserRole = "super_admin" | "admin" | "user";

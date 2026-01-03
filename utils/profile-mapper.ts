@@ -6,7 +6,8 @@ export type RawProfile = {
   system_role: string | null; // Changed to system_role from DB
   role?: string | null; // Keep for backward compat if needed, but primary is system_role
   rhd_number: string | null;
-  sb_number: string | null;
+  shp_number: string | null;
+  wni_number?: string | null;
   vet_number: string | null;
   sanepid_number: string | null;
 };
@@ -48,10 +49,10 @@ export function normalizeProfile(raw: RawProfile): UserProfile {
     }
   }
 
-  // 2. RHD/SB Logic (Marketplace Guard)
-  // User allows selling if RHD OR SB number is present in DB
+  // 2. RHD/SHP Logic (Marketplace Guard)
+  // User allows selling if RHD OR SHP number is present in DB
   const hasRhd = !!(raw.rhd_number && raw.rhd_number.length > 0);
-  const hasSb = !!(raw.sb_number && raw.sb_number.length > 0);
+  const hasShp = !!(raw.shp_number && raw.shp_number.length > 0);
 
   return {
     id: raw.id,
@@ -60,7 +61,7 @@ export function normalizeProfile(raw: RawProfile): UserProfile {
     plan: cleanPlan,
     role: cleanRole,
     rhd: raw.rhd_number,
-    sb: raw.sb_number,
-    isRhdActive: hasRhd || hasSb,
+    sb: raw.shp_number, // Keep 'sb' name in UserProfile for backward compatibility
+    isRhdActive: hasRhd || hasShp,
   };
 }

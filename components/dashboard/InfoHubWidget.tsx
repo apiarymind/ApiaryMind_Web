@@ -18,13 +18,13 @@ export const InfoHubWidget = ({ systemMessages, announcements }: InfoHubWidgetPr
       <div className="flex-1 overflow-y-auto space-y-4 max-h-[300px] pr-1">
           {/* System Messages */}
           {systemMessages.map(msg => (
-              <div key={msg.id} className="bg-yellow-100/50 dark:bg-yellow-900/20 p-3 rounded-l border-l-4 border-yellow-500">
-                  <h4 className="font-bold text-xs uppercase text-yellow-800 dark:text-yellow-200 mb-1 flex items-center gap-2">
+              <div key={msg.id} className="bg-yellow-100/50 dark:bg-amber-900/30 p-3 rounded-l border-l-4 border-yellow-500 dark:border-amber-500">
+                  <h4 className="font-bold text-xs uppercase text-yellow-800 dark:text-amber-300 mb-1 flex items-center gap-2">
                      <span>SYSTEM</span>
                      {msg.priority === 'CRITICAL' && <span className="text-[10px] bg-red-500 text-white px-1 rounded">PILNE</span>}
                   </h4>
-                  <p className="text-sm font-bold text-text-dark dark:text-amber-100">{msg.title}</p>
-                  <p className="text-xs text-text-dark/70 dark:text-amber-200/70 mt-1">{msg.content}</p>
+                  <p className="text-sm font-bold text-text-dark dark:text-amber-300">{msg.title}</p>
+                  <p className="text-xs text-text-dark/70 dark:text-amber-200/90 mt-1">{msg.content}</p>
               </div>
           ))}
 

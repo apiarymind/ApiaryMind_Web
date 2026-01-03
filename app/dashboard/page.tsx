@@ -9,6 +9,7 @@ import {
   getAssociationAnnouncements 
 } from '@/app/actions/dashboard-widgets';
 import { getDashboardOverview } from '@/app/actions/get-dashboard-overview';
+import { getChartData } from '@/app/actions/get-chart-data';
 
 import Link from "next/link";
 import { redirect } from 'next/navigation';
@@ -19,6 +20,7 @@ import { WithdrawalGuardWidget } from '@/components/dashboard/WithdrawalGuardWid
 import { ForageRadarWidget } from '@/components/dashboard/ForageRadarWidget';
 import { ActionPlanWidget } from '@/components/dashboard/ActionPlanWidget';
 import { InfoHubWidget } from '@/components/dashboard/InfoHubWidget';
+import { ChartsWidget } from '@/components/dashboard/ChartsWidget';
 
 export default async function DashboardPage() {
   const uid = await getSessionUid();
@@ -33,7 +35,8 @@ export default async function DashboardPage() {
       forage,
       tasks, 
       sysMessages, 
-      assocAnnouncements
+      assocAnnouncements,
+      chartData
   ] = await Promise.all([
     getCurrentUserProfile(uid),
     getDashboardOverview(),
@@ -42,7 +45,8 @@ export default async function DashboardPage() {
     getForageData(),
     getUserTasks(uid, 'BEEKEEPER'),
     getSystemMessages(),
-    getAssociationAnnouncements()
+    getAssociationAnnouncements(),
+    getChartData()
   ]);
 
   if (!profile) {
@@ -114,12 +118,15 @@ export default async function DashboardPage() {
              <InfoHubWidget systemMessages={sysMessages} announcements={assocAnnouncements} />
         </div>
 
+        {/* ZONE 5: CHARTS & STATISTICS */}
+        <ChartsWidget data={chartData} />
+
       </div>
 
       {/* QUICK NAVIGATION (Legacy but condensed) */}
       <section className="pt-8 border-t border-white/5">
         <h3 className="text-xs font-bold uppercase text-gray-400 mb-4 tracking-widest">Szybki Dostęp</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
              <Link href="/dashboard/hives" className="p-4 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 transition-colors text-center">
                  <span className="block text-2xl mb-2">🐝</span>
                  <span className="text-sm font-bold">Ule</span>
@@ -131,6 +138,10 @@ export default async function DashboardPage() {
               <Link href="/dashboard/inspections" className="p-4 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 transition-colors text-center">
                  <span className="block text-2xl mb-2">📋</span>
                  <span className="text-sm font-bold">Przeglądy</span>
+             </Link>
+             <Link href="/dashboard/beekeeper/import" className="p-4 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 transition-colors text-center">
+                 <span className="block text-2xl mb-2">📥</span>
+                 <span className="text-sm font-bold">Import</span>
              </Link>
              <Link href="/dashboard/settings" className="p-4 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 transition-colors text-center">
                  <span className="block text-2xl mb-2">⚙️</span>

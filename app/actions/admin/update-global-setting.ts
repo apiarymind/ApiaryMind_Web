@@ -21,6 +21,12 @@ export async function updateGlobalSetting(key: string, value: string): Promise<{
     .eq('key', key);
 
   if (error) {
+    if (error.message?.includes('schema cache') || error.message?.includes('does not exist')) {
+      return { 
+        success: false, 
+        error: 'Tabela app_settings nie istnieje w bazie danych. Proszę utworzyć tabelę.' 
+      };
+    }
     console.error('Error updating global setting:', error);
     return { success: false, error: error.message };
   }

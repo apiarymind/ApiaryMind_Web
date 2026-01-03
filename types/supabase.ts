@@ -21,7 +21,7 @@ export interface Profile {
   // Veterinary Data
   wni_number?: string;
   rhd_number?: string;
-  sb_number?: string;
+  shp_number?: string;
   arimr_ep_number?: string;
   
   // Subscription

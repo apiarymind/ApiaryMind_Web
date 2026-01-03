@@ -30,7 +30,7 @@ export async function updateProfile(data: Partial<Profile>) {
     // Veterinary Data
     wni_number: data.wni_number,
     rhd_number: data.rhd_number,
-    sb_number: data.sb_number,
+    shp_number: data.shp_number,
     arimr_ep_number: data.arimr_ep_number,
     
     updated_at: new Date().toISOString(),

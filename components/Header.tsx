@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useAuth } from "../lib/AuthContext";
 import { ThemeToggle } from "@/app/components/ui/ThemeToggle";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 // Helper component for user menu
 function UserMenu() {
@@ -61,6 +62,13 @@ function UserMenu() {
 }
 
 export default function Header() {
+  const pathname = usePathname();
+  
+  // Hide header on login, register and beta pages
+  if (pathname === '/login' || pathname === '/register' || pathname === '/beta') {
+    return null;
+  }
+
   return (
     <header className="fixed top-4 left-0 right-0 mx-auto w-[95%] max-w-7xl z-50 rounded-full backdrop-blur-xl border border-amber-900/10 dark:border-white/20 shadow-2xl bg-white/60 dark:bg-black/60 transition-all duration-300">
       <div className="flex items-center justify-between px-6 py-3">

@@ -77,7 +77,7 @@ export default function InspectionFormModal({ isOpen, onClose, hiveId }: Inspect
       const med = medications.find(m => m.id === selectedMedicationId);
       if (med) {
          const d = new Date(date);
-         d.setDate(d.getDate() + med.withdrawal_period_days);
+         d.setDate(d.getDate() + med.withdrawal_days);
          setWithdrawalDate(d.toLocaleDateString());
       }
     } else {
@@ -107,7 +107,7 @@ export default function InspectionFormModal({ isOpen, onClose, hiveId }: Inspect
 
     const med = medications.find(m => m.id === selectedMedicationId);
     const treatmentName = med ? med.name : undefined;
-    const withdrawalDays = med ? med.withdrawal_period_days : undefined;
+    const withdrawalDays = med ? med.withdrawal_days : undefined;
 
     const result = await addInspection({
       hive_id: hiveId,
@@ -304,28 +304,30 @@ export default function InspectionFormModal({ isOpen, onClose, hiveId }: Inspect
                       <select 
                           value={selectedMedicationId} 
                           onChange={(e) => setSelectedMedicationId(e.target.value)}
-                          className="w-full bg-neutral-900 border border-purple-500/30 rounded-lg p-2 text-white focus:ring-2 focus:ring-purple-500"
+                          className="w-full bg-neutral-900 border border-purple-500/30 rounded-lg p-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                       >
                           <option value="">-- Brak Leczenia --</option>
                           {medications.map(med => (
                               <option key={med.id} value={med.id}>
-                                  {med.name} (Substancja: {med.active_substance})
+                                  {med.name}{med.active_substance ? ` (${med.active_substance})` : ''}
                               </option>
                           ))}
                       </select>
                   </div>
 
-                  {selectedMedicationId && (
+                  {selectedMedicationId && (withdrawalDate || (medications.find(m => m.id === selectedMedicationId)?.withdrawal_days || 0) > 0) && (
                       <div className="bg-purple-500/20 rounded-lg p-3 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
                           <AlertTriangle className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
                           <div>
                               <p className="text-sm text-purple-200 font-bold">Uwaga: Zastosowano leczenie!</p>
                               <p className="text-xs text-purple-300 mt-1">
-                                  Okres karencji wynosi <strong className="text-white">{medications.find(m => m.id === selectedMedicationId)?.withdrawal_period_days} dni</strong>.
+                                  Okres karencji wynosi <strong className="text-white">{medications.find(m => m.id === selectedMedicationId)?.withdrawal_days} dni</strong>.
                               </p>
-                              <p className="text-xs text-purple-300 mt-1">
-                                  Koniec karencji: <strong className="text-white">{withdrawalDate}</strong>.
-                              </p>
+                              {withdrawalDate && (
+                                <p className="text-xs text-purple-300 mt-1">
+                                    Koniec karencji: <strong className="text-white">{withdrawalDate}</strong>.
+                                </p>
+                              )}
                           </div>
                       </div>
                   )}
