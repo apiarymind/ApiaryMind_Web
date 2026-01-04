@@ -183,3 +183,4 @@ WHERE EXISTS (
   SELECT 1 FROM queen_bank WHERE user_id = p.id
 );
 
+
