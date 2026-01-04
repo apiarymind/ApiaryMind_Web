@@ -226,7 +226,7 @@ export async function getBreedingTasks(seriesId?: string): Promise<{ data: Breed
 export async function getOverdueTasks(): Promise<{ success: boolean; data?: BreedingTask[]; error?: string }> {
   const uid = await getSessionUid();
   if (!uid) {
-    return { data: [], error: 'Unauthorized' };
+    return { success: false, error: 'Unauthorized' };
   }
 
   const supabase = createClient();
@@ -252,7 +252,7 @@ export async function getOverdueTasks(): Promise<{ success: boolean; data?: Bree
 
     if (error) {
       console.error('Error fetching overdue tasks:', error);
-      return { data: [], error: error.message };
+      return { success: false, error: error.message };
     }
 
     // Process series join

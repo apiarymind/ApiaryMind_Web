@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { verifyInvitationToken, acceptInvitation } from '@/app/actions/business-team';
@@ -17,6 +17,49 @@ function InviteContent() {
   const [status, setStatus] = useState<'loading' | 'verifying' | 'success' | 'error' | 'needs-auth'>('loading');
   const [message, setMessage] = useState<string>('');
   const [invitationEmail, setInvitationEmail] = useState<string>('');
+
+  const verifyAndAccept = useCallback(async (tokenToUse: string) => {
+    if (!tokenToUse) return;
+
+    // Najpierw weryfikuj token
+    const verification = await verifyInvitationToken(tokenToUse);
+    
+    if (!verification.valid || !verification.invitation) {
+      setStatus('error');
+      setMessage(verification.error || 'Nieprawidłowy lub wygasły token zaproszenia');
+      return;
+    }
+
+    setInvitationEmail(verification.invitation.email);
+
+    // Jeśli użytkownik nie jest zalogowany, przekieruj do logowania
+    if (!user && !authLoading) {
+      setStatus('needs-auth');
+      // Zapisz token w localStorage aby po zalogowaniu móc go użyć
+      localStorage.setItem('pendingInviteToken', tokenToUse);
+      return;
+    }
+
+    // Jeśli użytkownik jest zalogowany, akceptuj zaproszenie
+    if (user) {
+      setStatus('verifying');
+      const result = await acceptInvitation(tokenToUse, user.id);
+      
+      if (result.success) {
+        setStatus('success');
+        setMessage('Zaproszenie zostało zaakceptowane! Zostałeś dodany do zespołu.');
+        // Usuń token z localStorage
+        localStorage.removeItem('pendingInviteToken');
+        // Przekieruj po 3 sekundach
+        setTimeout(() => {
+          router.push('/dashboard/breeder/team');
+        }, 3000);
+      } else {
+        setStatus('error');
+        setMessage(result.error || 'Wystąpił błąd podczas akceptacji zaproszenia');
+      }
+    }
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     // Sprawdź czy jest token w URL lub localStorage (po zalogowaniu)
@@ -40,62 +83,25 @@ function InviteContent() {
     if (tokenToUse) {
       verifyAndAccept(tokenToUse);
     }
-  }, [searchParams, user, authLoading, router]);
-
-  const verifyAndAccept = async (tokenToUse: string) => {
-    if (!tokenToUse) return;
-
-    // Najpierw weryfikuj token
-    const verification = await verifyInvitationToken(tokenToUse);
-    
-    if (!verification.valid || !verification.invitation) {
-      setStatus('error');
-      setMessage(verification.error || 'Nieprawidłowy lub wygasły token zaproszenia');
-      return;
-    }
-
-    setInvitationEmail(verification.invitation.email);
-
-    // Jeśli użytkownik nie jest zalogowany, przekieruj do logowania
-    if (!user && !authLoading) {
-      setStatus('needs-auth');
-      // Zapisz token w localStorage aby po zalogowaniu móc go użyć
-      localStorage.setItem('pendingInviteToken', token);
-      return;
-    }
-
-    // Jeśli użytkownik jest zalogowany, akceptuj zaproszenie
-    if (user) {
-      setStatus('verifying');
-      const result = await acceptInvitation(tokenToUse, user.id);
-      
-      if (result.success) {
-        setStatus('success');
-        setMessage('Zaproszenie zostało zaakceptowane! Zostałeś dodany do zespołu.');
-        // Usuń token z localStorage
-        localStorage.removeItem('pendingInviteToken');
-        // Przekieruj po 3 sekundach
-        setTimeout(() => {
-          router.push('/dashboard/breeder/team');
-        }, 3000);
-      } else {
-        setStatus('error');
-        setMessage(result.error || 'Wystąpił błąd podczas akceptacji zaproszenia');
-      }
-    }
-  };
+  }, [searchParams, user, authLoading, router, verifyAndAccept]);
 
   const handleLoginRedirect = () => {
-    if (token) {
-      router.push(`/login?redirect=/invite?token=${encodeURIComponent(token)}`);
+    const urlToken = searchParams.get('token');
+    const storedToken = typeof window !== 'undefined' ? localStorage.getItem('pendingInviteToken') : null;
+    const tokenToUse = urlToken || storedToken;
+    if (tokenToUse) {
+      router.push(`/login?redirect=/invite?token=${encodeURIComponent(tokenToUse)}`);
     } else {
       router.push('/login');
     }
   };
 
   const handleRegisterRedirect = () => {
-    if (token) {
-      router.push(`/register?redirect=/invite?token=${encodeURIComponent(token)}`);
+    const urlToken = searchParams.get('token');
+    const storedToken = typeof window !== 'undefined' ? localStorage.getItem('pendingInviteToken') : null;
+    const tokenToUse = urlToken || storedToken;
+    if (tokenToUse) {
+      router.push(`/register?redirect=/invite?token=${encodeURIComponent(tokenToUse)}`);
     } else {
       router.push('/register');
     }

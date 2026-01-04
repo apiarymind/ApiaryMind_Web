@@ -1,6 +1,11 @@
 import { MetadataRoute } from 'next';
 import { createClient } from '@/utils/supabase/server';
 
+// ▼▼▼ TO JEST KLUCZOWA ZMIANA ▼▼▼
+// Ta linijka naprawia błąd "Dynamic server usage".
+// Wymusza generowanie sitemapy dynamicznie przy każdym zapytaniu, a nie przy buildzie.
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://apiarymind.com';
 
@@ -76,8 +81,3 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [...staticPages, ...queenPages, ...apiaryPages];
 }
-
-
-
-
-

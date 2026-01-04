@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { MatingNuc, QueenBank } from '@/types/supabase';
-import { getMatingNucs, getTotalInventory } from '@/app/actions/mating-nucs-updated';
-import { getQueenBank } from '@/app/actions/queen-bank-updated';
+import { getMatingNucs } from '@/app/actions/mating-nucs-updated';
+import { getQueenBank, getTotalInventory } from '@/app/actions/queen-bank-updated';
 import EditNucModal from '@/components/breeding/EditNucModal';
 import NewNucModal from '@/components/breeding/NewNucModal';
 import ExitModal from '@/components/breeding/ExitModal';
@@ -266,25 +266,13 @@ export default function MatingNucsPage() {
                 key={entry.id}
                 className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700"
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">Ilość</div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{entry.quantity}</div>
-                    {entry.series && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Seria: {entry.series.name || entry.series.id.substring(0, 8)}
-                      </div>
-                    )}
-                  </div>
-                  {entry.queen_year_color && (
-                    <div
-                      className={`w-8 h-8 rounded-full border-2 ${
-                        QUEEN_YEAR_COLORS[entry.queen_year_color]?.bg || 'bg-gray-300'
-                      } ${
-                        QUEEN_YEAR_COLORS[entry.queen_year_color]?.border || 'border-gray-400'
-                      }`}
-                      title={`Rok: ${entry.queen_year || 'N/A'}`}
-                    />
+                <div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Ilość</div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{entry.quantity}</div>
+                  {entry.series && (
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Seria: {entry.series.name || entry.series.id.substring(0, 8)}
+                    </div>
                   )}
                 </div>
               </div>
@@ -333,7 +321,7 @@ function NucCard({ nuc, onUpdate, onEdit }: { nuc: MatingNuc; onUpdate: () => vo
             } ${
               QUEEN_YEAR_COLORS[nuc.queen_year_color]?.border || 'border-gray-400'
             } shadow-sm`}
-            title={`Rok: ${nuc.queen_year || 'N/A'}`}
+            title="Oznakowanie roczne"
           />
         </div>
       )}
@@ -358,11 +346,6 @@ function NucCard({ nuc, onUpdate, onEdit }: { nuc: MatingNuc; onUpdate: () => vo
         {nuc.series && (
           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {nuc.series.name || nuc.series.id.substring(0, 8)}
-          </div>
-        )}
-        {nuc.introduced_date && (
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Wprowadzono: {new Date(nuc.introduced_date).toLocaleDateString('pl-PL')}
           </div>
         )}
       </div>

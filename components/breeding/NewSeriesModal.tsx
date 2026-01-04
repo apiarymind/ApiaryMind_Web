@@ -115,7 +115,7 @@ export default function NewSeriesModal({ isOpen, onClose, onSuccess }: NewSeries
             {mothers.length === 0 ? (
               <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-sm text-yellow-700 dark:text-yellow-400">
                 <p className="font-medium mb-1">Brak matek reprodukcyjnych</p>
-                <p>Najpierw dodaj matkę reprodukcyjną w sekcji "Matki Reprodukcyjne".</p>
+                <p>Najpierw dodaj matkę reprodukcyjną w sekcji &quot;Matki Reprodukcyjne&quot;.</p>
               </div>
             ) : (
               <select

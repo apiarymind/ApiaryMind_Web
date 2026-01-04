@@ -92,7 +92,7 @@ export async function getTeamMembers(employerId?: string): Promise<{ data: Busin
         id: item.id,
         team_id: item.employer_id, // Używamy employer_id jako team_id
         user_id: item.employee_id,
-        role: item.role === 'OWNER' ? 'OWNER' : 'EMPLOYEE',
+        role: (item.role === 'OWNER' ? 'OWNER' : 'EMPLOYEE') as 'OWNER' | 'EMPLOYEE',
         status: 'ACTIVE' as const,
         created_at: item.created_at,
         profile: profileData ? {
