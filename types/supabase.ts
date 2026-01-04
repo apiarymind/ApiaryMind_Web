@@ -77,6 +77,117 @@ export interface BreedingBatch {
   created_at: string;
 }
 
+// ============================================
+// BREEDING MODULE TYPES
+// ============================================
+
+export interface BreedingMother {
+  id: string;
+  user_id: string;
+  name: string;
+  breed?: string;
+  line?: string;
+  insemination_method?: string;
+  year?: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface BreedingSeries {
+  id: string;
+  user_id: string; // Changed from breeder_id
+  name?: string; // Changed from series_number
+  mother_id?: string; // Changed from mother_queen_id - references breeding_mothers
+  start_date: string;
+  larvae_count: number;
+  accepted_count: number;
+  hatched_count: number;
+  status: 'ACTIVE' | 'COMPLETED' | 'CANCELLED'; // Changed status values
+  created_at: string;
+  // Computed fields
+  acceptance_efficiency?: number; // (accepted_count / larvae_count) * 100
+  hatching_efficiency?: number; // (hatched_count / accepted_count) * 100
+  // Joins
+  breeding_mother?: BreedingMother; // Changed from mother_queen
+}
+
+export interface MatingNuc {
+  id: string;
+  user_id: string; // Changed from breeder_id
+  identifier: string; // Changed from custom_id
+  status: 'EMPTY' | 'VIRGIN' | 'READY' | 'LAYING'; // Added LAYING
+  current_series_id?: string; // Changed from current_queen_series_id
+  queen_year_color?: string;
+  updated_at: string;
+  // Joins
+  series?: BreedingSeries;
+}
+
+export interface QueenBank {
+  id: string;
+  user_id: string; // Changed from breeder_id
+  series_id?: string;
+  quantity: number; // Changed from count
+  status: 'READY';
+  // Joins
+  series?: BreedingSeries;
+}
+
+export interface BreedingTask {
+  id: string;
+  series_id: string;
+  user_id: string; // Changed from breeder_id
+  task_name: string; // Changed from task_type
+  planned_date: string; // Changed from scheduled_date
+  completed_at?: string;
+  status: 'PENDING' | 'COMPLETED' | 'SKIPPED';
+  notes?: string;
+  created_at: string;
+  // Joins
+  series?: BreedingSeries;
+}
+
+export interface BreedingManifest {
+  id: string;
+  user_id: string;
+  series_id?: string;
+  quantity: number;
+  destination_type?: string;
+  generated_at: string;
+  qr_code_payload?: string;
+  manifest_pdf_url?: string;
+  passports_pdf_url?: string;
+  notes?: string;
+  // Joins
+  series?: BreedingSeries;
+}
+
+export interface ProductionHistory {
+  id: string;
+  breeder_id: string;
+  exit_date: string;
+  quantity: number;
+  source_type: 'NUCS' | 'BANK' | 'MIXED';
+  series_id?: string;
+  genetics_info?: Record<string, any>;
+  manifest_pdf_url?: string;
+  passports_pdf_url?: string;
+  notes?: string;
+  created_at: string;
+  // Joins
+  series?: BreedingSeries;
+}
+
+export interface ProductionExitItem {
+  id: string;
+  production_history_id: string;
+  source_type: 'NUC' | 'BANK';
+  source_id?: string;
+  quantity: number;
+  created_at: string;
+}
+
 export interface Association {
   id: string;
   name: string;
@@ -182,6 +293,19 @@ export interface ApiaryForageFlow {
   // Join
   forage_type?: ForageType;
   apiary?: Apiary;
+}
+
+export interface Queen {
+  id: string;
+  marking_code?: string | null;
+  year?: number;
+  breeder_name?: string | null;
+  lineage?: string | null;
+  status?: string | null;
+  is_clipped?: boolean;
+  breeding_series_id?: string; // References breeding_series
+  // Joins
+  breeding_series?: BreedingSeries;
 }
 
 export interface SystemMessage {

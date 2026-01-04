@@ -18,6 +18,9 @@
 *.pem
 *.log
 
+# email logs (dev mode)
+/logs
+
 # local env files
 .env*.local
 .env

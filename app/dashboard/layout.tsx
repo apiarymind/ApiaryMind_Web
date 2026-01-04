@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import DashboardSidebar from "../../components/DashboardSidebar";
+import AdminPanel from "../../components/AdminPanel";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import { getSessionUid } from "@/app/actions/auth-session";
 import { getCurrentUserProfile } from "@/app/actions/get-user";
@@ -29,6 +30,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
            </ProtectedRoute>
         </div>
       </main>
+      <Suspense fallback={null}>
+        <AdminPanel />
+      </Suspense>
       <Suspense fallback={null}>
          <SurveyBanner />
       </Suspense>

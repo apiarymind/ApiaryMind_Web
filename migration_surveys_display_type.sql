@@ -8,3 +8,4 @@ ADD COLUMN IF NOT EXISTS display_type TEXT DEFAULT 'banner' CHECK (display_type 
 UPDATE surveys SET display_type = 'banner' WHERE display_type IS NULL;
 
 
+
