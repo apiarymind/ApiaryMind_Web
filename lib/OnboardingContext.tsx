@@ -20,7 +20,7 @@ const STORAGE_KEY_STEP = 'onboarding_current_step';
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>(0); // 0 = initializing
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>(1); // Default to 1
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDemo, setIsDemo] = useState(false);
   const [initialized, setInitialized] = useState(false);
@@ -35,16 +35,18 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
     if (isAnonymous) {
       // Demo Mode: Always start at Step 1
+      console.log('[Onboarding] Demo user detected, forcing Step 1');
       setCurrentStep(1);
     } else {
       // Normal Mode: Read from localStorage
       if (typeof window !== 'undefined') {
         const savedStep = localStorage.getItem(STORAGE_KEY_STEP);
+        console.log('[Onboarding] Reading from localStorage:', savedStep);
         if (savedStep) {
-          setCurrentStep(parseInt(savedStep, 10));
-        } else {
-          // Default to Step 1 if no history
-          setCurrentStep(1);
+          const step = parseInt(savedStep, 10);
+          if (!isNaN(step) && step >= 1) {
+            setCurrentStep(step);
+          }
         }
       }
     }
@@ -53,27 +55,35 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const completeStep = useCallback((step: OnboardingStep) => {
     const nextStep = step + 1;
+    console.log('[Onboarding] Completing step:', step, 'Next step:', nextStep);
     setCurrentStep(nextStep);
 
-    // Persist only for non-demo users (or both, but demo resets anyway)
+    // Persist to localStorage
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEY_STEP, nextStep.toString());
     }
   }, []);
 
   const setModalOpen = useCallback((isOpen: boolean) => {
+    console.log('[Onboarding] setModalOpen:', isOpen);
     setIsModalOpen(isOpen);
   }, []);
 
   const resetOnboarding = useCallback(() => {
+    console.log('[Onboarding] Resetting onboarding to Step 1');
     setCurrentStep(1);
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEY_STEP, '1');
     }
   }, []);
 
-  if (!initialized) {
-    return null; // Or a loading spinner if needed, but null avoids flash
+  // Don't render until we've checked storage/auth to prevent flash of wrong step
+  if (!initialized && !authLoading) {
+     // Optional: You could render a null or loader here, but typically context just holds off
+     // However, since we default to 1, we can just render.
+     // But for "Amnesia" fix, it's better to wait for the effect to fire at least once if we want to be strict.
+     // Let's render children only after init to be safe against flashing Step 1 then Step 3.
+     return null;
   }
 
   return (

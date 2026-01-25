@@ -40,9 +40,6 @@ export default function OnboardingFooter({
   const Icon = iconMap[iconName];
 
   // Only render if this is the active step
-  // EXCEPTION: For Step 4, if we are showing the success modal, keep rendering (but hidden via z-index maybe? No, modal is fixed z-50).
-  // If we transition step to 5 immediately, this component unmounts.
-  // So for Step 4, we delay calling completeStep until the modal is closed.
   if (currentStep !== step) {
     return null;
   }
@@ -58,16 +55,8 @@ export default function OnboardingFooter({
     }
 
     // For other steps, just proceed
-    // Small delay to show spinner/feedback
     setTimeout(() => {
         completeStep(step);
-
-        // Navigation logic for next step is handled by OnboardingWizard (State A) which will pop up
-        // because we are on the wrong page for the NEXT step.
-        // E.g. Finish Step 1 (Warehouse) -> Step 2 (Apiaries).
-        // User is still on Warehouse. OnboardingWizard sees Step 2 + Warehouse path -> Shows Modal "Go to Apiaries".
-        // This is perfect behavior.
-
         router.refresh();
     }, 500);
   };
@@ -85,7 +74,10 @@ export default function OnboardingFooter({
   return (
     <>
       <div
-        className={`fixed bottom-0 left-0 right-0 md:left-[288px] z-[9997] bg-amber-500 border-t-2 border-amber-600 shadow-2xl transition-transform duration-300 ease-in-out ${transformClass}`}
+        // Z-INDEX UPDATE: Changed from z-[9997] to z-40.
+        // This ensures standard modals (z-50) will naturally cover the footer if it fails to hide.
+        // Also sits below Sidebar (z-[60]).
+        className={`fixed bottom-0 left-0 right-0 md:left-[288px] z-40 bg-amber-500 border-t-2 border-amber-600 shadow-2xl transition-transform duration-300 ease-in-out ${transformClass}`}
         style={{
             willChange: 'transform'
         }}
