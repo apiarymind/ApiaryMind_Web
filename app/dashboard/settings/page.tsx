@@ -13,7 +13,9 @@ import {
   CheckCircle,
   AlertCircle,
   MapPin,
-  BookOpen
+  BookOpen,
+  FileText, // Added for DocumentTextIcon equivalent
+  Lock      // Added for LockClosedIcon equivalent
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { updateProfile } from '@/app/actions/profile';
@@ -27,7 +29,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useOnboarding } from '@/lib/OnboardingContext';
 import OnboardingFooter from '@/app/components/onboarding/OnboardingFooter';
 
-type Tab = 'profile' | 'company' | 'veterinary' | 'legal' | 'subscription';
+type Tab = 'profile' | 'company' | 'veterinary' | 'legal' | 'subscription' | 'security';
 type LegalStatus = 'hobby' | 'rhd' | 'sb';
 
 const PLAN_DETAILS = {
@@ -277,6 +279,70 @@ export default function SettingsPage() {
     resetOnboarding();
     // Redirect to step 1 route (Warehouse)
     router.push('/dashboard/beekeeper/warehouse');
+  };
+
+  // Definicja zakładek zgodnie z wymaganiem
+  const tabs = [
+    {
+      id: 'profile',
+      label: 'Profil Użytkownika',
+      icon: User
+    },
+    {
+      id: 'legal', // To jest kluczowa zakładka dla onboardingu! (RHD/SB)
+      label: 'Dane Pasieki / RHD',
+      icon: FileText
+    },
+    {
+      id: 'subscription',
+      label: 'Subskrypcja',
+      icon: CreditCard
+    },
+    {
+      id: 'security',
+      label: 'Bezpieczeństwo',
+      icon: Lock
+    }
+  ];
+
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const publicProfileUrl = profileId ? `${baseUrl}/public/beekeeper/${profileId}` : '';
+  const isPublicProfileEnabled = watch('is_public_profile_enabled');
+  const firstName = watch('first_name') || '';
+  const lastName = watch('last_name') || '';
+  const ownerName = `${firstName} ${lastName}`.trim();
+
+  const handlePrint = useReactToPrint({
+    content: () => printRef.current,
+    documentTitle: 'Wizytowka_Pasieki_QR',
+  });
+
+  const downloadQrPng = () => {
+    if (!qrRef.current || !publicProfileUrl) return;
+    const svg = qrRef.current.querySelector('svg');
+    if (!svg) return;
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(svg);
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      const pngUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = pngUrl;
+      link.download = 'apiarymind-qr.png';
+      link.click();
+    };
+    image.src = url;
   };
 
   if (loading) {
@@ -541,46 +607,14 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {/* Company Data Tab */}
-        {activeTab === 'company' && (
-          <div className="bg-white dark:bg-primary/15 backdrop-blur-md rounded-xl p-6 border border-gray-300 dark:border-primary/30 shadow-light-card-lg dark:shadow-none">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="md:col-span-2">
-                 <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 text-gray-900 dark:text-white">
-                  <Building2 className="w-5 h-5" />
-                  Informacje o Firmie
-                </h2>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">Nazwa Firmy</label>
-                <input 
-                  {...register('company_name')}
-                    className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none"
-                  placeholder="Pasieka Sp. z o.o."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">NIP</label>
-                <input 
-                  {...register('nip')}
-                    className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none"
-                  placeholder="1234567890"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Veterinary Data Tab */}
-        {activeTab === 'veterinary' && (
+        {/* Legal / Veterinary Data Tab (Renamed from 'veterinary') */}
+        {activeTab === 'legal' && (
           <div className="bg-white dark:bg-primary/15 backdrop-blur-md rounded-xl p-6 border border-gray-300 dark:border-primary/30 shadow-light-card-lg dark:shadow-none">
             <div className="space-y-6">
               <div className="md:col-span-2">
                 <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 text-gray-900 dark:text-white">
-                  <Stethoscope className="w-5 h-5" />
-                  Dane Weterynaryjne
+                  <FileText className="w-5 h-5" />
+                  Dane Pasieki / RHD
                 </h2>
               </div>
 
@@ -757,129 +791,6 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {/* Veterinary / Legal Tab */}
-        {activeTab === 'legal' && (
-          <div className="bg-white dark:bg-primary/15 backdrop-blur-md rounded-xl p-6 border border-gray-300 dark:border-primary/30 shadow-light-card-lg dark:shadow-none">
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Dane Weterynaryjne / Prawo</h2>
-                <p className="text-sm text-gray-600 dark:text-white/60">
-                  Globalna konfiguracja wizytówki publicznej i danych weterynaryjnych.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">Numer Świadectwa Zdrowia</label>
-                  <input
-                    {...register('health_cert_number')}
-                    className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none"
-                    placeholder="np. PIW.1234.2026"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">Data ważności</label>
-                  <input
-                    type="date"
-                    {...register('health_cert_date')}
-                    className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">
-                    Miasto Twojego Inspektoratu Weterynarii
-                  </label>
-                  <input
-                    {...register('default_vet_authority')}
-                    className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none"
-                    placeholder="np. Tychy"
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-gray-300 dark:border-primary/30 bg-gray-50 dark:bg-primary/15 p-4 space-y-3">
-                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-white/80">
-                  <input
-                    type="checkbox"
-                    {...register('is_public_profile_enabled')}
-                    className="w-4 h-4 text-amber-500 focus:ring-amber-500 bg-white dark:bg-transparent"
-                  />
-                  Aktywuj wizytówkę publiczną
-                </label>
-                <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-white/70">
-                  <input
-                    type="checkbox"
-                    {...register('public_profile_config.show_address')}
-                    className="w-4 h-4 text-amber-500 focus:ring-amber-500 bg-white dark:bg-transparent"
-                  />
-                  Pokaż adres zamieszkania
-                </label>
-                <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-white/70">
-                  <input
-                    type="checkbox"
-                    {...register('public_profile_config.show_company')}
-                    className="w-4 h-4 text-amber-500 focus:ring-amber-500 bg-white dark:bg-transparent"
-                  />
-                  Pokaż nazwę firmy
-                </label>
-              </div>
-
-              {isPublicProfileEnabled && publicProfileUrl && (
-                <div className="rounded-xl border border-gray-300 dark:border-primary/30 bg-gray-100 dark:bg-black/30 p-4 space-y-4 shadow-light-card dark:shadow-none">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="bg-white p-3 rounded-lg" ref={qrRef}>
-                      <QRCode value={publicProfileUrl} size={200} />
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-white/70 text-center">
-                      Zeskanuj, aby sprawdzić pasiekę
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center justify-center gap-3">
-                    <Link
-                      href={publicProfileUrl}
-                      className="px-4 py-2 rounded-lg border border-amber-500 dark:border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/10 text-sm font-semibold shadow-light-button hover:shadow-light-button-hover dark:shadow-none transition-all"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Podgląd wizytówki
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={downloadQrPng}
-                      className="px-4 py-2 rounded-lg border border-amber-500 dark:border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/10 text-sm font-semibold shadow-light-button hover:shadow-light-button-hover dark:shadow-none transition-all"
-                    >
-                      Pobierz kod QR (PNG)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handlePrint}
-                      className="px-4 py-2 rounded-lg border border-gray-300 dark:border-primary/40 text-gray-700 dark:text-white/70 hover:bg-gray-200 dark:hover:bg-primary/20 text-sm font-semibold shadow-light-button hover:shadow-light-button-hover dark:shadow-none transition-all"
-                    >
-                      Drukuj kod QR
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {isPublicProfileEnabled && publicProfileUrl && (
-                <div className="absolute -left-[10000px] top-0">
-                  <div
-                    ref={printRef}
-                    className="flex flex-col items-center justify-center text-center p-10 bg-white text-black"
-                  >
-                    <div className="text-2xl font-bold mb-4">Apiary Mind</div>
-                    <div className="bg-white p-4 rounded-lg mb-4">
-                      <QRCode value={publicProfileUrl} size={300} />
-                    </div>
-                    <h2 className="text-lg font-semibold">Zeskanuj, aby sprawdzić dokumenty pasieki</h2>
-                    {ownerName && <p className="text-sm mt-2">Własność: {ownerName}</p>}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Subscription Tab */}
         {activeTab === 'subscription' && (
           <div className="space-y-6">
@@ -943,8 +854,27 @@ export default function SettingsPage() {
           </div>
         )}
 
+        {/* Security Tab (Placeholder) */}
+        {activeTab === 'security' && (
+          <div className="bg-white dark:bg-primary/15 backdrop-blur-md rounded-xl p-6 border border-gray-300 dark:border-primary/30 shadow-light-card-lg dark:shadow-none">
+            <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 text-gray-900 dark:text-white">
+              <Lock className="w-5 h-5" />
+              Bezpieczeństwo
+            </h2>
+            <div className="text-center p-8">
+              <div className="bg-gray-100 dark:bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <Lock className="w-8 h-8 text-gray-400 dark:text-white/40" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Zarządzanie Bezpieczeństwem</h3>
+              <p className="text-gray-600 dark:text-white/60">
+                Zmiana hasła i ustawienia 2FA są dostępne w panelu konta Supabase lub w aplikacji mobilnej.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Save Button */}
-        {activeTab !== 'subscription' && (
+        {activeTab !== 'subscription' && activeTab !== 'security' && (
           <div className="pt-6 border-t border-gray-300 dark:border-primary/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             {activeTab === 'profile' && (
               <button
