@@ -48,6 +48,7 @@ export async function updateProfile(data: Partial<Profile>) {
     default_vet_authority: data.default_vet_authority,
     health_cert_number: data.health_cert_number,
     health_cert_date: data.health_cert_date && data.health_cert_date.trim() !== '' ? data.health_cert_date : null,
+    sanitary_exam_expires_at: data.sanitary_exam_expires_at && data.sanitary_exam_expires_at.trim() !== '' ? data.sanitary_exam_expires_at : null,
     is_public_profile_enabled: data.is_public_profile_enabled,
     public_profile_config: data.public_profile_config,
     rhd_number: data.rhd_number,

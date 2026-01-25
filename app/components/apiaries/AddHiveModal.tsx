@@ -5,6 +5,7 @@ import { X, Plus, AlertCircle, Package } from 'lucide-react'
 import { assembleHive } from '@/app/actions/hive-assembly'
 import { getAvailableHivesCount } from '@/app/actions/hive-assembly-utils'
 import { getHiveTypes } from '@/app/actions/get-hive-types'
+import { useOnboarding } from '@/lib/OnboardingContext'
 
 interface AddHiveModalProps {
   isOpen: boolean
@@ -14,6 +15,7 @@ interface AddHiveModalProps {
 }
 
 export default function AddHiveModal({ isOpen, onClose, apiaryId, onSuccess }: AddHiveModalProps) {
+  const { setModalOpen } = useOnboarding()
   const [hiveTypes, setHiveTypes] = useState<Array<{ id: string; default_name: string }>>([])
   const [selectedHiveTypeId, setSelectedHiveTypeId] = useState<string>('')
   const [hiveNumber, setHiveNumber] = useState<string>('')
@@ -21,6 +23,16 @@ export default function AddHiveModal({ isOpen, onClose, apiaryId, onSuccess }: A
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Notify context when modal visibility changes
+  useEffect(() => {
+    if (isOpen) {
+      setModalOpen(true)
+    } else {
+      setModalOpen(false)
+    }
+    return () => setModalOpen(false)
+  }, [isOpen, setModalOpen])
 
   // Załaduj typy uli
   useEffect(() => {

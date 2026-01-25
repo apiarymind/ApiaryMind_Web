@@ -23,9 +23,10 @@ const lato = Lato({
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Pobierz ustawienia motywu i social media na poziomie serwera
+  // Dla stopki używamy onlyActive=true (tylko aktywne linki)
   const [themeSettings, socialMedia] = await Promise.all([
     getThemeSettings(),
-    getSocialMediaAll().catch(() => []) // Fallback do pustej tablicy w przypadku błędu
+    getSocialMediaAll(true).catch(() => []) // Fallback do pustej tablicy w przypadku błędu
   ]);
 
   return (

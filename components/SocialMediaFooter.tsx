@@ -30,9 +30,11 @@ export default function SocialMediaFooter({ socialMedia }: { socialMedia: AllSoc
     <div className="flex items-center gap-4">
       {allPlatforms.map((platformKey) => {
         const config = platformConfig[platformKey];
-        const platformData = allSocialMedia.find(sm => sm.platform_key === platformKey);
-        const isActive = platformData?.is_active === true && 
-                        platformData?.target_url && 
+        // Case-insensitive porównanie - użyj toLowerCase() na platform_key
+        const platformData = allSocialMedia.find(sm => 
+          sm.platform_key.toLowerCase() === platformKey.toLowerCase()
+        );
+        const isActive = platformData?.target_url && 
                         platformData.target_url.trim() !== '';
 
         if (isActive && platformData) {

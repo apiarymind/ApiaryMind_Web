@@ -12,7 +12,11 @@ import {
   Save,
   CheckCircle,
   AlertCircle,
-  MapPin
+  MapPin,
+  BookOpen,
+  FileText, // Added for DocumentTextIcon equivalent
+  Lock,      // Added for LockClosedIcon equivalent
+  Calendar   // For sanitary exam date
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { updateProfile } from '@/app/actions/profile';
@@ -21,14 +25,11 @@ import { useRouter } from 'next/navigation';
 import { fetchLocationByZip } from '@/utils/postal-code-api';
 import Link from 'next/link';
 import QRCode from 'react-qr-code';
-import { useReactToPrint } from 'react-to-print';
 import { useAuth } from '@/lib/AuthContext';
-import OnboardingWizard from '@/components/OnboardingWizard';
-import { OnboardingProvider } from '@/lib/OnboardingContext';
-import { BookOpen } from 'lucide-react';
+import { useOnboarding } from '@/lib/OnboardingContext';
 import OnboardingFooter from '@/app/components/onboarding/OnboardingFooter';
 
-type Tab = 'profile' | 'company' | 'veterinary' | 'legal' | 'subscription';
+type Tab = 'profile' | 'company' | 'veterinary' | 'legal' | 'subscription' | 'security';
 type LegalStatus = 'hobby' | 'rhd' | 'sb';
 
 const PLAN_DETAILS = {
@@ -115,12 +116,11 @@ export default function SettingsPage() {
   const [legalStatus, setLegalStatus] = useState<LegalStatus>('hobby');
   const [postalCodeLoading, setPostalCodeLoading] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const [legalStatusText, setLegalStatusText] = useState<string>('Brak');
   const qrRef = useRef<HTMLDivElement | null>(null);
-  const printRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
   const { user } = useAuth();
+  const { resetOnboarding } = useOnboarding();
   
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<Profile>();
   const supabase = createClient();
@@ -213,6 +213,7 @@ export default function SettingsPage() {
             rhd_number: data.rhd_number || '',
             shp_number: data.shp_number || '',
             arimr_ep_number: data.arimr_ep_number || '',
+            sanitary_exam_expires_at: data.sanitary_exam_expires_at || '',
             avatar_url: data.avatar_url || '',
         });
       }
@@ -274,13 +275,39 @@ export default function SettingsPage() {
     }
   };
 
+  const handleStartOnboarding = () => {
+    resetOnboarding();
+    // Redirect to step 1 route (Warehouse)
+    router.push('/dashboard/beekeeper/warehouse');
+  };
+
+  // Definicja zakładek zgodnie z wymaganiem
   const tabs = [
-    { id: 'profile', label: 'Profil', icon: User },
-    { id: 'company', label: 'Dane Firmowe', icon: Building2 },
-    { id: 'veterinary', label: 'Dane Weterynaryjne', icon: Stethoscope },
-    { id: 'legal', label: 'Wirtualna Wizytówka', icon: QrCode },
-    // Hide subscription tab for anonymous users (Demo mode)
-    ...(isAnonymous ? [] : [{ id: 'subscription' as const, label: 'Subskrypcja', icon: CreditCard }]),
+    { 
+      id: 'profile', 
+      label: 'Profil Użytkownika', 
+      icon: User 
+    },
+    { 
+      id: 'company', 
+      label: 'Wizytówka', 
+      icon: QrCode 
+    },
+    { 
+      id: 'legal', // To jest kluczowa zakładka dla onboardingu! (RHD/SB)
+      label: 'Dane Pasieki / RHD', 
+      icon: FileText 
+    },
+    { 
+      id: 'subscription', 
+      label: 'Subskrypcja', 
+      icon: CreditCard 
+    },
+    { 
+      id: 'security', 
+      label: 'Ważność Badań', 
+      icon: Calendar 
+    }
   ];
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
@@ -290,10 +317,13 @@ export default function SettingsPage() {
   const lastName = watch('last_name') || '';
   const ownerName = `${firstName} ${lastName}`.trim();
 
-  const handlePrint = useReactToPrint({
-    content: () => printRef.current,
-    documentTitle: 'Wizytowka_Pasieki_QR',
-  });
+  const handlePrint = () => {
+    if (publicProfileUrl) {
+      window.print();
+    } else {
+      setMessage({ type: 'error', text: 'Błąd: Brak URL wizytówki' });
+    }
+  };
 
   const downloadQrPng = () => {
     if (!qrRef.current || !publicProfileUrl) return;
@@ -335,12 +365,19 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Ustawienia Konta</h1>
-        <p className="text-gray-700 dark:text-white/70 mt-1">Zarządzaj danymi profilu, firmowymi i weterynaryjnymi</p>
+        <h1 className="text-3xl font-bold text-amber-50">Ustawienia Konta</h1>
+        <p className="text-amber-100 mt-1">Zarządzaj danymi profilu, firmowymi i weterynaryjnymi</p>
       </div>
       
       {/* Tabs */}
-      <div className="flex border-b border-gray-300 dark:border-primary/30 mb-6 overflow-x-auto">
+      <div 
+        className="flex border-b mb-6 overflow-x-auto"
+        style={{
+          borderBottomColor: 'var(--theme-card-border)',
+          borderBottomWidth: '1px',
+          borderBottomStyle: 'solid',
+        }}
+      >
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -350,8 +387,8 @@ export default function SettingsPage() {
               onClick={() => setActiveTab(tab.id as Tab)}
               className={`flex items-center space-x-2 px-6 py-3 border-b-2 font-medium transition-colors whitespace-nowrap
                 ${isActive 
-                  ? 'border-amber-500 text-amber-600 dark:text-amber-400' 
-                  : 'border-transparent text-gray-600 dark:text-white/60 hover:text-gray-900 dark:hover:text-white/80'
+                  ? 'border-amber-500 text-amber-500' 
+                  : 'border-transparent text-amber-200 hover:text-amber-100'
                 }`}
             >
               <Icon className="w-5 h-5" />
@@ -362,11 +399,16 @@ export default function SettingsPage() {
       </div>
 
       {message && (
-        <div className={`p-4 rounded-xl flex items-center space-x-2 ${
-          message.type === 'success' 
-            ? 'bg-green-50 dark:bg-green-500/10 border border-green-300 dark:border-green-500/30 text-green-700 dark:text-green-400' 
-            : 'bg-red-50 dark:bg-red-500/10 border border-red-300 dark:border-red-500/30 text-red-700 dark:text-red-400'
-        }`}>
+        <div 
+          className="p-4 rounded-xl flex items-center space-x-2"
+          style={{
+            backgroundColor: message.type === 'success' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
+            borderColor: message.type === 'success' ? 'rgba(76, 175, 80, 0.3)' : 'rgba(244, 67, 54, 0.3)',
+            borderWidth: '1px',
+            borderStyle: 'solid',
+            color: message.type === 'success' ? 'rgb(76, 175, 80)' : 'rgb(244, 67, 54)',
+          }}
+        >
           {message.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
           <span>{message.text}</span>
         </div>
@@ -376,16 +418,27 @@ export default function SettingsPage() {
         
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <div className="bg-white dark:bg-primary/15 backdrop-blur-md rounded-xl p-6 border border-gray-300 dark:border-primary/30 shadow-light-card-lg dark:shadow-none">
+          <div 
+            className="backdrop-blur-md rounded-xl p-6 shadow-light-card-lg dark:shadow-none dark:border-primary/50 dark:shadow-[0_0_15px_rgba(244,181,36,0.15)]"
+            style={{
+              borderRadius: 'var(--theme-card-radius, 1.5rem)',
+              borderColor: 'var(--theme-card-border)',
+              borderWidth: 'var(--theme-card-border-width, 1px)',
+              borderStyle: 'solid',
+              boxShadow: 'var(--theme-card-shadow)',
+              backdropFilter: 'var(--theme-card-blur, blur(20px))',
+              backgroundColor: 'var(--theme-card-bg)',
+            }}
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
+                <h2 className="text-lg font-semibold flex items-center gap-2 text-amber-50">
                   <User className="w-5 h-5" />
                   Dane Podstawowe
                 </h2>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">Imię i Nazwisko</label>
+                  <label className="block text-sm font-medium mb-2 text-amber-100">Imię i Nazwisko</label>
                   <input 
                     type="text"
                     value={fullNameInput}
@@ -422,43 +475,80 @@ export default function SettingsPage() {
                         setValue('last_name', lastName, { shouldValidate: true });
                       }
                     }}
-                    className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none" 
+                    className="w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none" 
+                    style={{
+                      backgroundColor: 'var(--input-bg)',
+                      borderColor: 'var(--input-border)',
+                      borderWidth: '1px',
+                      borderStyle: 'solid',
+                      color: 'var(--text-primary)',
+                    }}
                     placeholder="Jan Kowalski"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">Numer Telefonu</label>
+                  <label className="block text-sm font-medium mb-2 text-amber-100">Numer Telefonu</label>
                   <input 
                     {...register('phone_number')}
-                    className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none" 
+                    className="w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none" 
+                    style={{
+                      backgroundColor: 'var(--input-bg)',
+                      borderColor: 'var(--input-border)',
+                      borderWidth: '1px',
+                      borderStyle: 'solid',
+                      color: 'var(--text-primary)',
+                    }}
                     placeholder="+48 123 456 789"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">Email (Tylko do odczytu)</label>
+                  <label className="block text-sm font-medium mb-2 text-amber-100">Email (Tylko do odczytu)</label>
                   <input 
                     {...register('email')}
                     disabled
-                    className="w-full px-4 py-2 bg-gray-100 dark:bg-primary/15 border border-gray-300 dark:border-primary/30 rounded-lg text-gray-500 dark:text-white/50 cursor-not-allowed" 
+                    className="w-full px-4 py-2 rounded-lg cursor-not-allowed" 
+                    style={{
+                      backgroundColor: 'var(--input-bg)',
+                      borderColor: 'var(--input-border)',
+                      borderWidth: '1px',
+                      borderStyle: 'solid',
+                      color: 'var(--text-muted)',
+                      opacity: 0.7,
+                    }}
                   />
                 </div>
               </div>
 
               <div className="space-y-4">
-                 <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
+                 <h2 className="text-lg font-semibold flex items-center gap-2 text-amber-50">
                    Avatar
                  </h2>
                  <div className="flex items-center space-x-4">
-                   <div className="w-24 h-24 rounded-full bg-gray-200 dark:bg-primary/20 border border-gray-300 dark:border-primary/40 flex items-center justify-center overflow-hidden">
-                      <span className="text-2xl text-gray-400 dark:text-white/40">?</span>
+                   <div 
+                     className="w-24 h-24 rounded-full flex items-center justify-center overflow-hidden"
+                     style={{
+                       backgroundColor: 'var(--input-bg)',
+                       borderColor: 'var(--input-border)',
+                       borderWidth: '1px',
+                       borderStyle: 'solid',
+                     }}
+                   >
+                      <span className="text-2xl text-amber-200">?</span>
                    </div>
                    <div className="flex-1">
-                     <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">Avatar URL (opcjonalnie)</label>
+                     <label className="block text-sm font-medium mb-2 text-amber-100">Avatar URL (opcjonalnie)</label>
                      <input 
                       {...register('avatar_url')}
-                      className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none" 
+                      className="w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none" 
+                      style={{
+                        backgroundColor: 'var(--input-bg)',
+                        borderColor: 'var(--input-border)',
+                        borderWidth: '1px',
+                        borderStyle: 'solid',
+                        color: 'var(--text-primary)',
+                      }}
                       placeholder="https://..."
                     />
                    </div>
@@ -467,27 +557,48 @@ export default function SettingsPage() {
             </div>
 
             {/* Address Section */}
-            <div className="md:col-span-2 mt-6 pt-6 border-t border-gray-300 dark:border-primary/30">
-              <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 text-gray-900 dark:text-white">
+            <div 
+              className="md:col-span-2 mt-6 pt-6"
+              style={{
+                borderTopColor: 'var(--theme-card-border)',
+                borderTopWidth: '1px',
+                borderTopStyle: 'solid',
+              }}
+            >
+              <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 text-amber-50">
                 <MapPin className="w-5 h-5" />
                 Adres Zamieszkania / Siedziba Pasieki
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">Ulica i numer</label>
+                  <label className="block text-sm font-medium mb-2 text-amber-100">Ulica i numer</label>
                   <input 
                     {...register('street_address')}
-                    className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none" 
+                    className="w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none" 
+                    style={{
+                      backgroundColor: 'var(--input-bg)',
+                      borderColor: 'var(--input-border)',
+                      borderWidth: '1px',
+                      borderStyle: 'solid',
+                      color: 'var(--text-primary)',
+                    }}
                     placeholder="ul. Pszczela 1"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">Kod pocztowy</label>
+                  <label className="block text-sm font-medium mb-2 text-amber-100">Kod pocztowy</label>
                   <div className="relative">
                     <input 
                       {...register('postal_code')}
-                      className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 pr-20" 
+                      className="w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 pr-20"
+                      style={{
+                        backgroundColor: 'var(--input-bg)',
+                        borderColor: 'var(--input-border)',
+                        borderWidth: '1px',
+                        borderStyle: 'solid',
+                        color: 'var(--text-primary)',
+                      }} 
                       placeholder="00-000"
                       maxLength={6}
                       onChange={async (e) => {
@@ -558,23 +669,37 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">Miasto</label>
+                  <label className="block text-sm font-medium mb-2 text-amber-100">Miasto</label>
                   <input 
                     {...register('city')}
-                    className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none" 
+                    className="w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none" 
+                    style={{
+                      backgroundColor: 'var(--input-bg)',
+                      borderColor: 'var(--input-border)',
+                      borderWidth: '1px',
+                      borderStyle: 'solid',
+                      color: 'var(--text-primary)',
+                    }}
                     placeholder="Warszawa"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">Województwo</label>
+                  <label className="block text-sm font-medium mb-2 text-amber-100">Województwo</label>
                   <select
                     {...register('voivodeship')}
-                    className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 dark:bg-gray-900/90 dark:text-gray-100 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none"
+                    className="w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none"
+                    style={{
+                      backgroundColor: 'var(--input-bg)',
+                      borderColor: 'var(--input-border)',
+                      borderWidth: '1px',
+                      borderStyle: 'solid',
+                      color: 'var(--text-primary)',
+                    }}
                   >
-                    <option value="" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Wybierz województwo</option>
+                    <option value="" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-primary)' }}>Wybierz województwo</option>
                     {POLISH_VOIVODESHIPS.map((voivodeship) => (
-                      <option key={voivodeship} value={voivodeship} className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">
+                      <option key={voivodeship} value={voivodeship} style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-primary)' }}>
                         {voivodeship}
                       </option>
                     ))}
@@ -585,52 +710,213 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {/* Company Data Tab */}
+        {/* Company / Business Card Tab */}
         {activeTab === 'company' && (
-          <div className="bg-white dark:bg-primary/15 backdrop-blur-md rounded-xl p-6 border border-gray-300 dark:border-primary/30 shadow-light-card-lg dark:shadow-none">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="md:col-span-2">
-                 <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 text-gray-900 dark:text-white">
-                  <Building2 className="w-5 h-5" />
-                  Informacje o Firmie
-                </h2>
+          <div 
+            className="backdrop-blur-md rounded-xl p-6 shadow-light-card-lg dark:shadow-none dark:border-primary/50 dark:shadow-[0_0_15px_rgba(244,181,36,0.15)]"
+            style={{
+              borderRadius: 'var(--theme-card-radius, 1.5rem)',
+              borderColor: 'var(--theme-card-border)',
+              borderWidth: 'var(--theme-card-border-width, 1px)',
+              borderStyle: 'solid',
+              boxShadow: 'var(--theme-card-shadow)',
+              backdropFilter: 'var(--theme-card-blur, blur(20px))',
+              backgroundColor: 'var(--theme-card-bg)',
+            }}
+          >
+            <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 text-amber-50">
+              <QrCode className="w-5 h-5" />
+              Wizytówka Pasieki
+            </h2>
+            
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  {...register('is_public_profile_enabled')}
+                  id="is_public_profile_enabled"
+                  className="w-5 h-5 rounded border-gray-300 text-amber-500 focus:ring-amber-500"
+                  style={{
+                    accentColor: 'var(--amber-500)',
+                  }}
+                />
+                <label htmlFor="is_public_profile_enabled" className="text-sm font-medium text-amber-100 cursor-pointer">
+                  Włącz publiczną wizytówkę pszczelarza
+                </label>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">Nazwa Firmy</label>
-                <input 
-                  {...register('company_name')}
-                    className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none"
-                  placeholder="Pasieka Sp. z o.o."
-                />
-              </div>
+              {isPublicProfileEnabled && (
+                <div className="space-y-6">
+                  <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--input-bg)', borderColor: 'var(--input-border)', borderWidth: '1px', borderStyle: 'solid' }}>
+                    <p className="text-xs text-amber-200 mb-3">
+                      Twoja wizytówka będzie dostępna pod adresem:
+                    </p>
+                    <div className="flex items-center gap-2 mb-4">
+                      <code className="text-xs px-3 py-2 rounded flex-1" style={{ backgroundColor: 'var(--theme-card-bg)', color: 'var(--text-primary)' }}>
+                        {publicProfileUrl || 'Ładowanie...'}
+                      </code>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (publicProfileUrl) {
+                            navigator.clipboard.writeText(publicProfileUrl);
+                            setMessage({ type: 'success', text: 'Link skopiowany do schowka' });
+                          }
+                        }}
+                        className="text-xs px-3 py-2 rounded-lg transition-colors text-amber-100 hover:text-amber-50"
+                        style={{
+                          backgroundColor: 'var(--input-bg)',
+                          borderColor: 'var(--input-border)',
+                          borderWidth: '1px',
+                          borderStyle: 'solid',
+                        }}
+                      >
+                        Kopiuj
+                      </button>
+                    </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">NIP</label>
-                <input 
-                  {...register('nip')}
-                    className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none"
-                  placeholder="1234567890"
-                />
-              </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          {...register('public_profile_config.show_address')}
+                          id="show_address"
+                          className="w-4 h-4 rounded border-gray-300 text-amber-500 focus:ring-amber-500"
+                          style={{
+                            accentColor: 'var(--amber-500)',
+                          }}
+                        />
+                        <label htmlFor="show_address" className="text-xs text-amber-100 cursor-pointer">
+                          Pokaż adres
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          {...register('public_profile_config.show_company')}
+                          id="show_company"
+                          className="w-4 h-4 rounded border-gray-300 text-amber-500 focus:ring-amber-500"
+                          style={{
+                            accentColor: 'var(--amber-500)',
+                          }}
+                        />
+                        <label htmlFor="show_company" className="text-xs text-amber-100 cursor-pointer">
+                          Pokaż dane firmy
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {publicProfileUrl && (
+                    <div 
+                      className="p-6 rounded-xl border-2 shadow-[0_0_15px_rgba(34,197,94,0.2)] dark:shadow-[0_0_15px_rgba(34,197,94,0.2)]" 
+                      style={{ backgroundColor: 'var(--input-bg)', borderColor: 'rgba(34, 197, 94, 0.7)' }}
+                    >
+                      <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                        <div className="flex-shrink-0">
+                          <div 
+                            ref={qrRef}
+                            className="p-4 rounded-lg"
+                            style={{ backgroundColor: '#FFFFFF' }}
+                          >
+                            <QRCode
+                              value={publicProfileUrl}
+                              size={200}
+                              level="H"
+                              includeMargin={true}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex-1 text-center md:text-left">
+                          <h3 className="text-lg font-bold mb-2 text-amber-50">{ownerName || 'Pszczelarz'}</h3>
+                          {watch('phone_number') && (
+                            <p className="text-sm text-amber-100 mb-1">
+                              <span className="text-amber-200">Tel:</span> {watch('phone_number')}
+                            </p>
+                          )}
+                          {watch('company_name') && watch('public_profile_config.show_company') && (
+                            <p className="text-sm text-amber-100 mb-1">
+                              <span className="text-amber-200">Firma:</span> {watch('company_name')}
+                            </p>
+                          )}
+                          {watch('city') && watch('public_profile_config.show_address') && (
+                            <p className="text-sm text-amber-100">
+                              <span className="text-amber-200">Lokalizacja:</span> {watch('city')}
+                              {watch('voivodeship') && `, ${watch('voivodeship')}`}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-3 mt-6 justify-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!publicProfileUrl) {
+                              setMessage({ type: 'error', text: 'Błąd: Brak URL wizytówki' });
+                              return;
+                            }
+                            // Wywołaj handlePrint, który sam zadba o konwersję QR i opóźnienie
+                            handlePrint();
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all"
+                          style={{
+                            backgroundColor: 'var(--amber-500)',
+                            color: '#2A1C10',
+                          }}
+                        >
+                          <FileText className="w-4 h-4" />
+                          Drukuj Wizytówkę
+                        </button>
+                        <button
+                          type="button"
+                          onClick={downloadQrPng}
+                          className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all"
+                          style={{
+                            backgroundColor: 'var(--input-bg)',
+                            borderColor: 'var(--input-border)',
+                            borderWidth: '1px',
+                            borderStyle: 'solid',
+                            color: 'var(--text-primary)',
+                          }}
+                        >
+                          <QrCode className="w-4 h-4" />
+                          Pobierz QR
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* Veterinary Data Tab */}
-        {activeTab === 'veterinary' && (
-          <div className="bg-white dark:bg-primary/15 backdrop-blur-md rounded-xl p-6 border border-gray-300 dark:border-primary/30 shadow-light-card-lg dark:shadow-none">
+        {/* Legal / Veterinary Data Tab (Renamed from 'veterinary') */}
+        {activeTab === 'legal' && (
+          <div 
+            className="backdrop-blur-md rounded-xl p-6 shadow-light-card-lg dark:shadow-none dark:border-primary/50 dark:shadow-[0_0_15px_rgba(244,181,36,0.15)]"
+            style={{
+              borderRadius: 'var(--theme-card-radius, 1.5rem)',
+              borderColor: 'var(--theme-card-border)',
+              borderWidth: 'var(--theme-card-border-width, 1px)',
+              borderStyle: 'solid',
+              boxShadow: 'var(--theme-card-shadow)',
+              backdropFilter: 'var(--theme-card-blur, blur(20px))',
+              backgroundColor: 'var(--theme-card-bg)',
+            }}
+          >
             <div className="space-y-6">
               <div className="md:col-span-2">
-                <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 text-gray-900 dark:text-white">
-                  <Stethoscope className="w-5 h-5" />
-                  Dane Weterynaryjne
+                <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 text-amber-50">
+                  <FileText className="w-5 h-5" />
+                  Dane Pasieki / RHD
                 </h2>
               </div>
 
               {/* Legal Status Selector */}
               <div className="space-y-4">
-                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">Status Prawny</label>
+                <label className="block text-sm font-medium mb-2 text-amber-100">Status Prawny</label>
                 {!isAddressComplete && (
                   <div className="mb-3 p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 rounded-lg shadow-light-card dark:shadow-none">
                     <p className="text-sm text-amber-700 dark:text-amber-400 flex items-center gap-2">
@@ -640,11 +926,20 @@ export default function SettingsPage() {
                   </div>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <label className={`flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    legalStatus === 'hobby' 
-                      ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/10' 
-                      : 'border-gray-300 dark:border-primary/40 bg-gray-50 dark:bg-primary/15 hover:bg-gray-100 dark:hover:bg-primary/20'
-                  }`}>
+                  <label 
+                    className={`flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      legalStatus === 'hobby' 
+                        ? 'border-green-500/70 shadow-[0_0_15px_rgba(34,197,94,0.2)] dark:border-green-500/70 dark:shadow-[0_0_15px_rgba(34,197,94,0.2)]' 
+                        : 'dark:border-primary/30 dark:hover:border-primary/50'
+                    }`}
+                    style={legalStatus === 'hobby' ? {
+                      borderColor: 'rgba(34, 197, 94, 0.7)',
+                      backgroundColor: 'var(--input-bg)',
+                    } : {
+                      borderColor: 'var(--theme-card-border)',
+                      backgroundColor: 'var(--input-bg)',
+                    }}
+                  >
                     <div className="flex items-center gap-3 mb-2">
                       <input
                         type="radio"
@@ -657,20 +952,32 @@ export default function SettingsPage() {
                           setValue('rhd_number', '');
                           setValue('shp_number', '');
                         }}
-                        className="w-4 h-4 text-amber-500 focus:ring-amber-500"
+                        className="w-4 h-4 text-green-500 focus:ring-green-500"
                       />
-                      <span className="font-semibold text-gray-900 dark:text-white">Hobby / Własny użytek</span>
+                      <span className="font-semibold text-amber-50">Hobby / Własny użytek</span>
                     </div>
-                    <p className="text-xs text-gray-600 dark:text-white/60">Nie sprzedaję miodu lub robię to okazjonalnie bez rejestracji.</p>
+                    <p className="text-xs text-amber-200">Nie sprzedaję miodu lub robię to okazjonalnie bez rejestracji.</p>
                   </label>
 
-                  <label className={`flex flex-col p-4 rounded-xl border-2 transition-all relative ${
-                    !isAddressComplete 
-                      ? 'border-gray-300 dark:border-primary/30 bg-gray-100 dark:bg-primary/15 opacity-50 cursor-not-allowed shadow-light-card dark:shadow-none' 
-                      : legalStatus === 'rhd'
-                        ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/10 cursor-pointer shadow-light-card dark:shadow-none'
-                        : 'border-gray-300 dark:border-primary/40 bg-gray-50 dark:bg-primary/15 hover:bg-gray-100 dark:hover:bg-primary/20 cursor-pointer shadow-light-card dark:shadow-none hover:shadow-light-card-lg dark:hover:shadow-none'
-                  }`}>
+                  <label 
+                    className={`flex flex-col p-4 rounded-xl border-2 transition-all relative ${
+                      !isAddressComplete 
+                        ? 'opacity-50 cursor-not-allowed shadow-light-card dark:shadow-none dark:border-primary/20' 
+                        : legalStatus === 'rhd'
+                          ? 'border-green-500/70 shadow-[0_0_15px_rgba(34,197,94,0.2)] dark:border-green-500/70 dark:shadow-[0_0_15px_rgba(34,197,94,0.2)] cursor-pointer shadow-light-card dark:shadow-none'
+                          : 'cursor-pointer shadow-light-card dark:shadow-none hover:shadow-light-card-lg dark:hover:shadow-none dark:border-primary/30 dark:hover:border-primary/50'
+                    }`}
+                    style={!isAddressComplete ? {
+                      borderColor: 'var(--theme-card-border)',
+                      backgroundColor: 'var(--input-bg)',
+                    } : legalStatus === 'rhd' ? {
+                      borderColor: 'rgba(34, 197, 94, 0.7)',
+                      backgroundColor: 'var(--input-bg)',
+                    } : {
+                      borderColor: 'var(--theme-card-border)',
+                      backgroundColor: 'var(--input-bg)',
+                    }}
+                  >
                     <div className="flex items-center gap-3 mb-2">
                       <input
                         type="radio"
@@ -687,22 +994,34 @@ export default function SettingsPage() {
                         }}
                         className="w-4 h-4 text-amber-500 focus:ring-amber-500 disabled:cursor-not-allowed"
                       />
-                      <span className={`font-semibold ${!isAddressComplete ? 'text-gray-400 dark:text-white/50' : 'text-gray-900 dark:text-white'}`}>
+                      <span className={`font-semibold ${!isAddressComplete ? 'text-amber-200' : 'text-amber-50'}`}>
                         Rolniczy Handel Detaliczny (RHD)
                       </span>
                     </div>
-                    <p className={`text-xs ${!isAddressComplete ? 'text-gray-400 dark:text-white/40' : 'text-gray-600 dark:text-white/60'}`}>
+                    <p className={`text-xs ${!isAddressComplete ? 'text-amber-200' : 'text-amber-200'}`}>
                       Sprzedaż konsumentom, limit przychodów do 100 tys. zł.
                     </p>
                   </label>
 
-                  <label className={`flex flex-col p-4 rounded-xl border-2 transition-all relative ${
-                    !isAddressComplete 
-                      ? 'border-gray-300 dark:border-primary/30 bg-gray-100 dark:bg-primary/15 opacity-50 cursor-not-allowed shadow-light-card dark:shadow-none' 
-                      : legalStatus === 'sb'
-                        ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/10 cursor-pointer shadow-light-card dark:shadow-none'
-                        : 'border-gray-300 dark:border-primary/40 bg-gray-50 dark:bg-primary/15 hover:bg-gray-100 dark:hover:bg-primary/20 cursor-pointer shadow-light-card dark:shadow-none hover:shadow-light-card-lg dark:hover:shadow-none'
-                  }`}>
+                  <label 
+                    className={`flex flex-col p-4 rounded-xl border-2 transition-all relative ${
+                      !isAddressComplete 
+                        ? 'opacity-50 cursor-not-allowed shadow-light-card dark:shadow-none dark:border-primary/20' 
+                        : legalStatus === 'sb'
+                          ? 'border-green-500/70 shadow-[0_0_15px_rgba(34,197,94,0.2)] dark:border-green-500/70 dark:shadow-[0_0_15px_rgba(34,197,94,0.2)] cursor-pointer shadow-light-card dark:shadow-none'
+                          : 'cursor-pointer shadow-light-card dark:shadow-none hover:shadow-light-card-lg dark:hover:shadow-none dark:border-primary/30 dark:hover:border-primary/50'
+                    }`}
+                    style={!isAddressComplete ? {
+                      borderColor: 'var(--theme-card-border)',
+                      backgroundColor: 'var(--input-bg)',
+                    } : legalStatus === 'sb' ? {
+                      borderColor: 'rgba(34, 197, 94, 0.7)',
+                      backgroundColor: 'var(--input-bg)',
+                    } : {
+                      borderColor: 'var(--theme-card-border)',
+                      backgroundColor: 'var(--input-bg)',
+                    }}
+                  >
                     <div className="flex items-center gap-3 mb-2">
                       <input
                         type="radio"
@@ -719,11 +1038,11 @@ export default function SettingsPage() {
                         }}
                         className="w-4 h-4 text-amber-500 focus:ring-amber-500 disabled:cursor-not-allowed"
                       />
-                      <span className={`font-semibold ${!isAddressComplete ? 'text-gray-400 dark:text-white/50' : 'text-gray-900 dark:text-white'}`}>
+                      <span className={`font-semibold ${!isAddressComplete ? 'text-amber-200' : 'text-amber-50'}`}>
                         Sprzedaż Bezpośrednia (SB)
                       </span>
                     </div>
-                    <p className={`text-xs ${!isAddressComplete ? 'text-gray-400 dark:text-white/40' : 'text-gray-600 dark:text-white/60'}`}>
+                    <p className={`text-xs ${!isAddressComplete ? 'text-amber-200' : 'text-amber-200'}`}>
                       Sprzedaż produktów nieprzetworzonych, limity terytorialne.
                     </p>
                   </label>
@@ -732,24 +1051,35 @@ export default function SettingsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="relative">
-                <label className="block text-sm font-medium mb-2 text-amber-700 dark:text-amber-400 font-bold">
+                <label className="block text-sm font-medium mb-2 text-amber-500 font-bold">
                   Numer WNI (Weterynaryjny Numer Identyfikacyjny)
                 </label>
                 <input 
                   {...register('wni_number')}
-                  className="w-full px-4 py-2 bg-white dark:bg-primary/20 border-2 border-amber-500 dark:border-amber-500/50 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500" 
+                  className="w-full px-4 py-2 border-2 border-amber-500 dark:border-amber-500/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" 
+                  style={{
+                    backgroundColor: 'var(--input-bg)',
+                    color: 'var(--text-primary)',
+                  }}
                   placeholder="12345678"
                 />
-                <p className="text-xs text-gray-600 dark:text-white/60 mt-1">Numer stały pszczelarza do auto-uzupełniania dokumentów.</p>
+                <p className="text-xs text-amber-200 mt-1">Numer stały pszczelarza do auto-uzupełniania dokumentów.</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">
+                <label className="block text-sm font-medium mb-2 text-amber-100">
                   Miasto Twojego Inspektoratu Weterynarii
                 </label>
                   <input
                     {...register('default_vet_authority')}
-                    className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none"
+                    className="w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none"
+                    style={{
+                      backgroundColor: 'var(--input-bg)',
+                      borderColor: 'var(--input-border)',
+                      borderWidth: '1px',
+                      borderStyle: 'solid',
+                      color: 'var(--text-primary)',
+                    }}
                   placeholder="np. Tychy"
                 />
               </div>
@@ -758,12 +1088,19 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {legalStatus === 'rhd' && (
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">
+                    <label className="block text-sm font-medium mb-2 text-amber-100">
                       Numer RHD <span className="text-red-600 dark:text-red-400">*</span>
                     </label>
                     <input 
                       {...register('rhd_number', { required: legalStatus === 'rhd' })}
-                      className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none" 
+                      className="w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none" 
+                      style={{
+                        backgroundColor: 'var(--input-bg)',
+                        borderColor: 'var(--input-border)',
+                        borderWidth: '1px',
+                        borderStyle: 'solid',
+                        color: 'var(--text-primary)',
+                      }}
                       placeholder="12345678"
                     />
                     {errors.rhd_number && (
@@ -774,12 +1111,19 @@ export default function SettingsPage() {
 
                 {legalStatus === 'sb' && (
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">
+                    <label className="block text-sm font-medium mb-2 text-amber-100">
                       Numer Wet. (SB) <span className="text-red-400">*</span>
                     </label>
                     <input 
                       {...register('shp_number', { required: legalStatus === 'sb' })}
-                      className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none" 
+                      className="w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none" 
+                      style={{
+                        backgroundColor: 'var(--input-bg)',
+                        borderColor: 'var(--input-border)',
+                        borderWidth: '1px',
+                        borderStyle: 'solid',
+                        color: 'var(--text-primary)',
+                      }}
                       placeholder="12345678"
                     />
                     {errors.shp_number && (
@@ -789,10 +1133,17 @@ export default function SettingsPage() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">Numer EP (ARiMR)</label>
+                  <label className="block text-sm font-medium mb-2 text-amber-100">Numer EP (ARiMR)</label>
                   <input 
                     {...register('arimr_ep_number')}
-                    className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none" 
+                    className="w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none" 
+                    style={{
+                      backgroundColor: 'var(--input-bg)',
+                      borderColor: 'var(--input-border)',
+                      borderWidth: '1px',
+                      borderStyle: 'solid',
+                      color: 'var(--text-primary)',
+                    }}
                     placeholder="PL123456789"
                   />
                 </div>
@@ -801,134 +1152,22 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {/* Veterinary / Legal Tab */}
-        {activeTab === 'legal' && (
-          <div className="bg-white dark:bg-primary/15 backdrop-blur-md rounded-xl p-6 border border-gray-300 dark:border-primary/30 shadow-light-card-lg dark:shadow-none">
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Dane Weterynaryjne / Prawo</h2>
-                <p className="text-sm text-gray-600 dark:text-white/60">
-                  Globalna konfiguracja wizytówki publicznej i danych weterynaryjnych.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">Numer Świadectwa Zdrowia</label>
-                  <input
-                    {...register('health_cert_number')}
-                    className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none"
-                    placeholder="np. PIW.1234.2026"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">Data ważności</label>
-                  <input
-                    type="date"
-                    {...register('health_cert_date')}
-                    className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-white/80">
-                    Miasto Twojego Inspektoratu Weterynarii
-                  </label>
-                  <input
-                    {...register('default_vet_authority')}
-                    className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none"
-                    placeholder="np. Tychy"
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-gray-300 dark:border-primary/30 bg-gray-50 dark:bg-primary/15 p-4 space-y-3">
-                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-white/80">
-                  <input
-                    type="checkbox"
-                    {...register('is_public_profile_enabled')}
-                    className="w-4 h-4 text-amber-500 focus:ring-amber-500 bg-white dark:bg-transparent"
-                  />
-                  Aktywuj wizytówkę publiczną
-                </label>
-                <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-white/70">
-                  <input
-                    type="checkbox"
-                    {...register('public_profile_config.show_address')}
-                    className="w-4 h-4 text-amber-500 focus:ring-amber-500 bg-white dark:bg-transparent"
-                  />
-                  Pokaż adres zamieszkania
-                </label>
-                <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-white/70">
-                  <input
-                    type="checkbox"
-                    {...register('public_profile_config.show_company')}
-                    className="w-4 h-4 text-amber-500 focus:ring-amber-500 bg-white dark:bg-transparent"
-                  />
-                  Pokaż nazwę firmy
-                </label>
-              </div>
-
-              {isPublicProfileEnabled && publicProfileUrl && (
-                <div className="rounded-xl border border-gray-300 dark:border-primary/30 bg-gray-100 dark:bg-black/30 p-4 space-y-4 shadow-light-card dark:shadow-none">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="bg-white p-3 rounded-lg" ref={qrRef}>
-                      <QRCode value={publicProfileUrl} size={200} />
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-white/70 text-center">
-                      Zeskanuj, aby sprawdzić pasiekę
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center justify-center gap-3">
-                    <Link
-                      href={publicProfileUrl}
-                      className="px-4 py-2 rounded-lg border border-amber-500 dark:border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/10 text-sm font-semibold shadow-light-button hover:shadow-light-button-hover dark:shadow-none transition-all"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Podgląd wizytówki
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={downloadQrPng}
-                      className="px-4 py-2 rounded-lg border border-amber-500 dark:border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/10 text-sm font-semibold shadow-light-button hover:shadow-light-button-hover dark:shadow-none transition-all"
-                    >
-                      Pobierz kod QR (PNG)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handlePrint}
-                      className="px-4 py-2 rounded-lg border border-gray-300 dark:border-primary/40 text-gray-700 dark:text-white/70 hover:bg-gray-200 dark:hover:bg-primary/20 text-sm font-semibold shadow-light-button hover:shadow-light-button-hover dark:shadow-none transition-all"
-                    >
-                      Drukuj kod QR
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {isPublicProfileEnabled && publicProfileUrl && (
-                <div className="absolute -left-[10000px] top-0">
-                  <div
-                    ref={printRef}
-                    className="flex flex-col items-center justify-center text-center p-10 bg-white text-black"
-                  >
-                    <div className="text-2xl font-bold mb-4">Apiary Mind</div>
-                    <div className="bg-white p-4 rounded-lg mb-4">
-                      <QRCode value={publicProfileUrl} size={300} />
-                    </div>
-                    <h2 className="text-lg font-semibold">Zeskanuj, aby sprawdzić dokumenty pasieki</h2>
-                    {ownerName && <p className="text-sm mt-2">Własność: {ownerName}</p>}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Subscription Tab */}
         {activeTab === 'subscription' && (
           <div className="space-y-6">
-            <div className="bg-white dark:bg-primary/15 backdrop-blur-md rounded-xl p-6 border border-gray-300 dark:border-primary/30 shadow-light-card-lg dark:shadow-none">
-              <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 text-gray-900 dark:text-white">
+            <div 
+              className="backdrop-blur-md rounded-xl p-6 shadow-light-card-lg dark:shadow-none dark:border-primary/50 dark:shadow-[0_0_15px_rgba(244,181,36,0.15)]"
+              style={{
+                borderRadius: 'var(--theme-card-radius, 1.5rem)',
+                borderColor: 'var(--theme-card-border)',
+                borderWidth: 'var(--theme-card-border-width, 1px)',
+                borderStyle: 'solid',
+                boxShadow: 'var(--theme-card-shadow)',
+                backdropFilter: 'var(--theme-card-blur, blur(20px))',
+                backgroundColor: 'var(--theme-card-bg)',
+              }}
+            >
+              <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 text-amber-50">
                 <CreditCard className="w-5 h-5" />
                 Subskrypcja
               </h2>
@@ -942,13 +1181,19 @@ export default function SettingsPage() {
                 const currentPlan = PLAN_DETAILS[currentPlanKey as keyof typeof PLAN_DETAILS] || PLAN_DETAILS.FREE;
 
                 return (
-                  <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 p-6 rounded-xl shadow-light-card dark:shadow-none">
-                    <h3 className="text-sm uppercase tracking-wide text-amber-700 dark:text-amber-400 font-bold mb-2">Twój Plan</h3>
-                    <div className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white mb-2">
+                  <div 
+                    className="border-2 shadow-[0_0_15px_rgba(34,197,94,0.2)] dark:border-green-500/70 dark:shadow-[0_0_15px_rgba(34,197,94,0.2)] p-6 rounded-xl shadow-light-card dark:shadow-none"
+                    style={{
+                      borderColor: 'rgba(34, 197, 94, 0.7)',
+                      backgroundColor: 'var(--input-bg)',
+                    }}
+                  >
+                    <h3 className="text-sm uppercase tracking-wide text-green-600 dark:text-green-400 font-bold mb-2">Twój Plan</h3>
+                    <div className="text-2xl md:text-3xl font-extrabold text-amber-50 mb-2">
                       {currentPlan.label}
                     </div>
-                    <div className="text-xs text-gray-600 dark:text-white/60 mb-4">{currentPlan.price}</div>
-                    <ul className="text-sm text-gray-700 dark:text-white/80 space-y-2 list-disc pl-5">
+                    <div className="text-xs text-amber-200 mb-4">{currentPlan.price}</div>
+                    <ul className="text-sm text-amber-100 space-y-2 list-disc pl-5">
                       {currentPlan.features.map(feature => (
                         <li key={feature}>{feature}</li>
                       ))}
@@ -958,8 +1203,19 @@ export default function SettingsPage() {
               })()}
             </div>
 
-            <div className="bg-white dark:bg-primary/15 backdrop-blur-md rounded-xl p-6 border border-gray-300 dark:border-primary/30 shadow-light-card-lg dark:shadow-none">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Inne Plany</h3>
+            <div 
+              className="backdrop-blur-md rounded-xl p-6 shadow-light-card-lg dark:shadow-none dark:border-primary/50 dark:shadow-[0_0_15px_rgba(244,181,36,0.15)]"
+              style={{
+                borderRadius: 'var(--theme-card-radius, 1.5rem)',
+                borderColor: 'var(--theme-card-border)',
+                borderWidth: 'var(--theme-card-border-width, 1px)',
+                borderStyle: 'solid',
+                boxShadow: 'var(--theme-card-shadow)',
+                backdropFilter: 'var(--theme-card-blur, blur(20px))',
+                backgroundColor: 'var(--theme-card-bg)',
+              }}
+            >
+              <h3 className="text-lg font-semibold text-amber-50 mb-4">Inne Plany</h3>
               {(() => {
                 const currentPlanKey = (watch('subscription_plan') || 'FREE').toString().toUpperCase();
                 const planEntries = Object.entries(PLAN_DETAILS).filter(([key]) => key !== currentPlanKey);
@@ -969,11 +1225,15 @@ export default function SettingsPage() {
                     {planEntries.map(([key, plan]) => (
                       <div
                         key={key}
-                        className="border rounded-xl p-4 bg-gray-100 dark:bg-black/30 border-gray-300 dark:border-primary/30 shadow-light-card dark:shadow-none"
+                        className="border rounded-xl p-4 shadow-light-card dark:shadow-none"
+                        style={{
+                          borderColor: 'var(--theme-card-border)',
+                          backgroundColor: 'var(--input-bg)',
+                        }}
                       >
-                        <h4 className="text-sm uppercase tracking-wide text-gray-700 dark:text-white/70 font-bold">{plan.label}</h4>
-                        <div className="text-xs text-gray-600 dark:text-white/50 mb-3">{plan.price}</div>
-                        <ul className="text-xs text-gray-600 dark:text-white/70 space-y-2 list-disc pl-4">
+                        <h4 className="text-sm uppercase tracking-wide text-amber-50 font-bold">{plan.label}</h4>
+                        <div className="text-xs text-amber-200 mb-3">{plan.price}</div>
+                        <ul className="text-xs text-amber-100 space-y-2 list-disc pl-4">
                           {plan.features.map(feature => (
                             <li key={feature}>{feature}</li>
                           ))}
@@ -987,13 +1247,127 @@ export default function SettingsPage() {
           </div>
         )}
 
+        {/* Security Tab - Ważność Badań Sanitarno-Epidemiologicznych */}
+        {activeTab === 'security' && (() => {
+          const examDate = watch('sanitary_exam_expires_at');
+          const examDateObj = examDate ? new Date(examDate) : null;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          
+          let statusColor = 'green';
+          let statusText = 'Badania aktualne';
+          let statusBg = 'rgba(34, 197, 94, 0.1)';
+          let statusBorder = 'rgba(34, 197, 94, 0.3)';
+          let statusTextColor = 'rgb(34, 197, 94)';
+          
+          if (examDateObj) {
+            examDateObj.setHours(0, 0, 0, 0);
+            const daysUntilExpiry = Math.ceil((examDateObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            
+            if (daysUntilExpiry < 0) {
+              // Wygasły
+              statusColor = 'red';
+              statusText = 'Badania nieważne!';
+              statusBg = 'rgba(244, 67, 54, 0.1)';
+              statusBorder = 'rgba(244, 67, 54, 0.3)';
+              statusTextColor = 'rgb(244, 67, 54)';
+            } else if (daysUntilExpiry < 30) {
+              // Wygasają wkrótce
+              statusColor = 'yellow';
+              statusText = 'Wygasają wkrótce';
+              statusBg = 'rgba(255, 193, 7, 0.1)';
+              statusBorder = 'rgba(255, 193, 7, 0.3)';
+              statusTextColor = 'rgb(255, 193, 7)';
+            }
+          } else {
+            statusColor = 'gray';
+            statusText = 'Brak danych o badaniach';
+            statusBg = 'rgba(158, 158, 158, 0.1)';
+            statusBorder = 'rgba(158, 158, 158, 0.3)';
+            statusTextColor = 'rgb(158, 158, 158)';
+          }
+          
+          return (
+            <div 
+              className="backdrop-blur-md rounded-xl p-6 shadow-light-card-lg dark:shadow-none dark:border-primary/50 dark:shadow-[0_0_15px_rgba(244,181,36,0.15)]"
+              style={{
+                borderRadius: 'var(--theme-card-radius, 1.5rem)',
+                borderColor: 'var(--theme-card-border)',
+                borderWidth: 'var(--theme-card-border-width, 1px)',
+                borderStyle: 'solid',
+                boxShadow: 'var(--theme-card-shadow)',
+                backdropFilter: 'var(--theme-card-blur, blur(20px))',
+                backgroundColor: 'var(--theme-card-bg)',
+              }}
+            >
+              <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 text-amber-50">
+                <Calendar className="w-5 h-5" />
+                Ważność Badań Sanitarno-Epidemiologicznych
+              </h2>
+              
+              <div className="space-y-6">
+                {/* Status Alert */}
+                {examDate && (
+                  <div 
+                    className="p-4 rounded-xl border-2"
+                    style={{
+                      backgroundColor: statusBg,
+                      borderColor: statusBorder,
+                      color: statusTextColor,
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5" />
+                      <span className="font-semibold">{statusText}</span>
+                    </div>
+                    {examDateObj && (
+                      <p className="text-sm mt-2">
+                        Data ważności: {examDateObj.toLocaleDateString('pl-PL')}
+                      </p>
+                    )}
+                  </div>
+                )}
+                
+                {/* Date Input */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-amber-100">
+                    Data ważności badań sanitarno-epidemiologicznych
+                  </label>
+                  <input 
+                    type="date"
+                    {...register('sanitary_exam_expires_at')}
+                    className="w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-light-input dark:shadow-none" 
+                    style={{
+                      backgroundColor: 'var(--input-bg)',
+                      borderColor: 'var(--input-border)',
+                      borderWidth: '1px',
+                      borderStyle: 'solid',
+                      color: 'var(--text-primary)',
+                    }}
+                  />
+                  <p className="text-xs text-amber-200 mt-1">
+                    Wprowadź datę wygaśnięcia ważności badań sanitarno-epidemiologicznych
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Save Button */}
-        {activeTab !== 'subscription' && (
-          <div className="pt-6 border-t border-gray-300 dark:border-primary/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        {activeTab !== 'subscription' && activeTab !== 'company' && (
+          <div 
+            className="pt-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+            style={{
+              borderTopColor: 'var(--theme-card-border)',
+              borderTopWidth: '1px',
+              borderTopStyle: 'solid',
+            }}
+          >
             {activeTab === 'profile' && (
               <button
                 type="button"
-                onClick={() => setShowOnboarding(true)}
+                onClick={handleStartOnboarding}
                 className="flex items-center space-x-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold transition-all shadow-light-button hover:shadow-light-button-hover dark:shadow-none"
               >
                 <BookOpen className="w-4 h-4" />
@@ -1023,16 +1397,6 @@ export default function SettingsPage() {
         )}
       </form>
 
-      {/* Onboarding Wizard */}
-      {showOnboarding && (
-        <OnboardingProvider>
-          <OnboardingWizard 
-            forceStart={showOnboarding}
-            onComplete={() => setShowOnboarding(false)}
-          />
-        </OnboardingProvider>
-      )}
-
       {/* Onboarding Footer - Krok 4 */}
       <OnboardingFooter
         step={4}
@@ -1041,6 +1405,84 @@ export default function SettingsPage() {
         infoText="Ostatni szlif. Wybierz status RHD lub SB i wpisz numer weterynaryjny, aby odblokować sprzedaż i legalne raporty."
         buttonLabel="Zakończ Konfigurację"
       />
+
+      {/* Print Styles */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @media print {
+            @page { size: auto; margin: 0mm; }
+            
+            /* Ukryj wszystko domyślnie */
+            body * {
+              display: none !important;
+            }
+            
+            /* Pokaż tylko kontener do druku i jego dzieci */
+            #printable-root, #printable-root * {
+              display: flex !important;
+              visibility: visible !important;
+            }
+
+            /* Ustawienia kontenera - pełna strona, wyśrodkowanie */
+            #printable-root {
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100vw !important;
+              height: 100vh !important;
+              flex-direction: column !important;
+              align-items: center !important;
+              justify-content: center !important;
+              background: white !important;
+              z-index: 9999 !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+
+            /* Stylizacja treści */
+            #printable-root h1 {
+              font-size: 40pt !important;
+              margin-bottom: 20px !important;
+              color: black !important;
+              font-weight: bold !important;
+              display: block !important;
+            }
+            
+            /* Wymuszenie widoczności SVG */
+            #printable-root svg {
+              width: 350px !important;
+              height: 350px !important;
+              display: block !important;
+            }
+            
+            #printable-root > div {
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+            }
+          }
+          
+          /* Ukryj w normalnym widoku */
+          #printable-root { display: none; }
+        `
+      }} />
+
+      {/* Hidden Print Area - Direct Render Version */}
+      {publicProfileUrl && (
+        <div id="printable-root">
+          <h1>ApiaryMind</h1>
+          <div style={{ border: '4px solid black', padding: '15px' }}>
+            <QRCode
+              value={publicProfileUrl}
+              size={350}
+              level="H"
+              includeMargin={true}
+              fgColor="#000000"
+              bgColor="#FFFFFF"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

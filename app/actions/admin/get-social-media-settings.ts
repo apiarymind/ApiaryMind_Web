@@ -1,8 +1,8 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server';
 import { getCurrentUserProfile } from '@/app/actions/get-user';
 import { getSessionUid } from '@/app/actions/auth-session';
+import { createClient } from '@/utils/supabase/server';
 
 export type SocialMediaSetting = {
   id: string;
@@ -24,11 +24,16 @@ export async function getSocialMediaSettings(): Promise<SocialMediaSetting[]> {
     return [];
   }
 
+  // Pobierz wszystkie rekordy (aktywne i nieaktywne) dla panelu admina
   const supabase = createClient();
   const { data, error } = await supabase
     .from('system_social_media')
     .select('*')
     .order('platform_key', { ascending: true });
+
+  // Diagnostyka - console.log dla debugowania
+  console.log('Pobieranie social media (admin), błąd:', error);
+  console.log('Dane (admin):', data);
 
   if (error) {
     console.error('Error fetching social media settings:', error);

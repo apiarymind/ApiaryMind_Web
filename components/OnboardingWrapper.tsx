@@ -1,8 +1,14 @@
 'use client';
 
-import OnboardingGuide from './OnboardingGuide';
+import { ReactNode } from 'react';
+import { OnboardingProvider } from '@/lib/OnboardingContext';
+import OnboardingWizard from './OnboardingWizard';
 
-export default function OnboardingWrapper() {
-  // Usunięto Suspense - renderujemy od razu, aby modal mógł się pokazać natychmiast
-  return <OnboardingGuide />;
+export default function OnboardingWrapper({ children }: { children: ReactNode }) {
+  return (
+    <OnboardingProvider>
+      {children}
+      <OnboardingWizard />
+    </OnboardingProvider>
+  );
 }

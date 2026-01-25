@@ -9,7 +9,6 @@ import DashboardNews from "@/app/components/DashboardNews";
 import { ChevronDown, ChevronRight, Menu, X } from "lucide-react";
 import { NavigationItem } from "@/types/navigation";
 import { MASTER_NAVIGATION } from "@/src/config/navigationConfig";
-import { useOnboardingSafe } from "@/lib/useOnboardingSafe";
 
 // Definicja sekcji sidebaru
 interface SidebarSection {
@@ -81,14 +80,6 @@ export default function DashboardSidebar({
   const role = ((profile as any)?.role || (profile as any)?.system_role || 'USER').toString().toUpperCase();
   const plan = ((profile as any)?.plan || 'FREE').toString().toUpperCase();
   
-  // UWAGA: Nowy system OnboardingGuide nie blokuje nawigacji - użytkownik może swobodnie poruszać się
-  // Modal pojawia się tylko gdy użytkownik nie jest na docelowej stronie
-  // Stary system może nadal używać kontekstu, ale nowy nie wymaga blokowania
-  const onboardingContext = useOnboardingSafe();
-  const isOnboardingBlocking = onboardingContext && typeof onboardingContext === 'object' && 'isBlocking' in onboardingContext 
-    ? onboardingContext.isBlocking 
-    : false;
-
   console.log('Current User Role:', role);
 
   const accessTokens = useMemo(() => {
@@ -335,7 +326,6 @@ export default function DashboardSidebar({
   };
 
   // Funkcja sprawdzająca czy link powinien być zablokowany podczas onboardingu
-  // UWAGA: W nowym systemie Modal-First nie blokujemy nawigacji
   const isLinkBlocked = (path: string) => {
     // Nowy system OnboardingGuide nie blokuje nawigacji
     // Użytkownik może swobodnie poruszać się po aplikacji

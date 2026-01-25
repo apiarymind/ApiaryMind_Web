@@ -67,6 +67,7 @@ export interface Profile {
   default_vet_authority?: string;
   health_cert_number?: string;
   health_cert_date?: string;
+  sanitary_exam_expires_at?: string; // Date format: YYYY-MM-DD
   is_public_profile_enabled?: boolean;
   public_profile_config?: {
     show_address?: boolean;

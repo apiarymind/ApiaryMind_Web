@@ -1,107 +1,99 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { useAuth } from '@/lib/AuthContext';
 
-type OnboardingState = 
-  | 'STEP_1_PENDING'
-  | 'STEP_2_PENDING'
-  | 'STEP_3_PENDING'
-  | 'STEP_4_PENDING'
-  | 'COMPLETED'
-  | 'HIDDEN';
+type OnboardingStep = number; // 1, 2, 3, 4, or 5 (Completed)
 
 interface OnboardingContextType {
-  state: OnboardingState;
-  setState: (state: OnboardingState) => void;
-  currentStep: number; // 1-4, lub 0 jeśli wszystko ukończone
-  setCurrentStep: (step: number) => void;
-  isBlocking: boolean; // Czy onboarding blokuje dostęp do innych sekcji
-  tutorialDisabled: boolean;
-  setTutorialDisabled: (disabled: boolean) => void;
+  currentStep: OnboardingStep;
+  isModalOpen: boolean;
+  isDemo: boolean;
+  completeStep: (step: OnboardingStep) => void;
+  setModalOpen: (isOpen: boolean) => void;
+  resetOnboarding: () => void;
 }
 
-export const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
+const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
 
-const STORAGE_KEY_STATE = 'onboarding_state';
 const STORAGE_KEY_STEP = 'onboarding_current_step';
-const STORAGE_KEY_DISABLED = 'tutorial_disabled';
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
-  // Inicjalizacja z localStorage (tylko po stronie klienta)
-  const [state, setStateInternal] = useState<OnboardingState>(() => {
-    if (typeof window === 'undefined') return 'HIDDEN';
-    const saved = localStorage.getItem(STORAGE_KEY_STATE);
-    return (saved as OnboardingState) || 'HIDDEN';
-  });
+  const { user, loading: authLoading } = useAuth();
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>(1); // Default to 1
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDemo, setIsDemo] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
-  const [currentStep, setCurrentStepInternal] = useState<number>(() => {
-    if (typeof window === 'undefined') return 0;
-    const saved = localStorage.getItem(STORAGE_KEY_STEP);
-    return saved ? parseInt(saved, 10) : 0;
-  });
-
-  const [tutorialDisabled, setTutorialDisabledInternal] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem(STORAGE_KEY_DISABLED) === 'true';
-  });
-
-  // Persystencja do localStorage
-  const setState = useCallback((newState: OnboardingState) => {
-    setStateInternal(newState);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY_STATE, newState);
-    }
-  }, []);
-
-  const setCurrentStep = useCallback((step: number) => {
-    setCurrentStepInternal(step);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY_STEP, step.toString());
-    }
-  }, []);
-
-  const setTutorialDisabled = useCallback((disabled: boolean) => {
-    setTutorialDisabledInternal(disabled);
-    if (typeof window !== 'undefined') {
-      if (disabled) {
-        localStorage.setItem(STORAGE_KEY_DISABLED, 'true');
-      } else {
-        localStorage.removeItem(STORAGE_KEY_DISABLED);
-      }
-    }
-  }, []);
-
-  // Synchronizacja z localStorage przy zmianie (np. z innej karty)
+  // Initialize state
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (authLoading) return;
 
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY_STATE && e.newValue) {
-        setStateInternal(e.newValue as OnboardingState);
-      }
-      if (e.key === STORAGE_KEY_STEP && e.newValue) {
-        setCurrentStepInternal(parseInt(e.newValue, 10));
-      }
-      if (e.key === STORAGE_KEY_DISABLED) {
-        setTutorialDisabledInternal(e.newValue === 'true');
-      }
-    };
+    // Check if user is Demo
+    const isAnonymous = user?.is_anonymous === true || (!user?.email && user?.app_metadata?.provider === 'anonymous');
+    setIsDemo(isAnonymous);
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    if (isAnonymous) {
+      // Demo Mode: Always start at Step 1
+      console.log('[Onboarding] Demo user detected, forcing Step 1');
+      setCurrentStep(1);
+    } else {
+      // Normal Mode: Read from localStorage
+      if (typeof window !== 'undefined') {
+        const savedStep = localStorage.getItem(STORAGE_KEY_STEP);
+        console.log('[Onboarding] Reading from localStorage:', savedStep);
+        if (savedStep) {
+          const step = parseInt(savedStep, 10);
+          if (!isNaN(step) && step >= 1) {
+            setCurrentStep(step);
+          }
+        }
+      }
+    }
+    setInitialized(true);
+  }, [user, authLoading]);
+
+  const completeStep = useCallback((step: OnboardingStep) => {
+    const nextStep = step + 1;
+    console.log('[Onboarding] Completing step:', step, 'Next step:', nextStep);
+    setCurrentStep(nextStep);
+    
+    // Persist to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY_STEP, nextStep.toString());
+    }
   }, []);
-  
-  const isBlocking = state !== 'HIDDEN' && state !== 'COMPLETED' && !tutorialDisabled;
+
+  const setModalOpen = useCallback((isOpen: boolean) => {
+    console.log('[Onboarding] setModalOpen:', isOpen);
+    setIsModalOpen(isOpen);
+  }, []);
+
+  const resetOnboarding = useCallback(() => {
+    console.log('[Onboarding] Resetting onboarding to Step 1');
+    setCurrentStep(1);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY_STEP, '1');
+    }
+  }, []);
+
+  // Don't render until we've checked storage/auth to prevent flash of wrong step
+  if (!initialized && !authLoading) {
+     // Optional: You could render a null or loader here, but typically context just holds off
+     // However, since we default to 1, we can just render.
+     // But for "Amnesia" fix, it's better to wait for the effect to fire at least once if we want to be strict.
+     // Let's render children only after init to be safe against flashing Step 1 then Step 3.
+     return null; 
+  }
 
   return (
     <OnboardingContext.Provider value={{ 
-      state, 
-      setState, 
-      currentStep,
-      setCurrentStep,
-      isBlocking,
-      tutorialDisabled,
-      setTutorialDisabled
+      currentStep, 
+      isModalOpen, 
+      isDemo, 
+      completeStep, 
+      setModalOpen,
+      resetOnboarding
     }}>
       {children}
     </OnboardingContext.Provider>

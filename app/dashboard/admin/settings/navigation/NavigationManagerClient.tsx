@@ -56,7 +56,8 @@ export default function NavigationManagerClient({ items }: NavigationManagerClie
     const updates = localItems.map(item => ({
       id: item.id,
       allowed_roles: item.allowed_roles || [],
-      is_active: item.is_active
+      is_active: item.is_active,
+      sort_order: item.sort_order
     }));
 
     startTransition(async () => {

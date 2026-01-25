@@ -19,30 +19,31 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="min-h-screen bg-transparent text-text-dark dark:text-amber-50">
-      <Suspense fallback={<div className="w-64 bg-white/90 dark:bg-black/40 border-r border-amber-900/10 dark:border-white/10 min-h-screen backdrop-blur-xl"></div>}>
-        <DashboardSidebar
-          userProfile={profile}
-          newsContent={newsSettings.content}
-          newsPosition={newsSettings.position}
-          navigationItems={navigationItems}
-        />
-      </Suspense>
-      <main className="md:ml-[288px] p-6 min-h-screen relative">
-        <DashboardNews content={newsSettings.content} position={newsSettings.position} />
-        
-        <div className="max-w-6xl mx-auto">
-           {/* ProtectedRoute still wraps children to handle client-side auth redirections if session is invalid */}
-           <ProtectedRoute>
-             <Suspense fallback={<div className="text-amber-500">Ładowanie zawartości...</div>}>
-              {children}
-             </Suspense>
-           </ProtectedRoute>
-        </div>
-      </main>
-      <Suspense fallback={null}>
-         <SurveyBanner />
-      </Suspense>
-      <OnboardingWrapper />
+      <OnboardingWrapper>
+        <Suspense fallback={<div className="w-64 bg-white/90 dark:bg-black/40 border-r border-amber-900/10 dark:border-white/10 min-h-screen backdrop-blur-xl"></div>}>
+          <DashboardSidebar
+            userProfile={profile}
+            newsContent={newsSettings.content}
+            newsPosition={newsSettings.position}
+            navigationItems={navigationItems}
+          />
+        </Suspense>
+        <main className="md:ml-[288px] p-6 min-h-screen relative">
+          <DashboardNews content={newsSettings.content} position={newsSettings.position} />
+          
+          <div className="max-w-6xl mx-auto">
+             {/* ProtectedRoute still wraps children to handle client-side auth redirections if session is invalid */}
+             <ProtectedRoute>
+               <Suspense fallback={<div className="text-amber-500">Ładowanie zawartości...</div>}>
+                {children}
+               </Suspense>
+             </ProtectedRoute>
+          </div>
+        </main>
+        <Suspense fallback={null}>
+           <SurveyBanner />
+        </Suspense>
+      </OnboardingWrapper>
     </div>
   );
 }
