@@ -25,6 +25,7 @@ import { useRouter } from 'next/navigation';
 import { fetchLocationByZip } from '@/utils/postal-code-api';
 import Link from 'next/link';
 import QRCode from 'react-qr-code';
+import PrintPortal from '@/app/components/PrintPortal';
 import { useAuth } from '@/lib/AuthContext';
 import { useOnboarding } from '@/lib/OnboardingContext';
 import OnboardingFooter from '@/app/components/onboarding/OnboardingFooter';
@@ -319,7 +320,10 @@ export default function SettingsPage() {
 
   const handlePrint = () => {
     if (publicProfileUrl) {
-      window.print();
+      // Small delay to ensure render
+      setTimeout(() => {
+        window.print();
+      }, 300);
     } else {
       setMessage({ type: 'error', text: 'Błąd: Brak URL wizytówki' });
     }
@@ -1406,82 +1410,76 @@ export default function SettingsPage() {
         buttonLabel="Zakończ Konfigurację"
       />
 
-      {/* Print Styles */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          @media print {
-            @page { size: auto; margin: 0mm; }
-            
-            /* Ukryj wszystko domyślnie */
-            body * {
-              display: none !important;
-            }
-            
-            /* Pokaż tylko kontener do druku i jego dzieci */
-            #printable-root, #printable-root * {
-              display: flex !important;
-              visibility: visible !important;
-            }
-
-            /* Ustawienia kontenera - pełna strona, wyśrodkowanie */
-            #printable-root {
-              position: absolute !important;
-              left: 0 !important;
-              top: 0 !important;
-              width: 100vw !important;
-              height: 100vh !important;
-              flex-direction: column !important;
-              align-items: center !important;
-              justify-content: center !important;
-              background: white !important;
-              z-index: 9999 !important;
-              margin: 0 !important;
-              padding: 0 !important;
-            }
-
-            /* Stylizacja treści */
-            #printable-root h1 {
-              font-size: 40pt !important;
-              margin-bottom: 20px !important;
-              color: black !important;
-              font-weight: bold !important;
-              display: block !important;
-            }
-            
-            /* Wymuszenie widoczności SVG */
-            #printable-root svg {
-              width: 350px !important;
-              height: 350px !important;
-              display: block !important;
-            }
-            
-            #printable-root > div {
-              display: flex !important;
-              align-items: center !important;
-              justify-content: center !important;
-            }
-          }
-          
-          /* Ukryj w normalnym widoku */
-          #printable-root { display: none; }
-        `
-      }} />
-
-      {/* Hidden Print Area - Direct Render Version */}
+      {/* Portal-based Print Area */}
       {publicProfileUrl && (
-        <div id="printable-root">
-          <h1>ApiaryMind</h1>
-          <div style={{ border: '4px solid black', padding: '15px' }}>
-            <QRCode
-              value={publicProfileUrl}
-              size={350}
-              level="H"
-              includeMargin={true}
-              fgColor="#000000"
-              bgColor="#FFFFFF"
-            />
+        <PrintPortal>
+          <div className="print-container">
+            <style dangerouslySetInnerHTML={{
+              __html: `
+                @media print {
+                  @page { size: A4 portrait; margin: 0; }
+
+                  /* Hide everything in body except the print portal */
+                  body > *:not(#print-portal-root) {
+                    display: none !important;
+                  }
+
+                  /* Ensure the portal root is visible and takes full space */
+                  #print-portal-root {
+                    display: block !important;
+                    position: fixed !important;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: white;
+                    z-index: 9999;
+                  }
+
+                  .print-container {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                  }
+
+                  .print-header {
+                    font-size: 48pt;
+                    font-weight: 800;
+                    color: black;
+                    margin-bottom: 40px;
+                    font-family: sans-serif;
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                  }
+
+                  .qr-wrapper {
+                    padding: 20px;
+                    background: white;
+                  }
+                }
+
+                @media screen {
+                  .print-container { display: none; }
+                }
+              `
+            }} />
+
+            <h1 className="print-header">ApiaryMind</h1>
+            <div className="qr-wrapper">
+              <QRCode
+                value={publicProfileUrl}
+                size={450}
+                level="H"
+                includeMargin={false}
+                fgColor="#000000"
+                bgColor="#FFFFFF"
+              />
+            </div>
           </div>
-        </div>
+        </PrintPortal>
       )}
     </div>
   );
