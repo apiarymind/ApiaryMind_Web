@@ -12,7 +12,8 @@ import {
   Save,
   CheckCircle,
   AlertCircle,
-  MapPin
+  MapPin,
+  BookOpen
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { updateProfile } from '@/app/actions/profile';
@@ -23,9 +24,7 @@ import Link from 'next/link';
 import QRCode from 'react-qr-code';
 import { useReactToPrint } from 'react-to-print';
 import { useAuth } from '@/lib/AuthContext';
-import OnboardingWizard from '@/components/OnboardingWizard';
-import { OnboardingProvider } from '@/lib/OnboardingContext';
-import { BookOpen } from 'lucide-react';
+import { useOnboarding } from '@/lib/OnboardingContext';
 import OnboardingFooter from '@/app/components/onboarding/OnboardingFooter';
 
 type Tab = 'profile' | 'company' | 'veterinary' | 'legal' | 'subscription';
@@ -115,12 +114,12 @@ export default function SettingsPage() {
   const [legalStatus, setLegalStatus] = useState<LegalStatus>('hobby');
   const [postalCodeLoading, setPostalCodeLoading] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const [legalStatusText, setLegalStatusText] = useState<string>('Brak');
   const qrRef = useRef<HTMLDivElement | null>(null);
   const printRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
   const { user } = useAuth();
+  const { resetOnboarding } = useOnboarding();
   
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<Profile>();
   const supabase = createClient();
@@ -274,53 +273,10 @@ export default function SettingsPage() {
     }
   };
 
-  const tabs = [
-    { id: 'profile', label: 'Profil', icon: User },
-    { id: 'company', label: 'Dane Firmowe', icon: Building2 },
-    { id: 'veterinary', label: 'Dane Weterynaryjne', icon: Stethoscope },
-    { id: 'legal', label: 'Wirtualna Wizytówka', icon: QrCode },
-    // Hide subscription tab for anonymous users (Demo mode)
-    ...(isAnonymous ? [] : [{ id: 'subscription' as const, label: 'Subskrypcja', icon: CreditCard }]),
-  ];
-
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-  const publicProfileUrl = profileId ? `${baseUrl}/public/beekeeper/${profileId}` : '';
-  const isPublicProfileEnabled = watch('is_public_profile_enabled');
-  const firstName = watch('first_name') || '';
-  const lastName = watch('last_name') || '';
-  const ownerName = `${firstName} ${lastName}`.trim();
-
-  const handlePrint = useReactToPrint({
-    content: () => printRef.current,
-    documentTitle: 'Wizytowka_Pasieki_QR',
-  });
-
-  const downloadQrPng = () => {
-    if (!qrRef.current || !publicProfileUrl) return;
-    const svg = qrRef.current.querySelector('svg');
-    if (!svg) return;
-    const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(svg);
-    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(svgBlob);
-    const image = new Image();
-    image.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 512;
-      canvas.height = 512;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-      URL.revokeObjectURL(url);
-      const pngUrl = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = pngUrl;
-      link.download = 'apiarymind-qr.png';
-      link.click();
-    };
-    image.src = url;
+  const handleStartOnboarding = () => {
+    resetOnboarding();
+    // Redirect to step 1 route (Warehouse)
+    router.push('/dashboard/beekeeper/warehouse');
   };
 
   if (loading) {
@@ -993,7 +949,7 @@ export default function SettingsPage() {
             {activeTab === 'profile' && (
               <button
                 type="button"
-                onClick={() => setShowOnboarding(true)}
+                onClick={handleStartOnboarding}
                 className="flex items-center space-x-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold transition-all shadow-light-button hover:shadow-light-button-hover dark:shadow-none"
               >
                 <BookOpen className="w-4 h-4" />
@@ -1022,16 +978,6 @@ export default function SettingsPage() {
           </div>
         )}
       </form>
-
-      {/* Onboarding Wizard */}
-      {showOnboarding && (
-        <OnboardingProvider>
-          <OnboardingWizard 
-            forceStart={showOnboarding}
-            onComplete={() => setShowOnboarding(false)}
-          />
-        </OnboardingProvider>
-      )}
 
       {/* Onboarding Footer - Krok 4 */}
       <OnboardingFooter

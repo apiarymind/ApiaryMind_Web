@@ -7,6 +7,7 @@ import { PlusCircle, X, Package, Layers, Pill, Wand2, ChevronDown, ChevronUp, Al
 import { addWarehouseItem } from "@/app/actions/add-warehouse-item";
 import { searchMedicationsGlobal, getMedicationById, MedicationGlobal } from "@/app/actions/search-medications";
 import { getHiveTypes, HiveType } from "@/app/actions/get-hive-types";
+import { useOnboarding } from "@/lib/OnboardingContext";
 
 const initialState = {
   message: "",
@@ -28,6 +29,7 @@ function SubmitButton() {
 
 export default function AddStockModal() {
   const router = useRouter();
+  const { setModalOpen } = useOnboarding();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"inventory" | "product">("product");
   const [state, formAction] = useFormState(addWarehouseItem, initialState);
@@ -74,6 +76,16 @@ export default function AddStockModal() {
   
   // Refs for auto-focus
   const batchNumberInputRef = useRef<HTMLInputElement>(null);
+
+  // Notify context when modal visibility changes
+  useEffect(() => {
+    if (isOpen) {
+      setModalOpen(true);
+    } else {
+      setModalOpen(false);
+    }
+    return () => setModalOpen(false);
+  }, [isOpen, setModalOpen]);
 
   // Fetch hive types when modal opens and itemType is "sprzet"
   useEffect(() => {
@@ -298,23 +310,12 @@ export default function AddStockModal() {
       // Success - close modal and reset
       setIsOpen(false);
       
-      // CRITICAL FIX: Wyślij custom eventy, aby OnboardingFooter wiedział, że modal został zamknięty
-      // i że element został dodany do magazynu
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('modal-closed'));
-        window.dispatchEvent(new CustomEvent('warehouse-item-added', {
-          detail: { type: 'inventory' }
-        }));
-      }, 100);
-      
       setSelectedHiveTypeId("");
       setSelectedComponent("");
       setSelectedMaterial("");
       setSelectedBottomBoardType("");
       setEquipmentError("");
       
-      // CRITICAL FIX: NIE używaj window.location.reload() - to resetuje stan aplikacji!
-      // Zamiast tego użyj router.refresh() - odświeża dane bez pełnego przeładowania strony
       router.refresh();
     } catch (error: any) {
       console.error("Error adding equipment:", error);
@@ -328,25 +329,11 @@ export default function AddStockModal() {
   if (state.success && isOpen) {
      setIsOpen(false);
      
-     // CRITICAL FIX: Wyślij custom event, aby OnboardingFooter wiedział, że modal został zamknięty
-     setTimeout(() => {
-       window.dispatchEvent(new CustomEvent('modal-closed'));
-       // CRITICAL: Wyślij event o dodaniu elementu do magazynu
-       window.dispatchEvent(new CustomEvent('warehouse-item-added', {
-         detail: { type: activeTab } // 'inventory' lub 'product'
-       }));
-     }, 100);
-     
-     // CRITICAL FIX: NIE używaj window.location.reload() - użyj router.refresh()
      router.refresh();
      
      // Reset form state
      setCategory("Sprzęt Pszczelarski");
      setUnit("szt");
-     // Reset state manually or handle via useEffect if needed, 
-     // but for simplicity we just close the modal.
-     // In a real app, use a Toast here.
-     // alert("Dodano pomyślnie!"); // Usunięto alert - można dodać toast później
      state.success = false; // Reset simple flag
   }
   
@@ -436,11 +423,6 @@ export default function AddStockModal() {
   // Reset form when modal closes
   const handleClose = () => {
     setIsOpen(false);
-    
-    // CRITICAL FIX: Wyślij custom event, aby OnboardingFooter wiedział, że modal został zamknięty
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('modal-closed'));
-    }, 100);
     
     setCategory("Sprzęt Pszczelarski");
     setUnit("szt");

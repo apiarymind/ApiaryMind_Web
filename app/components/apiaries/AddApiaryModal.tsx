@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, PlusCircle } from 'lucide-react';
 import { createApiary } from '@/app/actions/apiary-crud';
+import { useOnboarding } from '@/lib/OnboardingContext';
 
 interface AddApiaryModalProps {
   isOpen: boolean;
@@ -11,11 +12,22 @@ interface AddApiaryModalProps {
 }
 
 export function AddApiaryModal({ isOpen, onClose, onSuccess }: AddApiaryModalProps) {
+  const { setModalOpen } = useOnboarding();
   const [name, setName] = useState('');
   const [locationGeo, setLocationGeo] = useState('');
   const [type, setType] = useState('STATIONARY');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Notify context when modal visibility changes
+  useEffect(() => {
+    if (isOpen) {
+      setModalOpen(true);
+    } else {
+      setModalOpen(false);
+    }
+    return () => setModalOpen(false);
+  }, [isOpen, setModalOpen]);
 
   if (!isOpen) return null;
 
@@ -174,6 +186,3 @@ export function AddApiaryModal({ isOpen, onClose, onSuccess }: AddApiaryModalPro
     </div>
   );
 }
-
-
-
