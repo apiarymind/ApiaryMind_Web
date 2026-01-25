@@ -26,7 +26,15 @@ export default async function AdminCmsEditorPage() {
       </div>
 
       {/* SECTION 1: Feature Toggles */}
-      <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl p-6 border border-white/10 dark:border-white/5">
+      <div className="backdrop-blur-md rounded-xl p-6 border transition-all duration-300"
+           style={{
+             borderRadius: 'var(--theme-card-radius, 0.75rem)',
+             borderColor: 'var(--theme-card-border)',
+             borderWidth: 'var(--theme-card-border-width, 1px)',
+             boxShadow: 'var(--theme-card-shadow)',
+             backdropFilter: 'var(--theme-card-blur, blur(10px))',
+             backgroundColor: 'var(--theme-card-bg, rgba(255, 255, 255, 0.05))'
+           }}>
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-amber-950 dark:text-white mb-2">Włącz/Wyłącz Elementy</h2>
           <p className="text-sm text-amber-900/70 dark:text-gray-400">
@@ -37,7 +45,15 @@ export default async function AdminCmsEditorPage() {
       </div>
 
       {/* SECTION 2: Pages Manager - Main Section */}
-      <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl p-6 border border-white/10 dark:border-white/5">
+      <div className="backdrop-blur-md rounded-xl p-6 border transition-all duration-300"
+           style={{
+             borderRadius: 'var(--theme-card-radius, 0.75rem)',
+             borderColor: 'var(--theme-card-border)',
+             borderWidth: 'var(--theme-card-border-width, 1px)',
+             boxShadow: 'var(--theme-card-shadow)',
+             backdropFilter: 'var(--theme-card-blur, blur(10px))',
+             backgroundColor: 'var(--theme-card-bg, rgba(255, 255, 255, 0.05))'
+           }}>
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-amber-950 dark:text-white mb-2">Strony</h2>
           <p className="text-sm text-amber-900/70 dark:text-gray-400">
@@ -48,7 +64,15 @@ export default async function AdminCmsEditorPage() {
       </div>
 
       {/* SECTION 3: Visual CMS Editor (Drag & Drop) - Collapsible */}
-      <details id="visual-cms-editor" className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl border border-white/10 dark:border-white/5 overflow-hidden">
+      <details id="visual-cms-editor" className="backdrop-blur-md rounded-xl border overflow-hidden transition-all duration-300"
+               style={{
+                 borderRadius: 'var(--theme-card-radius, 0.75rem)',
+                 borderColor: 'var(--theme-card-border)',
+                 borderWidth: 'var(--theme-card-border-width, 1px)',
+                 boxShadow: 'var(--theme-card-shadow)',
+                 backdropFilter: 'var(--theme-card-blur, blur(10px))',
+                 backgroundColor: 'var(--theme-card-bg, rgba(255, 255, 255, 0.05))'
+               }}>
         <summary className="p-6 cursor-pointer hover:bg-white/5 transition-colors">
           <h2 className="text-2xl font-bold text-amber-950 dark:text-white inline-block">
             Edytor Wizualny (Drag & Drop)
@@ -63,7 +87,15 @@ export default async function AdminCmsEditorPage() {
       </details>
 
       {/* SECTION 4: Video CMS */}
-      <details className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl border border-white/10 dark:border-white/5 overflow-hidden">
+      <details className="backdrop-blur-md rounded-xl border overflow-hidden transition-all duration-300"
+               style={{
+                 borderRadius: 'var(--theme-card-radius, 0.75rem)',
+                 borderColor: 'var(--theme-card-border)',
+                 borderWidth: 'var(--theme-card-border-width, 1px)',
+                 boxShadow: 'var(--theme-card-shadow)',
+                 backdropFilter: 'var(--theme-card-blur, blur(10px))',
+                 backgroundColor: 'var(--theme-card-bg, rgba(255, 255, 255, 0.05))'
+               }}>
         <summary className="p-6 cursor-pointer hover:bg-white/5 transition-colors">
           <h2 className="text-2xl font-bold text-amber-950 dark:text-white inline-block">
             Zarządzanie Wideo
@@ -78,7 +110,15 @@ export default async function AdminCmsEditorPage() {
       </details>
 
       {/* SECTION 5: Global Text Settings */}
-      <details className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl border border-white/10 dark:border-white/5 overflow-hidden">
+      <details className="backdrop-blur-md rounded-xl border overflow-hidden transition-all duration-300"
+               style={{
+                 borderRadius: 'var(--theme-card-radius, 0.75rem)',
+                 borderColor: 'var(--theme-card-border)',
+                 borderWidth: 'var(--theme-card-border-width, 1px)',
+                 boxShadow: 'var(--theme-card-shadow)',
+                 backdropFilter: 'var(--theme-card-blur, blur(10px))',
+                 backgroundColor: 'var(--theme-card-bg, rgba(255, 255, 255, 0.05))'
+               }}>
         <summary className="p-6 cursor-pointer hover:bg-white/5 transition-colors">
           <h2 className="text-2xl font-bold text-amber-950 dark:text-white inline-block">
             Ustawienia Tekstowe
@@ -93,7 +133,15 @@ export default async function AdminCmsEditorPage() {
       </details>
 
       {/* SECTION 6: Dynamic Pages (HTML Editor) - Advanced */}
-      <details className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl border border-white/10 dark:border-white/5 overflow-hidden">
+      <details className="backdrop-blur-md rounded-xl border overflow-hidden transition-all duration-300"
+               style={{
+                 borderRadius: 'var(--theme-card-radius, 0.75rem)',
+                 borderColor: 'var(--theme-card-border)',
+                 borderWidth: 'var(--theme-card-border-width, 1px)',
+                 boxShadow: 'var(--theme-card-shadow)',
+                 backdropFilter: 'var(--theme-card-blur, blur(10px))',
+                 backgroundColor: 'var(--theme-card-bg, rgba(255, 255, 255, 0.05))'
+               }}>
         <summary className="p-6 cursor-pointer hover:bg-white/5 transition-colors">
           <h2 className="text-2xl font-bold text-amber-950 dark:text-white inline-block">
             Strony HTML (Zaawansowane)

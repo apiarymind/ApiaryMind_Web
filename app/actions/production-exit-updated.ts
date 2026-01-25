@@ -169,7 +169,19 @@ export async function getProductionManifests(): Promise<{ data: BreedingManifest
         series:breeding_series (
           id,
           name,
-          start_date
+          start_date,
+          breeding_mother:breeding_mothers!mother_id (
+            id,
+            name,
+            breed,
+            line,
+            year,
+            insemination_method,
+            mother_ref_number,
+            father_line,
+            breeder_wni,
+            certificate_number
+          )
         )
       `)
       .eq('user_id', uid)
@@ -183,9 +195,16 @@ export async function getProductionManifests(): Promise<{ data: BreedingManifest
     // Process series join
     const processedData: BreedingManifest[] = (data || []).map((item: any) => {
       const seriesData = Array.isArray(item.series) ? item.series[0] : item.series;
+      const rawMother = seriesData?.breeding_mother;
+      const breedingMother = Array.isArray(rawMother) ? rawMother[0] : rawMother;
       return {
         ...item,
-        series: seriesData || undefined,
+        series: seriesData
+          ? {
+              ...seriesData,
+              breeding_mother: breedingMother || undefined,
+            }
+          : undefined,
       };
     });
 

@@ -26,7 +26,7 @@ export default async function ApiaryPublicPage({ params }: { params: { id: strin
   }
 
   return (
-    <div className="min-h-screen bg-[url('/assets/marble-texture.jpg')] bg-cover bg-center dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900 via-gray-800 to-black">
+    <div className="min-h-screen bg-[url('/assets/bg-light-pattern.png')] bg-cover bg-center dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900 via-gray-800 to-black">
       <div className="container mx-auto px-4 py-8 md:py-12">
         {/* Header */}
         <div className="mb-8 text-center">
@@ -213,6 +213,11 @@ export default async function ApiaryPublicPage({ params }: { params: { id: strin
     </div>
   );
 }
+
+
+
+
+
 
 
 

@@ -46,6 +46,10 @@ export async function createBreedingMother(data: {
   line?: string;
   insemination_method?: string;
   year?: number;
+  mother_ref_number?: string;
+  father_line?: string;
+  breeder_wni?: string;
+  certificate_number?: string;
 }): Promise<{ success: boolean; data?: BreedingMother; error?: string }> {
   const uid = await getSessionUid();
   if (!uid) {
@@ -64,10 +68,14 @@ export async function createBreedingMother(data: {
       .insert({
         user_id: uid,
         name: data.name.trim(),
-        breed: data.breed || null,
-        line: data.line || null,
-        insemination_method: data.insemination_method || null,
+        breed: data.breed?.trim() || null,
+        line: data.line?.trim() || null,
+        insemination_method: data.insemination_method?.trim() || null,
         year: data.year || null,
+        mother_ref_number: data.mother_ref_number?.trim() || null,
+        father_line: data.father_line?.trim() || null,
+        breeder_wni: data.breeder_wni?.trim() || null,
+        certificate_number: data.certificate_number?.trim() || null,
         is_active: true,
       })
       .select()
@@ -98,6 +106,10 @@ export async function updateBreedingMother(
     insemination_method: string;
     year: number;
     is_active: boolean;
+    mother_ref_number: string;
+    father_line: string;
+    breeder_wni: string;
+    certificate_number: string;
   }>
 ): Promise<{ success: boolean; error?: string }> {
   const uid = await getSessionUid();

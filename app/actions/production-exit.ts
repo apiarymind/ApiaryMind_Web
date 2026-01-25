@@ -276,7 +276,7 @@ export async function getProductionHistory(): Promise<{ data: ProductionHistory[
  * TODO: Implement actual PDF generation
  */
 export async function generateManifestPDF(historyId: string): Promise<{ success: boolean; url?: string; error?: string }> {
-  // TODO: Implement PDF generation using jsPDF or similar
+  // TODO: Implement PDF generation using pdfmake
   // This is a scaffold - actual implementation would:
   // 1. Fetch production history with all details
   // 2. Generate QR code for manifest
@@ -292,5 +292,10 @@ export async function generateManifestPDF(historyId: string): Promise<{ success:
     error: 'PDF generation not yet implemented',
   };
 }
+
+
+
+
+
 
 

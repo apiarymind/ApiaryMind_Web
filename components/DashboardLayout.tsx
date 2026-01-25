@@ -17,8 +17,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 grid md:grid-cols-[220px,1fr] gap-6">
-      <aside className="bg-brown-800/80 border border-brown-700 rounded-xl p-4">
-        <h2 className="text-sm font-semibold text-amber-200 mb-3">
+      <aside className="bg-white/90 dark:bg-black/40 backdrop-blur-xl border border-amber-900/10 dark:border-white/10 rounded-xl p-4">
+        <h2 className="text-sm font-semibold text-amber-950 dark:text-white mb-3">
           Panele ApiaryMind
         </h2>
         <nav className="flex flex-col gap-1 text-sm">
@@ -27,8 +27,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               key={item.href}
               href={item.href}
               className={clsx(
-                "px-3 py-2 rounded-lg hover:bg-brown-700",
-                pathname === item.href && "bg-brown-700 text-amber-200 font-semibold"
+                "px-3 py-2 rounded-lg text-amber-950 dark:text-white hover:bg-amber-500/20 dark:hover:bg-amber-500/20 transition-colors",
+                pathname === item.href && "bg-amber-500/20 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 font-semibold"
               )}
             >
               {item.label}
@@ -36,7 +36,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           ))}
         </nav>
       </aside>
-      <section className="bg-brown-800/60 border border-brown-700 rounded-xl p-4">
+      <section className="bg-white/60 dark:bg-black/40 backdrop-blur-xl border border-amber-900/10 dark:border-white/10 rounded-xl p-4">
         {children}
       </section>
     </div>

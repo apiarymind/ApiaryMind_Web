@@ -153,7 +153,15 @@ export default function AdminSupportClient() {
       )}
 
       {filteredTickets.length === 0 ? (
-        <div className="bg-white/5 border border-white/10 rounded-xl p-8 text-center">
+        <div className="border rounded-xl p-8 text-center backdrop-blur-xl transition-all duration-300"
+             style={{
+               borderRadius: 'var(--theme-card-radius, 0.75rem)',
+               borderColor: 'var(--theme-card-border)',
+               borderWidth: 'var(--theme-card-border-width, 1px)',
+               boxShadow: 'var(--theme-card-shadow)',
+               backdropFilter: 'var(--theme-card-blur, blur(10px))',
+               backgroundColor: 'var(--theme-card-bg, rgba(255, 255, 255, 0.05))'
+             }}>
           <MessageSquare className="w-12 h-12 mx-auto mb-4 text-white/40" />
           <p className="text-white/60">Brak zgłoszeń.</p>
         </div>
@@ -162,7 +170,15 @@ export default function AdminSupportClient() {
           {filteredTickets.map(ticket => (
             <div
               key={ticket.id}
-              className="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-colors cursor-pointer"
+              className="border rounded-xl p-6 transition-all duration-300 cursor-pointer backdrop-blur-xl"
+              style={{
+                borderRadius: 'var(--theme-card-radius, 0.75rem)',
+                borderColor: 'var(--theme-card-border)',
+                borderWidth: 'var(--theme-card-border-width, 1px)',
+                boxShadow: 'var(--theme-card-shadow)',
+                backdropFilter: 'var(--theme-card-blur, blur(10px))',
+                backgroundColor: 'var(--theme-card-bg, rgba(255, 255, 255, 0.05))'
+              }}
               onClick={() => handleViewTicket(ticket.id)}
             >
               <div className="flex justify-between items-start mb-2">
@@ -190,7 +206,15 @@ export default function AdminSupportClient() {
       {/* Ticket Detail Modal */}
       {selectedTicket && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-brown-900 border border-brown-700 rounded-xl p-6 w-full max-w-3xl shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="border rounded-xl p-6 w-full max-w-3xl shadow-2xl max-h-[90vh] overflow-y-auto backdrop-blur-xl transition-all duration-300"
+               style={{
+                 borderRadius: 'var(--theme-card-radius, 0.75rem)',
+                 borderColor: 'var(--theme-card-border)',
+                 borderWidth: 'var(--theme-card-border-width, 1px)',
+                 boxShadow: 'var(--theme-card-shadow)',
+                 backdropFilter: 'var(--theme-card-blur, blur(20px))',
+                 backgroundColor: 'var(--theme-card-bg, rgba(60, 44, 31, 0.95))'
+               }}>
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h3 className="text-xl font-bold text-white">{selectedTicket.title}</h3>

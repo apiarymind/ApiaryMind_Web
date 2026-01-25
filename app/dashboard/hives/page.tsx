@@ -1,19 +1,39 @@
 import { getUserHives } from '@/app/actions/get-hives';
-import { getSessionUid } from '@/app/actions/auth-session';
+import { Apiary } from '@/app/actions/get-apiaries';
+import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import HivesBrowser from './HivesBrowser';
+import OnboardingFooter from '@/app/components/onboarding/OnboardingFooter';
 
 export default async function HivesPage() {
-  const uid = await getSessionUid();
-  if (!uid) {
+  const supabase = createClient();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
     redirect('/login');
   }
 
-  const { data: hives, error } = await getUserHives();
+  const [{ data: hives, error }, { data: userApiaries, error: apiariesError }] = await Promise.all([
+    getUserHives(),
+    supabase
+      .from('apiaries')
+      .select('id, name, type')
+      .eq('owner_id', user.id)
+      .order('name')
+  ]);
 
   if (error) {
      console.error("Hives fetch error:", error);
   }
+  if (apiariesError) {
+    console.error("Apiaries fetch error:", apiariesError);
+  }
+
+  const normalizedApiaries: Apiary[] = (userApiaries || []).map((apiary) => ({
+    id: apiary.id,
+    name: apiary.name,
+    type: apiary.type ?? null,
+    location: null
+  }));
 
   return (
     <div className="space-y-6">
@@ -27,17 +47,18 @@ export default async function HivesPage() {
         </div>
       )}
 
-      {!error && hives.length === 0 ? (
-        <div className="p-8 text-center flex flex-col items-center justify-center bg-neutral-900 border border-neutral-800 rounded-xl">
-           <div className="text-4xl mb-4">📦</div>
-           <h3 className="text-xl font-bold text-white mb-2">Brak uli</h3>
-           <p className="text-neutral-400">
-             Nie znaleziono uli. Dodaj je w aplikacji mobilnej.
-           </p>
-        </div>
-      ) : (
-        <HivesBrowser initialHives={hives} />
+      {!error && (
+        <HivesBrowser initialHives={hives} initialApiaries={normalizedApiaries} />
       )}
+
+      {/* Onboarding Footer - Krok 3 */}
+      <OnboardingFooter
+        step={3}
+        count={hives?.length || 0}
+        iconName="Home"
+        infoText="To serce Twojej gospodarki. Dodaj ule, wybierając je z Magazynu i zasiedl pierwsze rodziny."
+        buttonLabel="Ule stoją, idź do Ustawień >>"
+      />
     </div>
   );
 }

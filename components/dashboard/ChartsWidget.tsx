@@ -22,25 +22,18 @@ export function ChartsWidget({ data }: ChartsWidgetProps) {
                   data.inspectionsByMood.length > 0;
 
   if (!hasData) {
-    return (
-      <div className="col-span-1 md:col-span-2 lg:col-span-2 xl:col-span-2 bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-2xl p-6 border border-white/10 dark:border-white/5">
-        <h3 className="text-lg font-bold mb-4 text-amber-950 dark:text-white">Wykresy i Statystyki</h3>
-        <div className="flex items-center justify-center h-64 text-amber-900/60 dark:text-white/40">
-          <p className="text-sm">Brak danych do wyświetlenia. Dodaj przeglądy, aby zobaczyć statystyki.</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="col-span-1 md:col-span-2 lg:col-span-2 xl:col-span-2 bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-white/10 dark:border-white/5">
-      <h3 className="text-lg font-bold mb-4 md:mb-6 text-amber-950 dark:text-white">Wykresy i Statystyki</h3>
+    <div className="w-full bg-white dark:bg-black/20 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-gray-300 dark:border-white/10 shadow-lg dark:shadow-none">
+      <h3 className="text-lg font-bold mb-4 md:mb-6 text-gray-900 dark:text-white">Wykresy i Statystyki</h3>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Inspections Over Time */}
         {data.inspectionsOverTime.length > 0 && (
-          <div className="bg-white/5 dark:bg-black/30 rounded-xl p-4 border border-white/5">
-            <h4 className="text-sm font-bold mb-3 text-amber-900 dark:text-amber-400">Przeglądy w Czasie</h4>
+          <div className="bg-white dark:bg-black/30 rounded-xl p-4 border border-gray-300 dark:border-white/5 shadow-md dark:shadow-none">
+            <h4 className="text-sm font-bold mb-3 text-amber-700 dark:text-amber-400">Przeglądy w Czasie</h4>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={data.inspectionsOverTime}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
@@ -68,8 +61,8 @@ export function ChartsWidget({ data }: ChartsWidgetProps) {
 
         {/* Colony Strength Trend */}
         {data.colonyStrengthTrend.length > 0 && (
-          <div className="bg-white/5 dark:bg-black/30 rounded-xl p-4 border border-white/5">
-            <h4 className="text-sm font-bold mb-3 text-amber-900 dark:text-amber-400">Trend Siły Kolonii</h4>
+          <div className="bg-white dark:bg-black/30 rounded-xl p-4 border border-gray-300 dark:border-white/5 shadow-md dark:shadow-none">
+            <h4 className="text-sm font-bold mb-3 text-amber-700 dark:text-amber-400">Trend Siły Kolonii</h4>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={data.colonyStrengthTrend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
@@ -103,8 +96,8 @@ export function ChartsWidget({ data }: ChartsWidgetProps) {
 
         {/* Temperature Trend */}
         {data.temperatureTrend.length > 0 && (
-          <div className="bg-white/5 dark:bg-black/30 rounded-xl p-4 border border-white/5">
-            <h4 className="text-sm font-bold mb-3 text-amber-900 dark:text-amber-400">Temperatura</h4>
+          <div className="bg-white dark:bg-black/30 rounded-xl p-4 border border-gray-300 dark:border-white/5 shadow-md dark:shadow-none">
+            <h4 className="text-sm font-bold mb-3 text-amber-700 dark:text-amber-400">Temperatura</h4>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={data.temperatureTrend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
@@ -138,8 +131,8 @@ export function ChartsWidget({ data }: ChartsWidgetProps) {
 
         {/* Inspections By Mood */}
         {data.inspectionsByMood.length > 0 && (
-          <div className="bg-white/5 dark:bg-black/30 rounded-xl p-4 border border-white/5">
-            <h4 className="text-sm font-bold mb-3 text-amber-900 dark:text-amber-400">Nastrój Kolonii</h4>
+          <div className="bg-white dark:bg-black/30 rounded-xl p-4 border border-gray-300 dark:border-white/5 shadow-md dark:shadow-none">
+            <h4 className="text-sm font-bold mb-3 text-amber-700 dark:text-amber-400">Nastrój Kolonii</h4>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie

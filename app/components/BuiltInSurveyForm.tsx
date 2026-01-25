@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { submitSurveyResponse, getSurveyQuestions, getSurveyResultsPublic, SurveyQuestion } from '@/app/actions/surveys-builtin';
 import { Check, Star, X } from 'lucide-react';
 
@@ -20,18 +20,24 @@ export default function BuiltInSurveyForm({ surveyId, question, onClose }: Built
   const [results, setResults] = useState<Array<{ option: string; count: number; percentage: number }>>([]);
   const [loadingResults, setLoadingResults] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
+  const loadingRef = useRef(false);
 
   const loadResults = useCallback(async (questionId?: string) => {
+    // Prevent multiple simultaneous calls
+    if (loadingRef.current) {
+      return;
+    }
+    
     const qId = questionId || (questions.length > 0 ? questions[0].id : null);
     if (!qId) {
       console.error('No question ID available');
       return;
     }
     
+    loadingRef.current = true;
     setLoadingResults(true);
     try {
       const resultsData = await getSurveyResultsPublic(surveyId, qId);
-      console.log('Results data:', resultsData);
       if (resultsData.error) {
         console.error('Error loading results:', resultsData.error);
         setError(resultsData.error);
@@ -43,6 +49,7 @@ export default function BuiltInSurveyForm({ surveyId, question, onClose }: Built
       setError('Błąd ładowania wyników');
     } finally {
       setLoadingResults(false);
+      loadingRef.current = false;
     }
   }, [surveyId, questions]);
 
@@ -70,14 +77,29 @@ export default function BuiltInSurveyForm({ surveyId, question, onClose }: Built
           setSubmitted(true);
           // Load results immediately
           if (result.data.length > 0) {
-            loadResults(result.data[0].id);
+            // Call loadResults directly without dependency to avoid loop
+            const qId = result.data[0].id;
+            setLoadingResults(true);
+            try {
+              const resultsData = await getSurveyResultsPublic(surveyId, qId);
+              if (resultsData.error) {
+                console.error('Error loading results:', resultsData.error);
+              } else if (resultsData.data) {
+                setResults(resultsData.data);
+              }
+            } catch (err) {
+              console.error('Exception loading results:', err);
+            } finally {
+              setLoadingResults(false);
+            }
           }
         }
       }
       setLoading(false);
     };
     loadQuestions();
-  }, [surveyId, loadResults]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [surveyId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,9 +170,12 @@ export default function BuiltInSurveyForm({ surveyId, question, onClose }: Built
       // Mark as voted in localStorage
       localStorage.setItem(`survey_voted_${surveyId}`, 'true');
       setSubmitted(true);
-      // Load results after submission
+      // Load results after setting submitted to avoid flashing
       if (questions.length > 0) {
-        await loadResults(questions[0].id);
+        // Use a separate async call to avoid blocking the state update
+        loadResults(questions[0].id).catch(err => {
+          console.error('Error loading results after submit:', err);
+        });
       }
     } else {
       setError(result.error || 'Błąd wysyłania odpowiedzi');

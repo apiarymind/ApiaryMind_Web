@@ -31,31 +31,78 @@
   
   --input-bg: rgba(15, 10, 6, 0.8);
   --input-border: #4A3725;
+  
+  /* Zmienne dla GlassCard (dark mode) */
+  --theme-card-bg: rgba(60, 44, 31, 0.7);
+  --theme-card-border: rgba(255, 255, 255, 0.1);
+  --theme-card-shadow: none;
+  --theme-card-radius: 1.5rem;
+  --theme-card-border-width: 1px;
+  --theme-card-blur: blur(20px);
 }
 
 :root[data-theme="light"] {
-  /* Light Theme */
+  /* Light Theme - WZMOCNIONY KONTRAST I CZYTELNOŚĆ */
   --bg-primary: #FDFBF7;
   --bg-secondary: #FFF9E8;
   --bg-tertiary: #F3EAD3;
   --bg-header: transparent;
   
-  --text-primary: #3E2723;
-  --text-secondary: #5A422D;
-  --text-muted: #8B6B4E;
+  /* Ciemne kolory tekstu dla maksymalnej czytelności */
+  --text-primary: #1A0F0A; /* Bardzo ciemny brąz - prawie czarny */
+  --text-secondary: #2D1B0F; /* Ciemny brąz */
+  --text-muted: #4A3725; /* Średni brąz - nadal czytelny */
   
-  --border-color: #E6D5B8;
+  --border-color: #D4C4A8; /* Ciemniejsza ramka dla lepszej widoczności */
   
-  --input-bg: #FFFFFF;
-  --input-border: #E6D5B8;
+  --input-bg: #FFFFFF; /* Czysta biel */
+  --input-border: #C9B99A; /* Ciemniejsza ramka dla inputów */
+  
+  /* Dodatkowe zmienne dla kart i paneli */
+  --card-bg: rgba(255, 255, 255, 0.95); /* Prawie nieprzezroczysta biel */
+  --card-border: rgba(90, 66, 45, 0.2); /* Widoczna ramka */
+  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
+  
+  /* Zmienne dla GlassCard (kompatybilność) */
+  --theme-card-bg: rgba(255, 255, 255, 0.95);
+  --theme-card-border: rgba(90, 66, 45, 0.2);
+  --theme-card-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
+  --theme-card-radius: 1.5rem;
+  --theme-card-border-width: 1px;
+  --theme-card-blur: blur(20px);
+  
+  /* Panele i tabele */
+  --panel-bg: rgba(255, 255, 255, 0.98); /* Prawie pełna nieprzezroczystość */
+  --panel-border: rgba(90, 66, 45, 0.25);
+  --panel-shadow: 0 6px 20px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.1);
+  
+  /* Statystyki i badge'e */
+  --stat-bg: rgba(255, 255, 255, 0.9);
+  --stat-text: #1A0F0A;
+  --stat-border: rgba(90, 66, 45, 0.2);
 }
 
-/* GLOBAL BACKGROUND FIX */
+/* GLOBAL BACKGROUND FIX - Theme Engine will override these with inline styles */
 body {
-  background-repeat: repeat;
-  background-size: 350px auto; /* Perfect scale for hexagons */
-  background-attachment: fixed;
-  /* background-color is handled by class on body, or defaults to transparent if not set, but next-themes sets class */
+  background-repeat: repeat !important;
+  background-size: 350px auto !important; /* Perfect scale for hexagons */
+  background-attachment: fixed !important;
+  background-position: 0 0 !important;
+  /* background-image and background-color are set dynamically by ThemeEngineProvider via inline styles */
+  /* Force background-image to be visible */
+  background-origin: padding-box !important;
+  background-clip: padding-box !important;
+}
+
+/* Override any potential dark mode background colors from next-themes */
+body.dark,
+html.dark body {
+  background-color: transparent !important;
+}
+
+body.light,
+html:not(.dark) body {
+  background-color: transparent !important;
 }
 
 /* ENSURE ALL PARENT CONTAINERS ARE TRANSPARENT SO WE SEE THE BODY BG */
@@ -76,9 +123,9 @@ footer {
   border-color: transparent !important;
 }
 
-/* Transition for colors */
+/* Transition for colors and background */
 body {
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, background-image 0.3s ease, color 0.3s ease;
 }
 
 /* Legacy Utility Overrides - making them transparent where possible or keeping for legacy components that need them but ensuring text colors match */
@@ -95,18 +142,29 @@ body {
 
 /* Components */
 .btn-primary {
-  @apply inline-flex items-center justify-center px-4 py-2 rounded-full text-sm font-semibold transition-all shadow-md;
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-full text-sm font-semibold transition-all;
   background-color: var(--amber-500);
   color: #2A1C10;
   border: none;
   text-decoration: none;
   cursor: pointer;
+  /* Enhanced shadows for light mode */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .btn-primary:hover {
   background-color: var(--amber-400);
   transform: translateY(-1px);
-  box-shadow: 0 10px 18px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Light mode specific shadows - applied via data-theme attribute */
+:root[data-theme="light"] .btn-primary {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+:root[data-theme="light"] .btn-primary:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 .btn-secondary {
@@ -121,4 +179,189 @@ body {
 .btn-secondary:hover {
   background-color: rgba(244, 181, 36, 0.1);
   color: var(--amber-500);
+}
+
+/* Glass Panel Utility - For readable text panels over background patterns */
+.glass-panel {
+  background-color: rgba(20, 15, 10, 0.65);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+}
+
+:root[data-theme="light"] .glass-panel {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  color: var(--text-primary);
+}
+
+/* GLOBALNE STYLE DLA LIGHT MODE - WZMOCNIONA CZYTELNOŚĆ */
+:root[data-theme="light"] {
+  /* Wszystkie białe tła z przezroczystością - zwiększamy nieprzezroczystość */
+  --light-bg-opacity: 0.95;
+  --light-panel-opacity: 0.98;
+  --light-card-opacity: 0.95;
+}
+
+/* Poprawka dla wszystkich elementów z bg-white/XX - zwiększamy kontrast */
+:root[data-theme="light"] [class*="bg-white"] {
+  background-color: rgba(255, 255, 255, var(--light-bg-opacity, 0.95)) !important;
+  box-shadow: var(--card-shadow, 0 4px 16px rgba(0, 0, 0, 0.12)) !important;
+  border: 1px solid var(--card-border, rgba(90, 66, 45, 0.2)) !important;
+}
+
+/* Panele i karty - maksymalna czytelność - TYLKO LIGHT MODE */
+:root[data-theme="light"] [class*="backdrop-blur"],
+:root[data-theme="light"] [class*="bg-white/"],
+:root[data-theme="light"] [class*="bg-gray-"] {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(90, 66, 45, 0.2) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Dark mode - wyłącz nadpisywanie bg-white, bg-gray- w dark mode */
+:root:not([data-theme="light"]) [class*="bg-white"]:not([class*="dark"]):not([class*="bg-white/"]),
+.dark [class*="bg-white"]:not([class*="dark"]):not([class*="bg-white/"]),
+html.dark [class*="bg-white"]:not([class*="dark"]):not([class*="bg-white/"]) {
+  /* W dark mode nie nadpisuj bg-white - pozwól klasom Tailwind działać */
+  background-color: revert !important;
+  border: revert !important;
+  box-shadow: revert !important;
+}
+
+:root:not([data-theme="light"]) [class*="bg-gray-"]:not([class*="dark"]),
+.dark [class*="bg-gray-"]:not([class*="dark"]),
+html.dark [class*="bg-gray-"]:not([class*="dark"]) {
+  /* W dark mode nie nadpisuj bg-gray- - pozwól klasom Tailwind działać */
+  background-color: revert !important;
+  border: revert !important;
+  box-shadow: revert !important;
+}
+
+/* Teksty - ciemniejsze dla lepszej czytelności */
+:root[data-theme="light"] [class*="text-gray-700"],
+:root[data-theme="light"] [class*="text-gray-600"],
+:root[data-theme="light"] [class*="text-gray-900"] {
+  color: var(--text-primary, #1A0F0A) !important;
+}
+
+:root[data-theme="light"] [class*="text-gray-400"],
+:root[data-theme="light"] [class*="text-gray-500"] {
+  color: var(--text-muted, #4A3725) !important;
+}
+
+/* FIX DLA RAPORTÓW I BIAŁEGO TEKSTU W LIGHT MODE */
+/* Jeśli w light mode występuje klasa text-white (częste w raportach generowanych z dark mode), zamień na czarny */
+:root[data-theme="light"] .text-white,
+:root[data-theme="light"] .text-slate-50,
+:root[data-theme="light"] .text-gray-50,
+:root[data-theme="light"] .text-zinc-50 {
+  color: var(--text-primary, #1A0F0A) !important;
+}
+
+/* WYJĄTEK: Przyciski w light mode nadal mogą chcieć białego tekstu (np. na żółtym/brązowym tle) */
+:root[data-theme="light"] button .text-white,
+:root[data-theme="light"] .btn-primary .text-white,
+:root[data-theme="light"] [type="submit"] .text-white,
+:root[data-theme="light"] .badge .text-white {
+  color: #FFFFFF !important;
+}
+
+/* Tabele - lepszy kontrast */
+:root[data-theme="light"] table,
+:root[data-theme="light"] [class*="table"] {
+  background-color: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(90, 66, 45, 0.25) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+}
+
+:root[data-theme="light"] thead,
+:root[data-theme="light"] [class*="thead"] {
+  background-color: rgba(90, 66, 45, 0.1) !important;
+  color: var(--text-primary, #1A0F0A) !important;
+  font-weight: 700 !important;
+}
+
+:root[data-theme="light"] tbody tr,
+:root[data-theme="light"] [class*="tbody"] tr {
+  border-bottom: 1px solid rgba(90, 66, 45, 0.15) !important;
+}
+
+:root[data-theme="light"] tbody tr:hover,
+:root[data-theme="light"] [class*="tbody"] tr:hover {
+  background-color: rgba(244, 181, 36, 0.1) !important;
+}
+
+/* Tabele - dark mode - ciemne tło dla wierszy - WYŻSZY PRIORYTET niż light mode */
+:root:not([data-theme="light"]) tbody tr,
+:root:not([data-theme="light"]) [class*="tbody"] tr,
+.dark tbody tr,
+.dark [class*="tbody"] tr,
+:root:not([data-theme="light"]) table tbody tr,
+.dark table tbody tr,
+html.dark tbody tr,
+html:not([data-theme="light"]) tbody tr {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+:root:not([data-theme="light"]) tbody tr:hover,
+:root:not([data-theme="light"]) [class*="tbody"] tr:hover,
+.dark tbody tr:hover,
+.dark [class*="tbody"] tr:hover,
+:root:not([data-theme="light"]) table tbody tr:hover,
+.dark table tbody tr:hover,
+html.dark tbody tr:hover,
+html:not([data-theme="light"]) tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Dark mode - dla wierszy z arbitralnymi kolorami (bg-[#...]) - wyższy priorytet */
+:root:not([data-theme="light"]) tbody tr[class*="bg-\["],
+.dark tbody tr[class*="bg-\["],
+html.dark tbody tr[class*="bg-\["] {
+  /* Pozwól arbitralnym kolorom w dark mode działać - nie nadpisuj */
+  background-color: revert !important;
+}
+
+/* Wiersze tabeli w magazynie - używają bezpośrednich klas Tailwind, nie potrzebują specjalnej klasy CSS */
+
+/* Przyciski i interaktywne elementy */
+:root[data-theme="light"] button,
+:root[data-theme="light"] [class*="btn"] {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid rgba(90, 66, 45, 0.2) !important;
+}
+
+:root[data-theme="light"] button:hover,
+:root[data-theme="light"] [class*="btn"]:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Inputy i formularze */
+:root[data-theme="light"] input,
+:root[data-theme="light"] textarea,
+:root[data-theme="light"] select {
+  background-color: #FFFFFF !important;
+  border: 1px solid var(--input-border, #C9B99A) !important;
+  color: var(--text-primary, #1A0F0A) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+:root[data-theme="light"] input:focus,
+:root[data-theme="light"] textarea:focus,
+:root[data-theme="light"] select:focus {
+  border-color: var(--amber-500, #F4B524) !important;
+  box-shadow: 0 0 0 3px rgba(244, 181, 36, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Scrollbar utilities */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
 }

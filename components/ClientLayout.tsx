@@ -1,14 +1,30 @@
 "use client";
 
 import { ThemeProvider } from "./ThemeProvider";
+import { ThemeEngineProvider } from "../lib/ThemeEngineProvider";
 import AIChat from "./AIChat";
 import { AuthProvider } from "../lib/AuthContext";
+import { OnboardingProvider } from "../lib/OnboardingContext";
 import Header from "./Header";
+import Footer from "./Footer";
+import { ToastProvider } from "./ui/toast";
 import { usePathname } from "next/navigation";
+import type { ThemeSettings } from "@/types/theme";
+import type { AllSocialMedia } from "@/app/actions/get-social-media-all";
+import CookieWall from "./CookieWall";
 
-export default function ClientLayout({ children }: { children: React.ReactNode }) {
+export default function ClientLayout({ 
+  children,
+  initialThemeSettings,
+  socialMedia
+}: { 
+  children: React.ReactNode;
+  initialThemeSettings: ThemeSettings;
+  socialMedia: AllSocialMedia[];
+}) {
   const pathname = usePathname();
   const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/beta';
+  const isDashboard = pathname?.startsWith('/dashboard') ?? false;
   
   return (
     <ThemeProvider
@@ -16,25 +32,28 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       defaultTheme="system"
       enableSystem
       disableTransitionOnChange
+      storageKey="theme"
+      enableColorScheme={false}
     >
-      <AuthProvider>
-        <Header />
-        <main className={`min-h-screen ${isAuthPage ? '' : 'pt-32'} text-text-dark dark:text-amber-50`}>
-          {children}
-        </main>
-        {!isAuthPage && (
-          <footer className="relative z-50 mt-8 pb-4">
-            <div className="max-w-6xl mx-auto px-4 py-4 text-sm text-white/50 flex flex-col md:flex-row justify-between gap-2">
-              <span>© {new Date().getFullYear()} ApiaryMind. Wszystkie prawa zastrzeżone.</span>
-              <span>
-                <a href="/regulamin" className="hover:text-primary mr-4 transition-colors">Regulamin</a>
-                <a href="/polityka-prywatnosci" className="hover:text-primary transition-colors">Polityka prywatności</a>
-              </span>
-            </div>
-          </footer>
-        )}
-        {!isAuthPage && <AIChat />}
-      </AuthProvider>
+      <ThemeEngineProvider initialThemeSettings={initialThemeSettings}>
+        <AuthProvider>
+          <OnboardingProvider>
+            <ToastProvider>
+              <Header />
+              <main className={`min-h-screen ${isAuthPage ? '' : 'pt-32'} text-text-dark dark:text-amber-50`} suppressHydrationWarning>
+                {children}
+              </main>
+              {!isAuthPage && (
+                <div className={isDashboard ? 'md:ml-[288px]' : ''}>
+                  <Footer socialMedia={socialMedia} />
+                </div>
+              )}
+              {!isAuthPage && <AIChat />}
+              <CookieWall />
+            </ToastProvider>
+          </OnboardingProvider>
+        </AuthProvider>
+      </ThemeEngineProvider>
     </ThemeProvider>
   );
 }

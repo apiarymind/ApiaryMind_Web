@@ -19,7 +19,15 @@ export default function AdminApprovalsPage() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-amber-500 mb-6">Zatwierdzanie Związków</h1>
-      <div className="bg-brown-800 rounded-xl border border-brown-700 p-6">
+      <div className="rounded-xl border p-6 backdrop-blur-xl transition-all duration-300"
+           style={{
+             borderRadius: 'var(--theme-card-radius, 0.75rem)',
+             borderColor: 'var(--theme-card-border)',
+             borderWidth: 'var(--theme-card-border-width, 1px)',
+             boxShadow: 'var(--theme-card-shadow)',
+             backdropFilter: 'var(--theme-card-blur, blur(20px))',
+             backgroundColor: 'var(--theme-card-bg, rgba(90, 66, 45, 0.4))'
+           }}>
         <p className="text-amber-100">Lista związków oczekujących na zatwierdzenie (Stub)</p>
       </div>
     </div>

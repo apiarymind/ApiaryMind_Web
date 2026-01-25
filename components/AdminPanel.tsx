@@ -69,9 +69,16 @@ export default function AdminPanel() {
         >
           Zgłoszenia Wsparcia
         </Link>
+        <Link
+          href="/dashboard/admin/theme"
+          className={`block px-4 py-3 rounded-xl text-sm transition-all duration-200 ${isActive('/dashboard/admin/theme') ? 'bg-red-500 text-white font-bold shadow-lg' : 'text-white/80 hover:bg-white/10 hover:translate-x-1'}`}
+        >
+          🎨 Zarządzanie Wyglądem
+        </Link>
       </nav>
     </aside>
   );
 }
+
 
 

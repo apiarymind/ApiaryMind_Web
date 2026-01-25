@@ -2,6 +2,7 @@
 
 import * as XLSX from 'xlsx';
 import { UserReportData } from '@/app/actions/get-user-report-data';
+import { getPdfMakeConfig } from '@/utils/pdfmake-client';
 
 export interface ReportData {
   lp: number;
@@ -9,10 +10,9 @@ export interface ReportData {
   product_name: string;
   quantity: number;
   unit: string;
-  daily_revenue?: number;
-  cumulative_revenue?: number;
+  transaction_value?: number; // Individual transaction value (price * quantity)
+  cumulative_revenue?: number; // Running total from year start
   batch_code?: string | null;
-  isDailySummary?: boolean;
 }
 
 /**
@@ -67,15 +67,11 @@ export function exportToExcel(
     row['Jednostka'] = entry.unit;
 
     if (reportType === 'rhd' && !hidePrices) {
-      // For summary rows, show daily revenue. For individual entries, show empty or individual revenue
-      if (entry.isDailySummary) {
-        row['Przychód dzienny'] = entry.daily_revenue !== undefined 
-          ? parseFloat(entry.daily_revenue.toFixed(2)).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-          : '0,00';
-      } else {
-        // Individual entries - empty for daily revenue (only in summary row)
-        row['Przychód dzienny'] = '';
-      }
+      // Transaction value
+      row['Kwota Transakcji'] = entry.transaction_value !== undefined
+        ? parseFloat(entry.transaction_value.toFixed(2)).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : '0,00';
+      // Cumulative revenue
       row['Przychód narastająco'] = entry.cumulative_revenue !== undefined
         ? parseFloat(entry.cumulative_revenue.toFixed(2)).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
         : '0,00';
@@ -136,7 +132,7 @@ export function exportToCSV(
   headers.push('Ilość', 'Jednostka');
   
   if (reportType === 'rhd' && !hidePrices) {
-    headers.push('Przychód dzienny', 'Przychód narastająco');
+    headers.push('Kwota Transakcji', 'Przychód narastająco');
   }
 
   csvLines.push(headers.join(';'));
@@ -156,16 +152,13 @@ export function exportToCSV(
     row.push(entry.quantity, entry.unit);
 
     if (reportType === 'rhd' && !hidePrices) {
-      // For summary rows, show daily revenue. For individual entries, show empty
-      if (entry.isDailySummary) {
-        row.push(
-          entry.daily_revenue !== undefined 
-            ? parseFloat(entry.daily_revenue.toFixed(2)).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-            : '0,00'
-        );
-      } else {
-        row.push(''); // Empty for individual entries
-      }
+      // Transaction value
+      row.push(
+        entry.transaction_value !== undefined
+          ? parseFloat(entry.transaction_value.toFixed(2)).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+          : '0,00'
+      );
+      // Cumulative revenue
       row.push(
         entry.cumulative_revenue !== undefined
           ? parseFloat(entry.cumulative_revenue.toFixed(2)).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -202,73 +195,39 @@ export async function exportToPDF(
   title: string = 'Raport Sprzedaży',
   userData?: UserReportData
 ) {
-  // Dynamic import to avoid SSR issues
-  const { default: jsPDF } = await import('jspdf');
-  const autoTable = (await import('jspdf-autotable')).default;
-  
-  const doc = new jsPDF({
-    compress: true,
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4'
-  });
-  
-  // Use Helvetica font (closest to Arial, jsPDF default)
-  // Note: jsPDF doesn't support 'arial' directly, it uses 'helvetica'
-  doc.setFont('helvetica', 'normal');
-  
-  let currentY = 15;
+  const { pdfMake, fontName } = await getPdfMakeConfig();
+  const currentDate = new Date().toLocaleDateString('pl-PL');
+  const isRhd = reportType === 'rhd';
+  const taxpayerName = userData?.company_name || userData?.full_name || 'Nie podano';
+  const registrationNumber = isRhd ? userData?.rhd_number : userData?.shp_number;
 
-  // Add header with user data for RHD reports
-  if (userData && reportType === 'rhd') {
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('EWIDENCJA SPRZEDAŻY RHD', 14, currentY);
-    currentY += 8;
+  const headerRows: any[] = [
+    [{ text: 'DANE PODATNIKA', style: 'sectionHeader', colSpan: 2 }, {}],
+    ['Nazwa', taxpayerName],
+  ];
 
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    
-    // Nazwa firmy (priorytet) lub imię i nazwisko
-    const taxpayerName = userData.company_name || userData.full_name || 'Nie podano';
-    if (userData.company_name) {
-      doc.text(`Nazwa firmy: ${userData.company_name}`, 14, currentY);
-      currentY += 6;
-      if (userData.full_name && userData.full_name !== userData.company_name) {
-        doc.text(`Właściciel: ${userData.full_name}`, 14, currentY);
-        currentY += 6;
-      }
-    } else {
-      doc.text(`Nazwa: ${taxpayerName}`, 14, currentY);
-      currentY += 6;
-    }
-    
-    if (userData.address) {
-      doc.text(`Adres: ${userData.address}`, 14, currentY);
-      currentY += 6;
-    }
-    
-    if (userData.nip) {
-      doc.text(`NIP: ${userData.nip}`, 14, currentY);
-      currentY += 6;
-    }
-    
-    if (userData.rhd_number) {
-      doc.text(`Numer Weterynaryjny RHD: ${userData.rhd_number}`, 14, currentY);
-      currentY += 6;
-    }
-    
-    currentY += 4; // Spacing before table
-  } else {
-    // Simple title for other report types
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text(title, 14, currentY);
-    currentY = 25;
+  if (userData?.company_name && userData?.full_name && userData?.full_name !== userData?.company_name) {
+    headerRows.push(['Właściciel', userData.full_name]);
   }
 
-  // Prepare table columns with proper Polish characters
-  const columns: any[] = [
+  if (userData?.address) {
+    headerRows.push(['Adres', userData.address]);
+  }
+
+  if (userData?.nip) {
+    headerRows.push(['NIP', userData.nip]);
+  }
+
+  headerRows.push([
+    isRhd ? 'Numer Weterynaryjny RHD' : 'Numer Wet. (SB)',
+    registrationNumber || 'Brak danych',
+  ]);
+
+  if (isRhd) {
+    headerRows.push(['Limit roczny RHD (100 000 PLN)', '—']);
+  }
+
+  const columns = [
     { header: 'Lp.', dataKey: 'lp' },
     { header: 'Data', dataKey: 'sale_date' },
     { header: 'Produkt', dataKey: 'product_name' },
@@ -285,99 +244,118 @@ export async function exportToPDF(
 
   if (reportType === 'rhd' && !hidePrices) {
     columns.push(
-      { header: 'Przychód dzienny', dataKey: 'daily_revenue' },
+      { header: 'Kwota Transakcji', dataKey: 'transaction_value' },
       { header: 'Przychód narastająco', dataKey: 'cumulative_revenue' }
     );
   }
 
-  // Prepare table data with row metadata
-  const tableDataWithMetadata: Array<{ row: string[]; isSummary: boolean }> = data.map(entry => {
-    const rowData: any = {
-      lp: entry.lp.toString(),
-      sale_date: entry.sale_date,
-      product_name: entry.product_name,
-    };
+  const headerRow = columns.map(col => ({
+    text: String(col.header),
+    style: 'tableHeader',
+  }));
 
-    if (reportType === 'sb') {
-      rowData.batch_code = entry.batch_code || '-';
-    }
+  const tableBody = [
+    headerRow,
+    ...data.map(entry => {
+      const rowData: any = {
+        lp: entry.lp.toString(),
+        sale_date: entry.sale_date,
+        product_name: entry.product_name,
+      };
 
-    rowData.quantity = entry.quantity.toString();
-    rowData.unit = entry.unit;
+      if (reportType === 'sb') {
+        rowData.batch_code = entry.batch_code || '-';
+      }
 
-    if (reportType === 'rhd' && !hidePrices) {
-      // For summary rows, show daily revenue. For individual entries, show empty
-      if (entry.isDailySummary) {
-        rowData.daily_revenue = entry.daily_revenue !== undefined 
-          ? parseFloat(entry.daily_revenue.toFixed(2)).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' PLN'
+      rowData.quantity = entry.quantity.toString();
+      rowData.unit = entry.unit;
+
+      if (reportType === 'rhd' && !hidePrices) {
+        rowData.transaction_value = entry.transaction_value !== undefined
+          ? parseFloat(entry.transaction_value.toFixed(2)).toLocaleString('pl-PL', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }) + ' PLN'
           : '0,00 PLN';
-      } else {
-        rowData.daily_revenue = ''; // Empty for individual entries
+        rowData.cumulative_revenue = entry.cumulative_revenue !== undefined
+          ? parseFloat(entry.cumulative_revenue.toFixed(2)).toLocaleString('pl-PL', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }) + ' PLN'
+          : '0,00 PLN';
       }
-      rowData.cumulative_revenue = entry.cumulative_revenue !== undefined
-        ? parseFloat(entry.cumulative_revenue.toFixed(2)).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' PLN'
-        : '0,00 PLN';
-    }
 
-    return {
-      row: columns.map(col => String(rowData[col.dataKey] || '')),
-      isSummary: entry.isDailySummary || false,
-    };
+      return columns.map(col => String(rowData[col.dataKey] || ''));
+    }),
+  ];
+
+  const tableWidths = columns.map((col, index) => {
+    if (col.dataKey === 'product_name') return '*';
+    if (index === 0) return 'auto';
+    return 'auto';
   });
 
-  // Prepare headers - ensure they are properly encoded as UTF-8 strings
-  const headerRow = columns.map(col => {
-    // Return header as plain string - jsPDF should handle UTF-8 correctly
-    return String(col.header);
-  });
-  
-  autoTable(doc, {
-    head: [headerRow],
-    theme: 'striped', // Use striped theme for better rendering
-    body: tableDataWithMetadata.map(item => item.row),
-    startY: currentY,
-    styles: { 
-      fontSize: 8,
-      cellPadding: 2,
-      font: 'helvetica',
+  const docDefinition = {
+    pageSize: 'A4',
+    pageMargins: [40, 40, 40, 40],
+    defaultStyle: {
+      font: fontName,
+      fontSize: 9,
     },
-    headStyles: { 
-      fillColor: [139, 69, 19],
-      fontStyle: 'bold',
-      textColor: [255, 255, 255],
-      font: 'helvetica',
+    content: [
+      {
+        text: isRhd ? 'EWIDENCJA SPRZEDAŻY RHD' : title,
+        style: 'title',
+      },
+      {
+        table: {
+          widths: ['auto', '*'],
+          body: headerRows,
+        },
+        layout: 'lightHorizontalLines',
+        margin: [0, 10, 0, 12],
+      },
+      {
+        table: {
+          headerRows: 1,
+          widths: tableWidths,
+          body: tableBody,
+        },
+        layout: 'lightHorizontalLines',
+      },
+    ],
+    styles: {
+      title: {
+        fontSize: 14,
+        bold: true,
+        margin: [0, 0, 0, 6],
+      },
+      sectionHeader: {
+        bold: true,
+        fillColor: '#8B4513',
+        color: '#FFFFFF',
+        margin: [0, 2, 0, 2],
+      },
+      tableHeader: {
+        bold: true,
+        fillColor: '#8B4513',
+        color: '#FFFFFF',
+        fontSize: 8,
+      },
+      footer: {
+        fontSize: 8,
+        color: '#666666',
+      },
     },
-    // Style summary rows differently - check if product_name contains "Razem dnia"
-    didParseCell: (hookData: any) => {
-      const rowIndex = hookData.row.index;
-      if (rowIndex < tableDataWithMetadata.length && tableDataWithMetadata[rowIndex].isSummary) {
-        hookData.cell.styles.fontStyle = 'bold';
-        hookData.cell.styles.fillColor = [240, 240, 240];
-      }
-    },
-  });
+    footer: () => ({
+      columns: [
+        { text: 'Wygenerowane w ApiaryMind.com', alignment: 'left', style: 'footer' },
+        { text: currentDate, alignment: 'center', style: 'footer' },
+        { text: '', alignment: 'right', style: 'footer' },
+      ],
+      margin: [40, 0, 40, 20],
+    }),
+  };
 
-  // Add footer
-  const pageCount = doc.getNumberOfPages();
-  const currentDate = new Date().toLocaleDateString('pl-PL');
-  
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    const pageHeight = doc.internal.pageSize.height;
-    const pageWidth = doc.internal.pageSize.width;
-    
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    
-    // Left side: ApiaryMind
-    doc.text('Wygenerowane w ApiaryMind.com', 14, pageHeight - 10);
-    
-    // Center: Date
-    doc.text(currentDate, pageWidth / 2, pageHeight - 10, {
-      align: 'center'
-    });
-  }
-
-  // Save PDF
-  doc.save(`${filename}.pdf`);
+  pdfMake.createPdf(docDefinition as any).download(`${filename}.pdf`);
 }

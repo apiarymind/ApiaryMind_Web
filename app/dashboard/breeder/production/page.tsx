@@ -67,8 +67,8 @@ export default function BreedingProductionPage() {
   if (!hasAccess && profile) {
     return (
       <div className="p-8 text-center">
-        <h2 className="text-2xl font-bold text-red-500 mb-2">Brak Dostępu</h2>
-        <p className="text-gray-400">Ta sekcja jest dostępna tylko dla planów PRO+ oraz BUSINESS.</p>
+        <h2 className="text-2xl font-bold text-red-500 dark:text-red-400 mb-2">Brak Dostępu</h2>
+        <p className="text-gray-600 dark:text-gray-400">Ta sekcja jest dostępna tylko dla planów PRO+ oraz BUSINESS.</p>
       </div>
     );
   }
@@ -90,7 +90,7 @@ export default function BreedingProductionPage() {
       case 'ACTIVE': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
       case 'COMPLETED': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
       case 'CANCELLED': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
-      default: return 'bg-gray-100 text-gray-700';
+      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800/50 dark:text-gray-300';
     }
   };
 

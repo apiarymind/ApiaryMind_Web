@@ -3,6 +3,8 @@ import { Montserrat, Lato } from 'next/font/google';
 import { defaultMetadata } from './metadata';
 import type { Metadata } from 'next';
 import ClientLayout from '../components/ClientLayout';
+import { getThemeSettings } from './actions/admin/theme-settings';
+import { getSocialMediaAll } from './actions/get-social-media-all';
 
 export const metadata: Metadata = defaultMetadata;
 
@@ -19,11 +21,17 @@ const lato = Lato({
   display: 'swap',
 });
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Pobierz ustawienia motywu i social media na poziomie serwera
+  const [themeSettings, socialMedia] = await Promise.all([
+    getThemeSettings(),
+    getSocialMediaAll().catch(() => []) // Fallback do pustej tablicy w przypadku błędu
+  ]);
+
   return (
     <html lang="pl" suppressHydrationWarning>
-      <body className={`${montserrat.variable} ${lato.variable} font-sans min-h-screen transition-colors duration-300 bg-light-pattern dark:bg-dark-pattern bg-fixed bg-repeat bg-[length:350px_auto]`}>
-        <ClientLayout>
+      <body className={`${montserrat.variable} ${lato.variable} font-sans min-h-screen transition-colors duration-300`} suppressHydrationWarning>
+        <ClientLayout initialThemeSettings={themeSettings} socialMedia={socialMedia}>
           {children}
         </ClientLayout>
       </body>

@@ -8,16 +8,19 @@ import { GlassCard } from '@/app/components/ui/GlassCard';
 import { Check, X, Calendar, Crown, Activity, AlertTriangle, Layers, Thermometer, Bug, Lightbulb, Ban, Star, History } from 'lucide-react';
 import { translateColonyStrength, translateMood } from '@/utils/inspectionTranslations';
 import { calculateQueenScore } from '@/utils/queenScoring';
+import TreatmentHistory from '@/app/components/veterinary/TreatmentHistory';
+import QueenAssignmentModal from '@/app/components/QueenAssignmentModal';
 
 interface HiveDetailsTabsProps {
   hive: HiveDetails;
   inspections: Inspection[];
 }
 
-type Tab = 'HISTORY' | 'COLONY' | 'QUEEN';
+type Tab = 'HISTORY' | 'COLONY' | 'QUEEN' | 'TREATMENTS';
 
 export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>('HISTORY');
+  const [isQueenModalOpen, setIsQueenModalOpen] = useState(false);
 
   // Helper to render Queen Status Badge
   const getQueenStatusBadge = (status: string | null) => {
@@ -250,6 +253,16 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
         >
           Matka Pszczela
         </button>
+        <button
+          onClick={() => setActiveTab('TREATMENTS')}
+          className={`py-4 px-2 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${
+            activeTab === 'TREATMENTS' 
+              ? 'border-yellow-500 text-yellow-500' 
+              : 'border-transparent text-neutral-400 hover:text-neutral-200'
+          }`}
+        >
+          Leczenia
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -379,6 +392,12 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
                                     </div>
                                 );
                             })()}
+                            <button
+                              onClick={() => setIsQueenModalOpen(true)}
+                              className="mt-2 bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded-lg transition-colors shadow-lg"
+                            >
+                              Zmień Matkę
+                            </button>
                          </div>
                       </div>
 
@@ -433,7 +452,10 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
                       </div>
                       <h3 className="text-xl font-bold text-white mb-2">Brak przypisanej matki</h3>
                       <p className="text-neutral-400 mb-6">W tym ulu nie zarejestrowano jeszcze matki pszczelej.</p>
-                      <button className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-6 rounded-lg transition-colors shadow-lg">
+                      <button
+                        onClick={() => setIsQueenModalOpen(true)}
+                        className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-6 rounded-lg transition-colors shadow-lg"
+                      >
                          Dodaj Matkę
                       </button>
                    </div>
@@ -502,7 +524,22 @@ export default function HiveDetailsTabs({ hive, inspections }: HiveDetailsTabsPr
              )}
           </div>
         )}
+
+        {activeTab === 'TREATMENTS' && (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <TreatmentHistory 
+              hiveId={hive.id} 
+              hiveNumber={hive.hive_number}
+            />
+          </div>
+        )}
       </div>
+
+      <QueenAssignmentModal
+        isOpen={isQueenModalOpen}
+        hiveId={hive.id}
+        onClose={() => setIsQueenModalOpen(false)}
+      />
     </div>
   );
 }

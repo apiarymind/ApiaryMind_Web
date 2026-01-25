@@ -17,11 +17,11 @@ export default function DashboardNews({ content, position }: DashboardNewsProps)
   if (position === 'top_banner') {
     return (
       <div className="w-full bg-primary/20 border-b border-primary/30 backdrop-blur-md px-4 py-3 flex items-center justify-between animate-fade-in-down mb-4">
-         <div className="flex items-center gap-3 text-white text-sm">
-           <span className="bg-primary text-brown-900 font-bold px-2 py-0.5 rounded text-xs uppercase">Info</span>
+         <div className="flex items-center gap-3 text-amber-950 dark:text-white text-sm">
+           <span className="bg-primary text-brown-900 dark:text-brown-900 font-bold px-2 py-0.5 rounded text-xs uppercase">Info</span>
            <span>{content}</span>
          </div>
-         <button onClick={() => setIsVisible(false)} className="text-white/60 hover:text-white">
+         <button onClick={() => setIsVisible(false)} className="text-amber-950/60 dark:text-white/60 hover:text-amber-950 dark:hover:text-white">
            <X size={16} />
          </button>
       </div>
@@ -30,22 +30,22 @@ export default function DashboardNews({ content, position }: DashboardNewsProps)
 
   if (position === 'modal_popup') {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
-         <GlassCard className="max-w-md w-full p-8 mx-4 relative bg-black/90 border-primary/50 shadow-[0_0_50px_rgba(244,181,36,0.2)]">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 dark:bg-black/80 backdrop-blur-sm animate-fade-in">
+         <GlassCard className="max-w-md w-full p-8 mx-4 relative bg-black/90 dark:bg-black/90 border-primary/50 shadow-[0_0_50px_rgba(244,181,36,0.2)]">
             <button 
               onClick={() => setIsVisible(false)} 
-              className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-white/40 dark:text-white/40 hover:text-white dark:hover:text-white transition-colors"
             >
               <X size={20} />
             </button>
             <div className="text-primary text-4xl mb-4 text-center">🔔</div>
-            <h3 className="text-xl font-bold text-white mb-4 text-center">Komunikat</h3>
-            <p className="text-white/80 text-center mb-6 leading-relaxed">
+            <h3 className="text-xl font-bold text-white dark:text-white mb-4 text-center">Komunikat</h3>
+            <p className="text-white/80 dark:text-white/80 text-center mb-6 leading-relaxed">
               {content}
             </p>
             <button 
               onClick={() => setIsVisible(false)}
-              className="w-full bg-primary hover:bg-amber-400 text-brown-900 font-bold py-3 rounded-xl transition-colors"
+              className="w-full bg-primary hover:bg-amber-400 text-brown-900 dark:text-brown-900 font-bold py-3 rounded-xl transition-colors"
             >
               Zrozumiałem
             </button>
@@ -68,7 +68,7 @@ export default function DashboardNews({ content, position }: DashboardNewsProps)
                <span className="text-lg">📢</span>
                <span className="text-xs font-bold text-primary uppercase">Ogłoszenie</span>
             </div>
-            <p className="text-xs text-white/80 leading-relaxed">
+            <p className="text-xs text-amber-950/80 dark:text-white/80 leading-relaxed">
                {content}
             </p>
          </div>

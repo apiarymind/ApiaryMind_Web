@@ -19,12 +19,12 @@ export default async function SupportPage() {
   if (!allowedPlans.includes(profile.plan)) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-heading font-bold text-primary">Wsparcie Techniczne</h1>
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-6">
-          <p className="text-white/80 mb-4">
+        <h1 className="text-3xl font-heading font-bold text-amber-600 dark:text-primary">Wsparcie Techniczne</h1>
+        <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 rounded-xl p-6 shadow-lg dark:shadow-none">
+          <p className="text-gray-900 dark:text-white/80 mb-4">
             System wsparcia technicznego jest dostępny tylko dla użytkowników z planem Premium lub Business.
           </p>
-          <p className="text-white/60">
+          <p className="text-gray-700 dark:text-white/60">
             Uaktualnij swój plan, aby uzyskać dostęp do pomocy technicznej.
           </p>
         </div>
@@ -34,14 +34,19 @@ export default async function SupportPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-heading font-bold text-primary">Wsparcie Techniczne</h1>
-      <p className="text-white/70">
+      <h1 className="text-3xl font-heading font-bold text-amber-600 dark:text-primary">Wsparcie Techniczne</h1>
+      <p className="text-gray-700 dark:text-white/70">
         Masz pytanie lub problem? Utwórz zgłoszenie, a nasz zespół pomoże Ci jak najszybciej.
       </p>
       <SupportTicketsClient />
     </div>
   );
 }
+
+
+
+
+
 
 
 

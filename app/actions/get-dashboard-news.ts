@@ -15,6 +15,10 @@ export async function getDashboardNewsSettings(): Promise<DashboardNewsSettings>
     .in('key', ['DASHBOARD_NEWS_CONTENT', 'DASHBOARD_NEWS_POSITION']);
 
   if (error) {
+    // PGRST205 = table doesn't exist, silently return default
+    if (error.code === 'PGRST205') {
+      return { content: '', position: 'hidden' };
+    }
     console.error('Error fetching dashboard news settings:', error);
     return { content: '', position: 'hidden' };
   }

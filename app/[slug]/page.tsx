@@ -115,9 +115,19 @@ export default async function DynamicPage({ params }: { params: { slug: string }
             case 'HERO':
                return (
                  <div key={section.id} className="relative pt-24 pb-12 md:pt-40 md:pb-24 overflow-hidden flex justify-center px-4">
-                    <div className="relative z-10 max-w-4xl w-full py-8 px-6 md:py-12 md:px-12 rounded-3xl shadow-2xl backdrop-blur-xl text-center transition-colors duration-300
-                                    bg-white/60 border border-amber-900/10 text-amber-950
-                                    dark:bg-black/40 dark:border-white/10 dark:text-white">
+                    <div className="relative z-10 max-w-4xl w-full py-8 px-6 md:py-12 md:px-12 rounded-3xl text-center transition-colors duration-300
+                                    backdrop-blur-xl border transition-all duration-300
+                                    bg-white/60 dark:bg-black/40 
+                                    border-amber-900/10 dark:border-white/10 
+                                    text-amber-950 dark:text-white"
+                         style={{
+                           borderRadius: 'var(--theme-card-radius, 1.5rem)',
+                           borderColor: 'var(--theme-card-border)',
+                           borderWidth: 'var(--theme-card-border-width, 1px)',
+                           boxShadow: 'var(--theme-card-shadow)',
+                           backdropFilter: 'var(--theme-card-blur, blur(20px))',
+                           backgroundColor: 'var(--theme-card-bg, rgba(255, 255, 255, 0.6))'
+                         }}>
                       
                       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] md:text-xs font-mono mb-4 md:mb-6 backdrop-blur-sm
                                       bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400">
@@ -175,8 +185,19 @@ export default async function DynamicPage({ params }: { params: { slug: string }
                          { icon: Moon, title: "Smoke Theme", desc: "Design, który nie męczy wzroku. Oszczędzaj oczy i baterię.", color: "text-gray-600 dark:text-gray-400" }
                        ].map((item, i) => (
                          <div key={i} className="p-5 md:p-6 rounded-2xl backdrop-blur-md transition-all group hover:-translate-y-1
-                                                 bg-white/40 border border-amber-900/5 hover:bg-white/60 hover:border-amber-500/30
-                                                 dark:bg-black/40 dark:border-white/10 dark:hover:bg-black/60 dark:hover:border-amber-500/50">
+                                                 border transition-all duration-300
+                                                 bg-white/40 dark:bg-black/40
+                                                 border-amber-900/5 dark:border-white/10 
+                                                 hover:bg-white/60 dark:hover:bg-black/60 
+                                                 hover:border-amber-500/30 dark:hover:border-amber-500/50"
+                              style={{
+                                borderRadius: 'var(--theme-card-radius, 1rem)',
+                                borderColor: 'var(--theme-card-border)',
+                                borderWidth: 'var(--theme-card-border-width, 1px)',
+                                boxShadow: 'var(--theme-card-shadow)',
+                                backdropFilter: 'var(--theme-card-blur, blur(10px))',
+                                backgroundColor: 'var(--theme-card-bg, rgba(255, 255, 255, 0.4))'
+                              }}>
                            <item.icon className={`w-8 h-8 md:w-10 md:h-10 mb-3 md:mb-4 transition-colors ${item.color} opacity-80 group-hover:opacity-100`} />
                            <h3 className="text-base md:text-lg font-bold mb-2 text-amber-950 dark:text-white">{item.title}</h3>
                            <p className="text-sm text-amber-900/70 dark:text-white/60 leading-relaxed">{item.desc}</p>
@@ -201,9 +222,16 @@ export default async function DynamicPage({ params }: { params: { slug: string }
             case 'BETA_PROMO':
                 return (
                   <div key={section.id} className="max-w-5xl mx-auto px-4 md:px-6 pb-16 md:pb-24 pt-8 md:pt-10">
-                    <div className="relative rounded-2xl p-6 md:p-12 overflow-hidden text-center border backdrop-blur-md transition-colors
-                                    bg-white/60 border-amber-900/10 text-amber-900/80
-                                    dark:bg-white/5 dark:border-white/10 dark:text-white/70">
+                    <div className="relative rounded-2xl p-6 md:p-12 overflow-hidden text-center border backdrop-blur-md transition-all duration-300
+                                    text-amber-900/80 dark:text-white/70"
+                         style={{
+                           borderRadius: 'var(--theme-card-radius, 1rem)',
+                           borderColor: 'var(--theme-card-border)',
+                           borderWidth: 'var(--theme-card-border-width, 1px)',
+                           boxShadow: 'var(--theme-card-shadow)',
+                           backdropFilter: 'var(--theme-card-blur, blur(10px))',
+                           backgroundColor: 'var(--theme-card-bg, rgba(255, 255, 255, 0.6))'
+                         }}>
                         <div className="relative z-10 flex flex-col items-center">
                             <div className="bg-amber-500 text-black font-bold text-[10px] md:text-xs px-3 py-1 rounded-full mb-4 md:mb-6 flex items-center gap-2 shadow-lg">
                                 <Gift size={12} className="md:w-3.5 md:h-3.5" /> OFERTA SPECJALNA

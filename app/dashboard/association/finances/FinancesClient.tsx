@@ -186,58 +186,58 @@ export default function FinancesClient({ associationId }: FinancesClientProps) {
 
       {/* Add/Edit Form */}
       {(isAdding || editingId) && (
-        <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl p-6 border border-white/10 dark:border-white/5">
-          <h3 className="text-lg font-bold mb-4 text-white">
+        <div className="bg-white dark:bg-black/20 backdrop-blur-md rounded-xl p-6 border border-gray-300 dark:border-white/5 shadow-lg dark:shadow-none">
+          <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">
             {editingId ? 'Edytuj Wpis Finansowy' : 'Dodaj Nowy Wpis Finansowy'}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">Tytuł *</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-white/80 mb-1">Tytuł *</label>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full px-4 py-2 bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                 placeholder="Np. Składka członkowska"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">Kwota (zł) *</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-white/80 mb-1">Kwota (zł) *</label>
               <input
                 type="number"
                 step="0.01"
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full px-4 py-2 bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                 placeholder="0.00"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">Data *</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-white/80 mb-1">Data *</label>
               <input
                 type="date"
                 value={formData.transaction_date}
                 onChange={(e) => setFormData({ ...formData, transaction_date: e.target.value })}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full px-4 py-2 bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">Typ *</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-white/80 mb-1">Typ *</label>
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 dark:bg-gray-900/90 dark:text-gray-100 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
-                <option value="INCOME">Przychód</option>
-                <option value="EXPENSE">Wydatek</option>
+                <option value="INCOME" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Przychód</option>
+                <option value="EXPENSE" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Wydatek</option>
               </select>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-white/80 mb-1">Opis (opcjonalne)</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-white/80 mb-1">Opis (opcjonalne)</label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full px-4 py-2 bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                 rows={3}
                 placeholder="Dodatkowe informacje..."
               />
@@ -275,57 +275,57 @@ export default function FinancesClient({ associationId }: FinancesClientProps) {
       )}
 
       {/* Finances List */}
-      <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl border border-white/10 dark:border-white/5 overflow-hidden">
+      <div className="bg-white dark:bg-black/20 backdrop-blur-md rounded-xl border border-gray-300 dark:border-white/5 overflow-hidden shadow-lg dark:shadow-none">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-white/5 border-b border-white/10">
+            <thead className="bg-gray-100 dark:bg-white/5 border-b border-gray-300 dark:border-white/10">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Data</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Tytuł</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Typ</th>
-                <th className="px-6 py-3 text-right text-xs font-bold text-white/80 uppercase tracking-wider">Kwota</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Opis</th>
-                <th className="px-6 py-3 text-right text-xs font-bold text-white/80 uppercase tracking-wider">Akcje</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Data</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Tytuł</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Typ</th>
+                <th className="px-6 py-3 text-right text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Kwota</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Opis</th>
+                <th className="px-6 py-3 text-right text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Akcje</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10">
+            <tbody className="divide-y divide-gray-200 dark:divide-white/10">
               {finances.map((finance) => (
-                <tr key={finance.id} className="hover:bg-white/5 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white/70">
+                <tr key={finance.id} className="bg-[#F8F9FA] dark:bg-white/[0.03] hover:bg-[#F5F5F5] dark:hover:bg-white/[0.06] transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white/70">
                     {new Date(finance.transaction_date).toLocaleDateString('pl-PL')}
                   </td>
-                  <td className="px-6 py-4 text-sm font-medium text-white">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
                     {finance.title}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 rounded-full text-xs font-bold ${
                       finance.type === 'INCOME' 
-                        ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                        : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                        ? 'bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30' 
+                        : 'bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30'
                     }`}>
                       {finance.type === 'INCOME' ? 'Przychód' : 'Wydatek'}
                     </span>
                   </td>
                   <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${
-                    finance.type === 'INCOME' ? 'text-green-400' : 'text-red-400'
+                    finance.type === 'INCOME' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                   }`}>
                     {finance.type === 'INCOME' ? '+' : '-'}{parseFloat(finance.amount.toString()).toFixed(2)} zł
                   </td>
-                  <td className="px-6 py-4 text-sm text-white/70">
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-white/70">
                     {finance.description || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleEdit(finance)}
-                        className="text-amber-400 hover:text-amber-300 transition-colors"
+                        className="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
                         title="Edytuj"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(finance.id)}
-                        className="text-red-400 hover:text-red-300 transition-colors"
+                        className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
                         title="Usuń"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -339,7 +339,7 @@ export default function FinancesClient({ associationId }: FinancesClientProps) {
         </div>
 
         {finances.length === 0 && (
-          <div className="text-center py-8 text-white/60">
+          <div className="text-center py-8 text-gray-700 dark:text-white/60">
             Brak wpisów finansowych. Dodaj pierwszy wpis używając przycisku powyżej.
           </div>
         )}

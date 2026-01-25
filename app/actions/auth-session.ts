@@ -4,8 +4,13 @@ import { createClient } from '@/utils/supabase/server';
 
 export async function getSessionUid(): Promise<string | undefined> {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  return session?.user?.id;
+  const { data: { user }, error } = await supabase.auth.getUser();
+  
+  if (error || !user) {
+    return undefined;
+  }
+  
+  return user.id;
 }
 
 export async function setSession(uid: string) {

@@ -10,8 +10,14 @@ export default async function ReportsPage() {
     redirect('/login');
   }
 
-  const rhdCheck = await checkRhdAccess().catch(() => ({ hasAccess: false, error: undefined }));
-  const userData = await getUserReportData().catch(() => ({ data: null, error: null }));
+  const rhdCheck = await checkRhdAccess().catch((err) => {
+    console.error('Error checking RHD access:', err);
+    return { hasAccess: false, error: undefined };
+  });
+  const userData = await getUserReportData().catch((err) => {
+    console.error('Error fetching user report data:', err);
+    return { data: null, error: err?.message || 'Unknown error' };
+  });
 
   return (
     <ReportsClient 

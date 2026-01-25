@@ -1,113 +1,187 @@
-'use client'
+'use client';
 
-import { useState } from 'react';
-import { Upload, FileSpreadsheet, FileText, CheckCircle2, XCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { importDataFromFile } from '@/app/actions/import-data';
+import { useState, useCallback } from 'react';
+import { Upload, FileSpreadsheet, FileText, CheckCircle2, XCircle, AlertCircle, Loader2, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { GlassCard } from '@/app/components/ui/GlassCard';
+import { analyzeFileWithAI, saveAIImportedData } from '@/app/actions/ai-import';
 
-type ImportResult = {
+interface AIParseResult {
   success: boolean;
-  message: string;
-  imported?: number;
-  errors?: string[];
-};
+  detectedType: 'hives' | 'inspections' | 'queens' | 'inventory' | 'unknown';
+  confidence: number;
+  recordCount: number;
+  mappedData: any[];
+  columnMapping: Record<string, string>;
+  message?: string;
+  error?: string;
+}
 
 export function ImportDataClient() {
   const [file, setFile] = useState<File | null>(null);
-  const [importType, setImportType] = useState<'inspections' | 'hives' | 'inventory'>('inspections');
-  const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<ImportResult | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [parseResult, setParseResult] = useState<AIParseResult | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile) {
+      handleFileSelect(droppedFile);
+    }
+  }, []);
+
+  const handleFileSelect = (selectedFile: File) => {
+    const ext = selectedFile.name.split('.').pop()?.toLowerCase();
+    const allowedExts = ['csv', 'xlsx', 'xls', 'pdf', 'jpg', 'jpeg', 'png'];
+    
+    if (ext && allowedExts.includes(ext)) {
+      setFile(selectedFile);
+      setParseResult(null);
+      setShowPreview(false);
+    } else {
+      alert('Proszę wybrać plik: Excel, CSV, PDF lub Zdjęcie (.csv, .xlsx, .xls, .pdf, .jpg, .jpeg, .png)');
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      const ext = selectedFile.name.split('.').pop()?.toLowerCase();
-      if (ext === 'csv' || ext === 'xlsx' || ext === 'xls') {
-        setFile(selectedFile);
-        setResult(null);
-      } else {
-        alert('Proszę wybrać plik CSV lub Excel (.csv, .xlsx, .xls)');
-      }
+      handleFileSelect(selectedFile);
     }
   };
 
-  const handleImport = async () => {
+  const handleAnalyze = async () => {
     if (!file) {
-      alert('Proszę wybrać plik do importu');
+      alert('Proszę wybrać plik do analizy');
       return;
     }
 
-    setIsLoading(true);
-    setResult(null);
+    setIsAnalyzing(true);
+    setParseResult(null);
+    setShowPreview(false);
 
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('type', importType);
 
-      const result = await importDataFromFile(formData);
-      setResult(result);
+      const result = await analyzeFileWithAI(formData);
+      setParseResult(result);
+      if (result.success) {
+        setShowPreview(true);
+      }
     } catch (error: any) {
-      setResult({
+      setParseResult({
         success: false,
-        message: error.message || 'Wystąpił błąd podczas importu',
-        errors: [error.message]
+        detectedType: 'unknown',
+        confidence: 0,
+        recordCount: 0,
+        mappedData: [],
+        columnMapping: {},
+        error: error.message || 'Wystąpił błąd podczas analizy pliku',
       });
     } finally {
-      setIsLoading(false);
+      setIsAnalyzing(false);
     }
+  };
+
+  const handleSave = async () => {
+    if (!parseResult || !parseResult.success) {
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Upewnij się, że detectedType nie jest 'unknown' przed wywołaniem saveAIImportedData
+      if (parseResult.detectedType === 'unknown') {
+        throw new Error('Nie można zapisać danych o nieznanym typie. Spróbuj ponownie przeanalizować plik.');
+      }
+      
+      const result = await saveAIImportedData({
+        detectedType: parseResult.detectedType as 'hives' | 'inspections' | 'queens' | 'inventory',
+        mappedData: parseResult.mappedData,
+        columnMapping: parseResult.columnMapping,
+      });
+
+      if (result.success) {
+        // Reset form
+        setFile(null);
+        setParseResult(null);
+        setShowPreview(false);
+        alert(`Pomyślnie zaimportowano ${result.imported || 0} rekordów!`);
+      } else {
+        alert(`Błąd importu: ${result.error || 'Nieznany błąd'}`);
+      }
+    } catch (error: any) {
+      alert(`Błąd: ${error.message || 'Wystąpił błąd podczas zapisu'}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const getTypeLabel = (type: string): string => {
+    const labels: Record<string, string> = {
+      hives: 'Lista Uli',
+      inspections: 'Przeglądy',
+      queens: 'Matki',
+      inventory: 'Magazyn',
+      unknown: 'Nieznany typ',
+    };
+    return labels[type] || type;
+  };
+
+  const getConfidenceColor = (confidence: number): string => {
+    if (confidence >= 80) return 'text-green-600 dark:text-green-400';
+    if (confidence >= 50) return 'text-yellow-600 dark:text-yellow-400';
+    return 'text-red-600 dark:text-red-400';
   };
 
   return (
     <div className="space-y-6">
-      {/* Import Type Selection */}
-      <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-2xl p-6 border border-white/10 dark:border-white/5">
-        <h2 className="text-lg font-bold mb-4 text-amber-950 dark:text-white">Typ Importu</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button
-            onClick={() => setImportType('inspections')}
-            className={`p-4 rounded-xl border-2 transition-all ${
-              importType === 'inspections'
-                ? 'border-amber-500 bg-amber-500/10 dark:bg-amber-500/20'
-                : 'border-white/10 bg-white/5 dark:bg-black/30 hover:border-amber-500/50'
-            }`}
-          >
-            <div className="text-sm font-bold mb-1 text-amber-950 dark:text-white">Przeglądy</div>
-            <div className="text-xs text-amber-900/70 dark:text-white/60">Import historii przeglądów</div>
-          </button>
-          <button
-            onClick={() => setImportType('hives')}
-            className={`p-4 rounded-xl border-2 transition-all ${
-              importType === 'hives'
-                ? 'border-amber-500 bg-amber-500/10 dark:bg-amber-500/20'
-                : 'border-white/10 bg-white/5 dark:bg-black/30 hover:border-amber-500/50'
-            }`}
-          >
-            <div className="text-sm font-bold mb-1 text-amber-950 dark:text-white">Ule</div>
-            <div className="text-xs text-amber-900/70 dark:text-white/60">Import listy uli</div>
-          </button>
-          <button
-            onClick={() => setImportType('inventory')}
-            className={`p-4 rounded-xl border-2 transition-all ${
-              importType === 'inventory'
-                ? 'border-amber-500 bg-amber-500/10 dark:bg-amber-500/20'
-                : 'border-white/10 bg-white/5 dark:bg-black/30 hover:border-amber-500/50'
-            }`}
-          >
-            <div className="text-sm font-bold mb-1 text-amber-950 dark:text-white">Magazyn</div>
-            <div className="text-xs text-amber-900/70 dark:text-white/60">Import stanu magazynu</div>
-          </button>
+      {/* Drop Zone */}
+      <GlassCard className="p-8">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 flex items-center justify-center gap-2">
+            <Sparkles className="w-6 h-6 text-amber-500" />
+            Inteligentny Import Danych
+          </h2>
+          <p className="text-sm text-gray-700 dark:text-white/60">
+            Wrzuć dowolny plik (Excel, CSV, PDF, Zdjęcie rejestru) – AI rozpozna dane i przypisze je do odpowiednich tabel
+          </p>
         </div>
-      </div>
 
-      {/* File Upload */}
-      <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-2xl p-6 border border-white/10 dark:border-white/5">
-        <h2 className="text-lg font-bold mb-4 text-amber-950 dark:text-white">Wybierz Plik</h2>
-        
-        <div className="border-2 border-dashed border-amber-500/30 dark:border-amber-500/20 rounded-xl p-8 text-center hover:border-amber-500/50 transition-colors">
+        <div
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+          className={`
+            border-2 border-dashed rounded-xl p-12 text-center transition-all
+            ${dragActive 
+              ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/10' 
+              : 'border-amber-500/30 dark:border-amber-500/20 hover:border-amber-500/50'
+            }
+            ${file ? 'border-green-500/50 bg-green-50/50 dark:bg-green-500/5' : ''}
+          `}
+        >
           <input
             type="file"
             id="file-upload"
-            accept=".csv,.xlsx,.xls"
+            accept=".csv,.xlsx,.xls,.pdf,.jpg,.jpeg,.png"
             onChange={handleFileChange}
             className="hidden"
           />
@@ -117,23 +191,35 @@ export function ImportDataClient() {
           >
             {file ? (
               <>
-                <CheckCircle2 className="w-12 h-12 text-amber-500" />
+                <CheckCircle2 className="w-16 h-16 text-green-500" />
                 <div>
-                  <div className="font-bold text-amber-950 dark:text-white">{file.name}</div>
-                  <div className="text-sm text-amber-900/70 dark:text-white/60">
+                  <div className="font-bold text-gray-900 dark:text-white text-lg">{file.name}</div>
+                  <div className="text-sm text-gray-600 dark:text-white/60 mt-1">
                     {(file.size / 1024).toFixed(2)} KB
                   </div>
                 </div>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setFile(null);
+                    setParseResult(null);
+                    setShowPreview(false);
+                  }}
+                  className="text-sm text-red-600 dark:text-red-400 hover:underline"
+                >
+                  Usuń plik
+                </button>
               </>
             ) : (
               <>
-                <Upload className="w-12 h-12 text-amber-500/60" />
+                <Upload className="w-16 h-16 text-amber-500/60" />
                 <div>
-                  <div className="font-bold text-amber-950 dark:text-white mb-1">
-                    Kliknij, aby wybrać plik
+                  <div className="font-bold text-gray-900 dark:text-white text-lg mb-1">
+                    Kliknij, aby wybrać plik lub przeciągnij tutaj
                   </div>
-                  <div className="text-sm text-amber-900/70 dark:text-white/60">
-                    Obsługiwane formaty: CSV, Excel (.xlsx, .xls)
+                  <div className="text-sm text-gray-600 dark:text-white/60">
+                    Obsługiwane formaty: Excel, CSV, PDF, Zdjęcia (.csv, .xlsx, .xls, .pdf, .jpg, .jpeg, .png)
                   </div>
                 </div>
               </>
@@ -141,130 +227,168 @@ export function ImportDataClient() {
           </label>
         </div>
 
-        {file && (
-          <div className="mt-4 flex items-center gap-2 text-sm text-amber-900/70 dark:text-white/60">
-            {file.name.endsWith('.csv') ? (
-              <FileText className="w-4 h-4" />
-            ) : (
-              <FileSpreadsheet className="w-4 h-4" />
-            )}
-            <span>Format: {file.name.split('.').pop()?.toUpperCase()}</span>
+        {/* Analyze Button */}
+        {file && !parseResult && (
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={handleAnalyze}
+              disabled={isAnalyzing}
+              className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isAnalyzing ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Analizowanie pliku...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5" />
+                  Analizuj z AI
+                </>
+              )}
+            </button>
           </div>
         )}
-      </div>
+      </GlassCard>
 
-      {/* Import Button */}
-      {file && (
-        <div className="flex justify-end">
-          <button
-            onClick={handleImport}
-            disabled={isLoading}
-            className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Importowanie...
-              </>
-            ) : (
-              <>
-                <Upload className="w-5 h-5" />
-                Importuj Dane
-              </>
-            )}
-          </button>
-        </div>
-      )}
-
-      {/* Result */}
-      {result && (
-        <div className={`rounded-2xl p-6 border-2 ${
-          result.success
-            ? 'bg-green-500/10 border-green-500/30 dark:bg-green-500/20'
-            : 'bg-red-500/10 border-red-500/30 dark:bg-red-500/20'
-        }`}>
-          <div className="flex items-start gap-3">
-            {result.success ? (
+      {/* AI Analysis Result */}
+      {parseResult && (
+        <GlassCard className="p-6">
+          <div className="flex items-start gap-4">
+            {parseResult.success ? (
               <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" />
             ) : (
               <XCircle className="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5" />
             )}
             <div className="flex-1">
-              <div className={`font-bold mb-2 ${
-                result.success ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
-              }`}>
-                {result.success ? 'Import Zakończony Sukcesem' : 'Błąd Importu'}
-              </div>
-              <div className="text-sm text-amber-950 dark:text-white mb-2">{result.message}</div>
-              {result.imported !== undefined && (
-                <div className="text-sm text-amber-900/70 dark:text-white/60">
-                  Zaimportowano: {result.imported} rekordów
-                </div>
-              )}
-              {result.errors && result.errors.length > 0 && (
-                <div className="mt-4 space-y-1">
-                  <div className="text-sm font-bold text-red-700 dark:text-red-400">Błędy:</div>
-                  {result.errors.map((error, i) => (
-                    <div key={i} className="text-xs text-red-600 dark:text-red-300 flex items-start gap-2">
-                      <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                      <span>{error}</span>
+              {parseResult.success ? (
+                <>
+                  <div className="mb-4">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                      AI wykryło: <span className="text-amber-500">{getTypeLabel(parseResult.detectedType)}</span>
+                    </h3>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className={`font-semibold ${getConfidenceColor(parseResult.confidence)}`}>
+                        Pewność: {parseResult.confidence}%
+                      </span>
+                      <span className="text-gray-600 dark:text-white/60">
+                        Znaleziono: {parseResult.recordCount} {parseResult.recordCount === 1 ? 'rekord' : 'rekordów'}
+                      </span>
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Column Mapping Info */}
+                  {Object.keys(parseResult.columnMapping).length > 0 && (
+                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg">
+                      <p className="text-xs font-semibold text-gray-900 dark:text-white mb-2">Mapowanie kolumn:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(parseResult.columnMapping).map(([userCol, systemCol]) => (
+                          <span
+                            key={userCol}
+                            className="text-xs px-2 py-1 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded text-gray-700 dark:text-white/80"
+                          >
+                            <span className="font-medium">{userCol}</span> → <span className="text-amber-600 dark:text-amber-400">{systemCol}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Preview Toggle */}
+                  <div className="mb-4">
+                    <button
+                      onClick={() => setShowPreview(!showPreview)}
+                      className="flex items-center gap-2 text-sm text-gray-700 dark:text-white/60 hover:text-gray-900 dark:hover:text-white transition-colors"
+                    >
+                      {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showPreview ? 'Ukryj' : 'Pokaż'} podgląd danych
+                    </button>
+                  </div>
+
+                  {/* Preview Table */}
+                  {showPreview && parseResult.mappedData.length > 0 && (
+                    <div className="mb-4 overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-300 dark:border-white/10">
+                            {Object.keys(parseResult.mappedData[0]).map((key) => (
+                              <th
+                                key={key}
+                                className="px-3 py-2 text-left text-xs font-semibold text-gray-900 dark:text-white/80"
+                              >
+                                {key}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-300 dark:divide-white/10">
+                          {parseResult.mappedData.slice(0, 10).map((row, idx) => (
+                            <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-white/5">
+                              {Object.values(row).map((value: any, colIdx) => (
+                                <td
+                                  key={colIdx}
+                                  className="px-3 py-2 text-gray-900 dark:text-white/70 text-xs"
+                                >
+                                  {value !== null && value !== undefined ? String(value) : '—'}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {parseResult.mappedData.length > 10 && (
+                        <p className="text-xs text-gray-600 dark:text-white/60 mt-2 text-center">
+                          Pokazano pierwsze 10 z {parseResult.mappedData.length} rekordów
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Save Button */}
+                  <div className="flex justify-end gap-3 pt-4 border-t border-gray-300 dark:border-white/10">
+                    <button
+                      onClick={() => {
+                        setFile(null);
+                        setParseResult(null);
+                        setShowPreview(false);
+                      }}
+                      className="px-4 py-2 text-gray-700 dark:text-white/60 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors font-medium"
+                    >
+                      Anuluj
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      disabled={isSaving}
+                      className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Zapisuję...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-5 h-5" />
+                          Zapisz {parseResult.recordCount} {parseResult.recordCount === 1 ? 'rekord' : 'rekordów'}
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-2">
+                    Błąd analizy
+                  </h3>
+                  <p className="text-sm text-gray-700 dark:text-white/60">
+                    {parseResult.error || 'Nie udało się przeanalizować pliku'}
+                  </p>
                 </div>
               )}
             </div>
           </div>
-        </div>
+        </GlassCard>
       )}
-
-      {/* Help Section */}
-      <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-2xl p-6 border border-white/10 dark:border-white/5">
-        <h3 className="text-lg font-bold mb-4 text-amber-950 dark:text-white flex items-center gap-2">
-          <AlertCircle className="w-5 h-5" />
-          Wymagany Format Pliku
-        </h3>
-        <div className="space-y-4 text-sm text-amber-900/80 dark:text-white/70">
-          {importType === 'inspections' && (
-            <div>
-              <div className="font-bold mb-2">Dla przeglądów wymagane kolumny:</div>
-              <ul className="list-disc list-inside space-y-1 ml-4">
-                <li>hive_number (numer ula)</li>
-                <li>inspection_date (data przeglądu, format: YYYY-MM-DD)</li>
-                <li>colony_strength (STRONG, MEDIUM, WEAK)</li>
-                <li>temperature (temperatura w °C)</li>
-                <li>mood (CALM, AGGRESSIVE, DEFENSIVE)</li>
-                <li>notes (notatki, opcjonalne)</li>
-              </ul>
-            </div>
-          )}
-          {importType === 'hives' && (
-            <div>
-              <div className="font-bold mb-2">Dla uli wymagane kolumny:</div>
-              <ul className="list-disc list-inside space-y-1 ml-4">
-                <li>hive_number (numer ula)</li>
-                <li>apiary_name (nazwa pasieki)</li>
-                <li>type (typ ula, opcjonalne)</li>
-                <li>installation_date (data instalacji, format: YYYY-MM-DD, opcjonalne)</li>
-              </ul>
-            </div>
-          )}
-          {importType === 'inventory' && (
-            <div>
-              <div className="font-bold mb-2">Dla magazynu wymagane kolumny:</div>
-              <ul className="list-disc list-inside space-y-1 ml-4">
-                <li>item_name (nazwa przedmiotu)</li>
-                <li>category (kategoria)</li>
-                <li>quantity (ilość)</li>
-              </ul>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
-
-
-
-
-

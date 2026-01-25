@@ -24,11 +24,10 @@ export interface SalesReportEntry {
   product_name: string;
   quantity: number;
   unit: string;
-  daily_revenue?: number;
-  cumulative_revenue?: number;
+  transaction_value?: number; // Individual transaction value (price * quantity)
+  cumulative_revenue?: number; // Running total from year start
   customer_name?: string;
   batch_code?: string | null;
-  isDailySummary?: boolean; // Flag to mark daily summary rows
 }
 
 /**
@@ -257,84 +256,94 @@ export async function addSalesLogEntry(
 /**
  * Get RHD report (dzienny z przychodem narastającym od początku roku)
  * Returns entries grouped by date with daily and cumulative revenue from year start
+ * CRITICAL: Always fetches from January 1st of the year to calculate correct cumulative revenue
  */
 export async function getRhdReport(startDate?: string, endDate?: string): Promise<{ data: SalesReportEntry[]; error: string | null; totalRevenue: number; totalQuantity: number }> {
-  const currentYear = new Date().getFullYear();
-  const yearStart = startDate || `${currentYear}-01-01`;
-  const yearEnd = endDate || `${currentYear}-12-31`;
+  // Extract year from endDate or use current year
+  let reportYear: number;
+  if (endDate) {
+    const endDateObj = new Date(endDate);
+    reportYear = endDateObj.getFullYear();
+  } else {
+    reportYear = new Date().getFullYear();
+  }
 
+  // CRITICAL: Always fetch from January 1st of the year to calculate cumulative revenue correctly
+  const yearStart = `${reportYear}-01-01`;
+  const yearEnd = endDate || `${reportYear}-12-31`;
+
+  // Fetch ALL transactions from January 1st to endDate
   const result = await getSalesLog(undefined, yearStart, yearEnd);
   if (result.error) {
     return { data: [], error: result.error, totalRevenue: 0, totalQuantity: 0 };
   }
 
-  const allData = result.data;
+  const allTransactions = result.data;
   
-  // Calculate totals
-  const totalRevenue = allData.reduce((sum, entry) => sum + (entry.revenue || 0), 0);
-  const totalQuantity = allData.reduce((sum, entry) => sum + (entry.quantity_sold || 0), 0);
+  // Filter transactions for the selected date range (if startDate is provided) for totals calculation
+  const filteredForDisplay = startDate 
+    ? allTransactions.filter(entry => {
+        const entryDate = entry.sale_date.split('T')[0];
+        return entryDate >= startDate && entryDate <= yearEnd;
+      })
+    : allTransactions;
 
-  // Group by date
-  const groupedByDate: { [date: string]: SalesLogEntry[] } = {};
-  allData.forEach(entry => {
-    const date = entry.sale_date.split('T')[0]; // Get date part only
-    if (!groupedByDate[date]) {
-      groupedByDate[date] = [];
-    }
-    groupedByDate[date].push(entry);
+  // Calculate totals for the selected date range
+  const totalRevenue = filteredForDisplay.reduce((sum, entry) => sum + (entry.revenue || 0), 0);
+  const totalQuantity = filteredForDisplay.reduce((sum, entry) => sum + (entry.quantity_sold || 0), 0);
+
+  // Sort ALL transactions chronologically by date (for cumulative calculation)
+  const sortedAllTransactions = [...allTransactions].sort((a, b) => {
+    const dateA = new Date(a.sale_date).getTime();
+    const dateB = new Date(b.sale_date).getTime();
+    return dateA - dateB;
   });
 
-  // Sort dates chronologically
-  const dates = Object.keys(groupedByDate).sort();
+  // Calculate cumulative revenue by iterating through ALL transactions from Jan 1st
+  let yearRunningTotal = 0;
+  const cumulativeMap = new Map<string, number>(); // Map transaction ID to cumulative revenue at that point
 
-  // Build report with cumulative revenue from year start
-  let cumulativeRevenue = 0;
+  sortedAllTransactions.forEach(entry => {
+    const transactionValue = entry.revenue || 0;
+    yearRunningTotal += transactionValue;
+    cumulativeMap.set(entry.id, yearRunningTotal);
+  });
+
+  // Build report as a flat chronological list (no daily summaries)
   let lp = 1;
-  const report: SalesReportEntry[] = [];
+  const fullReport: SalesReportEntry[] = [];
 
-  dates.forEach(date => {
-    const dayEntries = groupedByDate[date];
-    const dailyRevenue = dayEntries.reduce((sum, entry) => sum + (entry.revenue || 0), 0);
-    const dailyQuantity = dayEntries.reduce((sum, entry) => sum + (entry.quantity_sold || 0), 0);
+  // Add all transactions in chronological order
+  sortedAllTransactions.forEach(entry => {
+    const transactionValue = entry.revenue || 0;
+    const cumulativeAtTransaction = cumulativeMap.get(entry.id) || 0;
+    const date = entry.sale_date.split('T')[0]; // Get date part only
     
-    const dayStartIndex = report.length;
-    
-    // Add entries for this day - each entry has its own revenue (from entry.revenue)
-    dayEntries.forEach(entry => {
-      report.push({
-        lp: lp++,
-        sale_date: date,
-        product_name: entry.product_name || 'Nieznany produkt',
-        quantity: entry.quantity_sold,
-        unit: 'szt',
-        daily_revenue: entry.revenue || 0, // Individual product revenue
-        cumulative_revenue: 0, // Will be updated after summary
-        isDailySummary: false,
-      });
-    });
-    
-    // Update cumulative revenue
-    cumulativeRevenue += dailyRevenue;
-    
-    // Update cumulative revenue for all entries of this day
-    for (let i = dayStartIndex; i < report.length; i++) {
-      report[i].cumulative_revenue = cumulativeRevenue;
-    }
-    
-    // Add daily summary row
-    report.push({
+    fullReport.push({
       lp: lp++,
       sale_date: date,
-      product_name: `Razem dnia ${date}`,
-      quantity: dailyQuantity,
+      product_name: entry.product_name || 'Nieznany produkt',
+      quantity: entry.quantity_sold,
       unit: 'szt',
-      daily_revenue: dailyRevenue,
-      cumulative_revenue: cumulativeRevenue,
-      isDailySummary: true,
+      transaction_value: transactionValue,
+      cumulative_revenue: cumulativeAtTransaction,
     });
   });
 
-  return { data: report, error: null, totalRevenue, totalQuantity };
+  // Filter report to only show the selected date range (if startDate is provided)
+  const filteredReport = startDate
+    ? fullReport.filter(entry => {
+        const entryDate = entry.sale_date;
+        return entryDate >= startDate && entryDate <= yearEnd;
+      })
+    : fullReport;
+
+  // Renumber LP after filtering
+  filteredReport.forEach((entry, index) => {
+    entry.lp = index + 1;
+  });
+
+  return { data: filteredReport, error: null, totalRevenue, totalQuantity };
 }
 
 /**
@@ -423,7 +432,9 @@ export async function getUserProductsForSale(): Promise<{ data: any[]; error?: s
       stock: item.stock,
       batch_code: item.batch_code,
       price: item.price,
-      owner_id: item.owner_id
+      owner_id: item.owner_id,
+      volume_ml: item.volume_ml !== null && item.volume_ml !== undefined ? parseInt(String(item.volume_ml)) : undefined,
+      weight_g: item.weight_g !== null && item.weight_g !== undefined ? parseInt(String(item.weight_g)) : undefined
     }));
 
     console.log('getUserProductsForSale: Fetched', products.length, 'products');

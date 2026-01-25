@@ -121,13 +121,13 @@ export default function SupportTicketsClient() {
   };
 
   if (loading && tickets.length === 0) {
-    return <div className="text-white/60">Ładowanie...</div>;
+    return <div className="text-gray-700 dark:text-white/60">Ładowanie...</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-white">Moje Zgłoszenia</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Moje Zgłoszenia</h2>
         <button
           onClick={() => setIsModalOpen(true)}
           className="btn-primary flex items-center gap-2"
@@ -144,28 +144,28 @@ export default function SupportTicketsClient() {
       )}
 
       {tickets.length === 0 ? (
-        <div className="bg-white/5 border border-white/10 rounded-xl p-8 text-center">
-          <MessageSquare className="w-12 h-12 mx-auto mb-4 text-white/40" />
-          <p className="text-white/60">Nie masz jeszcze żadnych zgłoszeń.</p>
-          <p className="text-white/40 text-sm mt-2">Utwórz pierwsze zgłoszenie, aby uzyskać pomoc.</p>
+        <div className="bg-white dark:bg-primary/15 border border-gray-300 dark:border-primary/30 rounded-xl p-8 text-center shadow-lg dark:shadow-none">
+          <MessageSquare className="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-white/40" />
+          <p className="text-gray-800 dark:text-white/60">Nie masz jeszcze żadnych zgłoszeń.</p>
+          <p className="text-gray-600 dark:text-white/40 text-sm mt-2">Utwórz pierwsze zgłoszenie, aby uzyskać pomoc.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {tickets.map(ticket => (
             <div
               key={ticket.id}
-              className="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-colors cursor-pointer"
+              className="bg-white dark:bg-primary/15 border border-gray-300 dark:border-primary/30 rounded-xl p-6 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors cursor-pointer shadow-md dark:shadow-none"
               onClick={() => handleViewTicket(ticket.id)}
             >
               <div className="flex justify-between items-start mb-2">
-                <h3 className="text-lg font-bold text-white">{ticket.title}</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{ticket.title}</h3>
                 <div className="flex items-center gap-2">
                   {getStatusBadge(ticket.status)}
                   {getPriorityBadge(ticket.priority)}
                 </div>
               </div>
-              <p className="text-white/70 text-sm mb-3 line-clamp-2">{ticket.description}</p>
-              <div className="flex items-center justify-between text-xs text-white/50">
+              <p className="text-gray-700 dark:text-white/70 text-sm mb-3 line-clamp-2">{ticket.description}</p>
+              <div className="flex items-center justify-between text-xs text-gray-600 dark:text-white/50">
                 <span>Kategoria: {ticket.category}</span>
                 <span>{new Date(ticket.created_at).toLocaleDateString('pl-PL')}</span>
               </div>
@@ -318,6 +318,11 @@ export default function SupportTicketsClient() {
     </div>
   );
 }
+
+
+
+
+
 
 
 

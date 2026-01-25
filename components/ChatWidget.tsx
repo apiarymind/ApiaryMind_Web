@@ -54,7 +54,7 @@ export default function ChatWidget() {
       {/* OKNO CZATU */}
       {isOpen && (
         <div className="mb-4 w-[90vw] max-w-[380px] h-[500px] rounded-3xl overflow-hidden shadow-2xl border backdrop-blur-xl flex flex-col
-                        bg-white/90 border-amber-900/10 dark:bg-black/80 dark:border-white/10 animate-in slide-in-from-bottom-10 fade-in">
+                        bg-white/90 border-amber-900/10 dark:bg-black/80 dark:border-primary/30 animate-in slide-in-from-bottom-10 fade-in">
           
           {/* NAGŁÓWEK - PSZCZOŁA (Zamiast robota) */}
           <div className="p-4 flex items-center justify-between bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border-b border-amber-900/10">
@@ -84,7 +84,7 @@ export default function ChatWidget() {
                 <div className={`max-w-[85%] p-3 px-4 rounded-2xl text-sm leading-relaxed ${
                   m.role === 'user' 
                     ? 'bg-amber-500 text-black font-medium rounded-br-none shadow-md' 
-                    : 'bg-white border border-amber-900/10 text-amber-950 rounded-bl-none shadow-sm dark:bg-white/10 dark:text-gray-100 dark:border-white/10'
+                    : 'bg-white border border-amber-900/10 text-amber-950 rounded-bl-none shadow-sm dark:bg-primary/20 dark:text-gray-100 dark:border-primary/30'
                 }`}>
                   {m.content}
                 </div>
@@ -92,7 +92,7 @@ export default function ChatWidget() {
             ))}
             {isLoading && (
                 <div className="flex justify-start">
-                    <div className="bg-white/50 dark:bg-white/10 p-3 rounded-2xl rounded-bl-none flex items-center gap-2 text-xs text-amber-900/50 dark:text-white/50">
+                    <div className="bg-white/50 dark:bg-primary/20 p-3 rounded-2xl rounded-bl-none flex items-center gap-2 text-xs text-amber-900/50 dark:text-white/50">
                         <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce"></span>
                         <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.1s]"></span>
                         <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.2s]"></span>
@@ -113,7 +113,7 @@ export default function ChatWidget() {
                   disabled={isLoading}
                   className="w-full pl-4 pr-12 py-3 rounded-xl text-sm outline-none transition-all shadow-sm
                              bg-white border border-amber-900/10 text-amber-950 placeholder:text-amber-900/30 focus:border-amber-500 focus:ring-1 focus:ring-amber-500
-                             dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder:text-white/20"
+                             dark:bg-primary/15 dark:border-primary/30 dark:text-white dark:placeholder:text-white/20"
                 />
                 <button 
                   type="submit" 

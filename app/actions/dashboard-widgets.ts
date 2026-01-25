@@ -101,6 +101,55 @@ export async function getWithdrawalGuardHives() {
   return treatments as TreatmentsLog[];
 }
 
+/**
+ * Get critical removal alerts (strip medications that need to be removed)
+ * Returns treatments where removal_date has passed and is_removed is false
+ */
+export async function getRemovalAlerts() {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return [];
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayISO = today.toISOString();
+
+  // Get all treatments with removal_date <= today and is_removed = false
+  // Only for hives owned by the current user
+  const { data: treatments, error } = await supabase
+    .from('treatments_log')
+    .select(`
+      *,
+      hive:hives!inner (
+        id,
+        hive_number,
+        apiary:apiaries!inner (
+          id,
+          owner_id
+        )
+      )
+    `)
+    .not('removal_date', 'is', null)
+    .lte('removal_date', todayISO)
+    .eq('is_removed', false)
+    .order('removal_date', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching removal alerts:', error);
+    return [];
+  }
+
+  // Filter by ownership (RLS should handle this, but double-check)
+  const filtered = (treatments || []).filter((t: any) => {
+    return t.hive?.apiary?.owner_id === user.id;
+  });
+
+  return filtered as TreatmentsLog[];
+}
+
 // --- ZONE 2: BIO-CONTEXT ---
 
 export async function getForageData(apiaryIds?: string[]) {
@@ -129,39 +178,96 @@ export async function getForageData(apiaryIds?: string[]) {
 export async function getUserTasks(userId: string, role: string) {
   const supabase = createClient();
   
-  const { data: inspections, error } = await supabase
-    .from('inspections')
+  // Calculate date range: today to 7 days in the future
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayISO = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+  
+  const sevenDaysLater = new Date(today);
+  sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
+  const sevenDaysLaterISO = sevenDaysLater.toISOString().split('T')[0]; // YYYY-MM-DD format
+  
+  // Get tasks from apiary_tasks table (same as calendar module)
+  const { data: tasks, error } = await supabase
+    .from('apiary_tasks')
     .select(`
         id,
+        task_description,
+        due_date,
+        priority,
+        status,
         hive_id,
-        next_visit_tasks,
-        inspection_date,
         hive:hives(hive_number)
     `)
-    .not('next_visit_tasks', 'is', null)
-    .order('inspection_date', { ascending: false })
+    .eq('user_id', userId)
+    .neq('status', 'DONE') // Only active tasks
+    .not('due_date', 'is', null) // Only tasks with due date
+    .gte('due_date', todayISO) // Tasks from today onwards
+    .lte('due_date', sevenDaysLaterISO) // Tasks within next 7 days
+    .order('due_date', { ascending: true })
+    .order('priority', { ascending: false }) // High priority first
     .limit(50); // Optimization
 
-    if (error) return [];
+    if (error) {
+      console.error('Error fetching tasks for dashboard widget:', error);
+      return [];
+    }
 
-    // Filter for unique latest per hive
-    const latestMap = new Map<string, any>();
-    inspections?.forEach((insp: any) => {
-        if (!latestMap.has(insp.hive_id)) {
-            latestMap.set(insp.hive_id, insp);
+    if (!tasks || tasks.length === 0) {
+      return [];
+    }
+
+    // Transform to match ActionPlanWidget interface
+    // Group tasks by hive and date
+    const tasksByHiveAndDate = new Map<string, any>();
+    
+    tasks.forEach((task: any) => {
+      const hiveNumber = task.hive?.hive_number || 'Nieznany';
+      // Handle date format: due_date can be DATE (YYYY-MM-DD) or ISO string
+      let dueDate: string;
+      if (task.due_date) {
+        // If it's already a string in YYYY-MM-DD format, convert to ISO
+        if (typeof task.due_date === 'string' && task.due_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          // It's a DATE type, add time to make it a proper ISO string
+          dueDate = new Date(task.due_date + 'T00:00:00').toISOString();
+        } else {
+          // It's already an ISO string or Date object
+          dueDate = new Date(task.due_date).toISOString();
         }
+      } else {
+        dueDate = new Date().toISOString();
+      }
+      
+      const key = `${hiveNumber}-${dueDate}`;
+      
+      if (!tasksByHiveAndDate.has(key)) {
+        tasksByHiveAndDate.set(key, {
+          id: task.id,
+          hiveNumber: hiveNumber,
+          tasks: [],
+          date: dueDate,
+          priority: task.priority
+        });
+      }
+      
+      const groupedTask = tasksByHiveAndDate.get(key);
+      groupedTask.tasks.push(task.task_description);
     });
 
-    const tasks = Array.from(latestMap.values())
-        .filter(i => i.next_visit_tasks && i.next_visit_tasks.length > 0)
-        .map(i => ({
-            id: i.id,
-            hiveNumber: i.hive?.hive_number,
-            tasks: i.next_visit_tasks,
-            date: i.inspection_date
-        }));
+    // Convert to array and sort by date
+    const result = Array.from(tasksByHiveAndDate.values())
+      .sort((a, b) => {
+        // Sort by date first
+        const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
+        if (dateCompare !== 0) return dateCompare;
+        
+        // Then by priority (HIGH > MEDIUM > LOW)
+        const priorityOrder = { 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1, null: 0 };
+        return (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) - 
+               (priorityOrder[a.priority as keyof typeof priorityOrder] || 0);
+      });
 
-    return tasks;
+    return result;
 }
 
 // --- ZONE 4: NETWORK ---

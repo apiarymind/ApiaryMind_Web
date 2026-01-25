@@ -18,7 +18,7 @@ export default function DashboardLayoutClient({ children }: { children: React.Re
       {/* Mobile Toggle - Floating Button (Bottom Left) */}
       <button 
           onClick={() => setSidebarOpen(!isSidebarOpen)}
-          className="md:hidden fixed bottom-6 left-6 z-50 w-12 h-12 flex items-center justify-center bg-amber-500 rounded-full text-brown-900 font-bold shadow-xl border-2 border-brown-900 hover:scale-110 transition-transform"
+          className="md:hidden fixed bottom-6 left-6 z-50 w-12 h-12 flex items-center justify-center bg-amber-500 rounded-full text-amber-950 dark:text-amber-950 font-bold shadow-xl border-2 border-amber-600 hover:scale-110 transition-transform"
           title="Menu"
       >
         {isSidebarOpen ? "✕" : "☰"}
@@ -27,7 +27,7 @@ export default function DashboardLayoutClient({ children }: { children: React.Re
       {/* Sidebar Container */}
       {/* Mobile: Fixed full height (minus header approx), slide-in. Desktop: Static. */}
       <div className={`
-          fixed top-[61px] bottom-0 left-0 z-40 w-64 bg-brown-900 transform transition-transform duration-300 ease-in-out border-r border-brown-700
+          fixed top-[61px] bottom-0 left-0 z-40 w-64 bg-white/90 dark:bg-black/40 backdrop-blur-xl transform transition-transform duration-300 ease-in-out border-r border-amber-900/10 dark:border-white/10
           md:translate-x-0 md:static md:block md:z-auto md:top-auto md:bottom-auto md:h-auto
           ${isSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}
       `}>

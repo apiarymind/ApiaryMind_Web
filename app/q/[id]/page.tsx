@@ -51,7 +51,7 @@ export default async function QueenPublicPage({ params }: { params: { id: string
   };
 
   return (
-    <div className="min-h-screen bg-[url('/assets/marble-texture.jpg')] bg-cover bg-center dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900 via-gray-800 to-black">
+    <div className="min-h-screen bg-[url('/assets/bg-light-pattern.png')] bg-cover bg-center dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900 via-gray-800 to-black">
       <div className="container mx-auto px-4 py-8 md:py-12">
         {/* Header */}
         <div className="mb-8 text-center">
@@ -62,7 +62,7 @@ export default async function QueenPublicPage({ params }: { params: { id: string
             Rodowód Matki Pszczelej
           </h1>
           <p className="text-amber-900/70 dark:text-gray-400">
-            Wirtualny Paszport - Pełna historia genetyczna
+            Publiczny rodowód i dane hodowlane
           </p>
         </div>
 
@@ -210,6 +210,11 @@ export default async function QueenPublicPage({ params }: { params: { id: string
     </div>
   );
 }
+
+
+
+
+
 
 
 

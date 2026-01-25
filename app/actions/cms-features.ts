@@ -20,7 +20,15 @@ export async function isBetaBannerEnabled(): Promise<boolean> {
       .eq('key', BETA_BANNER_ENABLED_KEY)
       .single();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
+      // PGRST116 = no rows returned, PGRST205 = table doesn't exist
+      if (error.code === 'PGRST116') {
+        return true; // Default to enabled if no setting exists
+      }
+      if (error.code === 'PGRST205') {
+        // Table doesn't exist, silently return default
+        return true;
+      }
       console.error('Error fetching beta banner setting:', error);
       return true; // Default to enabled if error
     }

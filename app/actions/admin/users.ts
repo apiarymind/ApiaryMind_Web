@@ -134,6 +134,16 @@ export async function updateUserPlan(userId: string, plan: string): Promise<{ su
     return { success: false, error: error.message };
   }
 
+  // Trigger reconciliation after plan change to unlock/lock hives based on new plan
+  try {
+    const { reconcileHiveLimits } = await import('../reconcile-hive-limits');
+    await reconcileHiveLimits(userId, plan.toUpperCase());
+    console.log(`[updateUserPlan] Reconciliation completed for user ${userId} after plan change to ${plan}`);
+  } catch (reconcileError: any) {
+    console.error('[updateUserPlan] Error during reconciliation:', reconcileError);
+    // Don't fail the plan update if reconciliation fails, just log it
+  }
+
   revalidatePath('/dashboard/admin/users');
   return { success: true };
 }

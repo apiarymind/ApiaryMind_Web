@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { X, Send, Sparkles } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
 
 type Message = {
   role: 'user' | 'assistant';
@@ -35,18 +36,53 @@ export default function AIChat() {
     // 1. Dodaj wiadomość użytkownika
     const userMsg: Message = { role: 'user', content: input };
     setMessages(prev => [...prev, userMsg]);
+    const userMessage = input;
     setInput("");
     setIsLoading(true);
 
-    // 2. Symulacja blokady
-    setTimeout(() => {
-        const blockedMsg: Message = { 
-            role: 'assistant', 
-            content: "Obecnie jestem zablokowany. Czekam na pełne uruchomienie systemu." 
-        };
-        setMessages(prev => [...prev, blockedMsg]);
-        setIsLoading(false);
-    }, 800); 
+    try {
+      // 2. Wywołanie backendu AI
+      const supabase = createClient();
+      const { data, error } = await supabase.functions.invoke('ai-inspector', {
+        body: { 
+          note_text: userMessage,
+          current_date: new Date().toISOString() 
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Błąd połączenia z AI');
+      }
+
+      // 3. Wyświetl odpowiedź BiBi
+      const chatMessage = data?.chat_message || "Przeanalizowałam Twoją notatkę!";
+      const assistantMsg: Message = { 
+        role: 'assistant', 
+        content: chatMessage 
+      };
+      setMessages(prev => [...prev, assistantMsg]);
+
+      // 4. Wypisz dodatkowe dane w konsoli
+      if (data?.tasks && data.tasks.length > 0) {
+        console.log('Zadania:', data.tasks);
+      }
+      if (data?.refined_note) {
+        console.log('Zrefaktorowana notatka:', data.refined_note);
+      }
+      if (data?.detected_values) {
+        console.log('Wykryte wartości:', data.detected_values);
+      }
+
+    } catch (error: any) {
+      const errorMsg: Message = { 
+        role: 'assistant', 
+        content: `Przepraszam, wystąpił błąd: ${error.message || 'Nie udało się połączyć z AI'}` 
+      };
+      setMessages(prev => [...prev, errorMsg]);
+      console.error('Błąd AI:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -55,7 +91,7 @@ export default function AIChat() {
       {/* OKNO CZATU */}
       {isOpen && (
         <div className="mb-4 w-[90vw] max-w-[380px] h-[500px] rounded-3xl overflow-hidden shadow-2xl border backdrop-blur-xl flex flex-col
-                        bg-white/80 border-amber-900/10 dark:bg-black/80 dark:border-white/10 animate-in slide-in-from-bottom-10 fade-in transition-all">
+                        bg-white/80 border-amber-900/10 dark:bg-black/80 dark:border-primary/30 animate-in slide-in-from-bottom-10 fade-in transition-all">
           
           {/* NAGŁÓWEK */}
           <div className="p-4 flex items-center justify-between bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-b border-amber-900/5 dark:border-white/5">
@@ -85,7 +121,7 @@ export default function AIChat() {
                 <div className={`max-w-[85%] p-3 px-4 rounded-2xl text-sm leading-relaxed ${
                   m.role === 'user' 
                     ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-black font-medium rounded-br-sm shadow-md shadow-amber-500/20' 
-                    : 'bg-white/80 backdrop-blur-sm border border-amber-900/5 text-amber-950 rounded-bl-sm shadow-sm dark:bg-white/10 dark:text-gray-100 dark:border-white/10'
+                    : 'bg-white/80 backdrop-blur-sm border border-amber-900/5 text-amber-950 rounded-bl-sm shadow-sm dark:bg-primary/20 dark:text-gray-100 dark:border-primary/30'
                 }`}>
                   {m.content}
                 </div>
@@ -93,7 +129,7 @@ export default function AIChat() {
             ))}
             {isLoading && (
                 <div className="flex justify-start animate-in fade-in">
-                    <div className="bg-white/50 dark:bg-white/10 p-3 rounded-2xl rounded-bl-sm flex items-center gap-2 text-xs text-amber-900/50 dark:text-white/50">
+                    <div className="bg-white/50 dark:bg-primary/20 p-3 rounded-2xl rounded-bl-sm flex items-center gap-2 text-xs text-amber-900/50 dark:text-white/50">
                         <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce"></span>
                         <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.1s]"></span>
                         <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.2s]"></span>
@@ -114,7 +150,7 @@ export default function AIChat() {
                   disabled={isLoading}
                   className="w-full pl-4 pr-12 py-3 rounded-xl text-sm outline-none transition-all shadow-sm
                              bg-white/80 border border-amber-900/10 text-amber-950 placeholder:text-amber-900/40 focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20
-                             dark:bg-black/50 dark:border-white/10 dark:text-white dark:placeholder:text-white/30"
+                             dark:bg-black/50 dark:border-primary/30 dark:text-white dark:placeholder:text-white/30"
                 />
                 <button 
                   type="submit" 
@@ -133,7 +169,7 @@ export default function AIChat() {
       <button 
         onClick={() => setIsOpen(!isOpen)}
         // Zmieniono bg-gradient na backdrop-blur i przezroczyste tła
-        className="group relative w-14 h-14 rounded-full backdrop-blur-xl bg-white/40 dark:bg-black/40 border border-white/20 dark:border-white/10 shadow-lg hover:shadow-xl hover:scale-110 active:scale-95 transition-all z-50 flex items-center justify-center overflow-hidden"
+        className="group relative w-14 h-14 rounded-full backdrop-blur-xl bg-white/40 dark:bg-black/40 border border-white/20 dark:border-primary/30 shadow-lg hover:shadow-xl hover:scale-110 active:scale-95 transition-all z-50 flex items-center justify-center overflow-hidden"
       >
         {/* Ikona pszczoły */}
         <div className={`transition-all duration-500 absolute inset-0 flex items-center justify-center ${isOpen ? 'opacity-0 rotate-90 scale-50' : 'opacity-100 rotate-0 scale-100 drop-shadow-md'}`}>

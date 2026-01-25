@@ -45,6 +45,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = useCallback(async (currentUser: User) => {
     try {
+      // Check if user is anonymous
+      const isAnonymous = currentUser.is_anonymous === true || (!currentUser.email && currentUser.app_metadata?.provider === 'anonymous');
+      
+      console.log('[AuthContext] Fetching profile for user:', currentUser.id, 'isAnonymous:', isAnonymous);
+      
       // Fetch system_role and subscription_plan as per new DB schema facts
       const { data, error } = await supabase
         .from('profiles')
@@ -52,13 +57,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', currentUser.id)
         .single();
 
+      // If profile doesn't exist, create it (especially for anonymous users)
+      if (error && error.code === 'PGRST116') {
+        console.log('[AuthContext] Profile not found (PGRST116), creating new profile for user:', currentUser.id);
+        
+        const newProfile = {
+          id: currentUser.id,
+          email: currentUser.email || null,
+          system_role: 'USER' as const,
+          subscription_plan: isAnonymous ? 'PRO' : 'FREE' as const,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        const { data: createdProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert(newProfile)
+          .select('*, system_role, subscription_plan')
+          .single();
+
+        if (createError) {
+          console.error('[AuthContext] Error creating profile:', createError);
+          // Don't throw - allow UI to continue even if profile creation fails
+          // Profile might be created by trigger
+          return;
+        }
+
+        if (createdProfile) {
+          console.log('[AuthContext] Profile created successfully');
+          
+          // Map system_role to app role
+          let appRole: UserRole = 'user';
+          if (createdProfile.system_role === 'SUPER_ADMIN') appRole = 'super_admin';
+          else if (createdProfile.system_role === 'ADMIN') appRole = 'admin';
+
+          const userProfile: UserProfile = {
+            id: createdProfile.id,
+            email: createdProfile.email || '',
+            displayName: createdProfile.full_name || createdProfile.email || 'Anonymous User',
+            role: appRole,
+            system_role: createdProfile.system_role as 'SUPER_ADMIN' | 'ADMIN' | 'USER' | undefined,
+            plan: (createdProfile.subscription_plan || 'FREE') as UserPlan,
+            avatar_url: createdProfile.avatar_url,
+          };
+          setProfile(userProfile);
+          setRole(appRole);
+        }
+        return;
+      }
+
       if (error) {
-        console.error('Error fetching profile:', error);
+        console.error('[AuthContext] Error fetching profile:', error);
+        // Don't throw - allow UI to continue even if profile fetch fails
+        // Profile might be created by trigger
         return;
       }
 
       if (data) {
-        console.log("Rola z bazy:", data.system_role);
+        console.log("[AuthContext] Profile loaded successfully, role:", data.system_role);
         
         // Map system_role to app role
         let appRole: UserRole = 'user';
@@ -68,18 +124,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const userProfile: UserProfile = {
           id: data.id,
-          email: data.email,
-          displayName: data.full_name || data.email,
+          email: data.email || '',
+          displayName: data.full_name || data.email || 'Anonymous User',
           role: appRole, // For backward compatibility
           system_role: data.system_role as 'SUPER_ADMIN' | 'ADMIN' | 'USER' | undefined, // Z bazy (wielkie litery)
-          plan: data.subscription_plan || 'FREE',
+          plan: (data.subscription_plan || 'FREE') as UserPlan,
           avatar_url: data.avatar_url,
         };
         setProfile(userProfile);
         setRole(appRole);
       }
     } catch (error) {
-      console.error("Failed to fetch user profile", error);
+      console.error("[AuthContext] Failed to fetch user profile", error);
+      // Don't throw - allow UI to continue even if there's an error
     }
   }, [supabase]);
 
@@ -94,9 +151,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (session?.user) {
-        fetchProfile(session.user);
-      } else {
+        fetchProfile(session.user).finally(() => {
           setLoading(false);
+        });
+      } else {
+        setLoading(false);
       }
     });
 
@@ -111,12 +170,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (session?.user) {
-         fetchProfile(session.user);
+        // Don't block UI if profile takes time to load
+        fetchProfile(session.user).finally(() => {
+          setLoading(false);
+        });
       } else {
-         setProfile(null);
-         setRole(null);
+        setProfile(null);
+        setRole(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();

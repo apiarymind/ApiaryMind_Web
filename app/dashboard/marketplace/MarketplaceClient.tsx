@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useMemo } from "react";
 import { addSalesLogEntry, SalesLogEntry, getRhdReport, getSbReport, getSalesStatistics } from "@/app/actions/sales-log";
 import Link from "next/link";
 import { Calendar, FileText, Download, Plus, X, TrendingUp, Package, DollarSign } from "lucide-react";
+import SafeSalesLimitWidget from "@/app/components/marketplace/SafeSalesLimitWidget";
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface MarketplaceClientProps {
   initialSales: SalesLogEntry[];
@@ -41,21 +43,84 @@ export default function MarketplaceClient({
   const [reportData, setReportData] = useState<any[]>([]);
   const [reportStats, setReportStats] = useState<{ totalRevenue?: number; totalQuantity: number }>({ totalQuantity: 0 });
 
-  // Calculate statistics from current sales
-  const stats = {
-    totalRevenue: sales.reduce((sum, s) => sum + (s.revenue || 0), 0),
-    totalQuantity: sales.reduce((sum, s) => sum + (s.quantity_sold || 0), 0),
-    saleCount: sales.length,
-  };
+  // Extract unique years from sales data and sort descending
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    sales.forEach(sale => {
+      if (sale.sale_date) {
+        const year = new Date(sale.sale_date).getFullYear();
+        years.add(year);
+      }
+    });
+    return Array.from(years).sort((a, b) => b - a); // Sort descending
+  }, [sales]);
+
+  // Get current year
+  const currentYear = new Date().getFullYear();
+
+  // Determine default selected year: current year if available, otherwise newest available
+  const defaultYear = useMemo(() => {
+    if (availableYears.length === 0) return currentYear;
+    if (availableYears.includes(currentYear)) return currentYear;
+    return availableYears[0]; // Newest available year
+  }, [availableYears, currentYear]);
+
+  // State for selected year
+  const [selectedYear, setSelectedYear] = useState<string>(String(defaultYear));
+
+  // Update selected year when defaultYear changes (e.g., when data loads)
+  useEffect(() => {
+    setSelectedYear(String(defaultYear));
+  }, [defaultYear]);
+
+  // Filter sales by selected year
+  const filteredSales = useMemo(() => {
+    if (!selectedYear) return sales;
+    const year = parseInt(selectedYear);
+    return sales.filter(sale => {
+      if (!sale.sale_date) return false;
+      return new Date(sale.sale_date).getFullYear() === year;
+    });
+  }, [sales, selectedYear]);
+
+  // Calculate statistics from filtered sales (only selected year)
+  const stats = useMemo(() => ({
+    totalRevenue: filteredSales.reduce((sum, s) => sum + (s.revenue || 0), 0),
+    totalQuantity: filteredSales.reduce((sum, s) => sum + (s.quantity_sold || 0), 0),
+    saleCount: filteredSales.length,
+  }), [filteredSales]);
 
   // Auto-fill price when product is selected
+  const [selectedProductWeight, setSelectedProductWeight] = useState<number | undefined>(undefined);
+  const [maxQuantity, setMaxQuantity] = useState<number | undefined>(undefined);
+  const [quantityError, setQuantityError] = useState<string>("");
+  
   useEffect(() => {
     if (selectedProduct && userProducts && userProducts.length > 0) {
       const product = userProducts.find(p => p.id === selectedProduct);
-      if (product && product.price) {
-        setPrice(product.price.toString());
+      if (product) {
+        if (product.price) {
+          setPrice(product.price.toString());
+        }
+        setSelectedProductWeight(product.weight_g);
+        // Set max quantity based on stock
+        const stock = product.stock !== undefined ? parseInt(String(product.stock)) : 0;
+        setMaxQuantity(stock);
+        // Reset quantity if it exceeds stock
+        if (quantity) {
+          const quantityNum = parseInt(quantity, 10);
+          if (!isNaN(quantityNum) && quantityNum > stock) {
+            setQuantity("");
+            setQuantityError("");
+          }
+        }
       }
+    } else {
+      setSelectedProductWeight(undefined);
+      setMaxQuantity(undefined);
+      setQuantityError("");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProduct, userProducts]);
 
   const handleAddSale = () => {
@@ -77,6 +142,13 @@ export default function MarketplaceClient({
       return;
     }
 
+    // Validate stock availability
+    if (maxQuantity !== undefined && quantityNum > maxQuantity) {
+      setQuantityError(`Brak wystarczającej ilości w magazynie (Dostępne: ${maxQuantity})`);
+      setMessage({ type: "error", text: `Brak wystarczającej ilości w magazynie (Dostępne: ${maxQuantity})` });
+      return;
+    }
+
     startTransition(async () => {
       const result = await addSalesLogEntry({
         product_id: selectedProduct,
@@ -93,6 +165,9 @@ export default function MarketplaceClient({
         setPrice("");
         setCustomerName("");
         setSaleDate(new Date().toISOString().split('T')[0]);
+        setQuantityError("");
+        setMaxQuantity(undefined);
+        setSelectedProductWeight(undefined);
         // Refresh sales by reloading the page after a short delay
         setTimeout(() => {
           window.location.reload();
@@ -128,8 +203,8 @@ export default function MarketplaceClient({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Ewidencja Sprzedaży</h1>
-          <p className="text-white/70 mt-1">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Ewidencja Sprzedaży</h1>
+          <p className="text-gray-700 dark:text-white/70 mt-1">
             Rejestracja sprzedaży zgodna z wymogami RHD/SB
           </p>
         </div>
@@ -152,29 +227,32 @@ export default function MarketplaceClient({
       {/* Statistics Cards */}
       {hasRhdAccess && sales.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+          <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-300 dark:border-blue-500/30 rounded-xl p-4 shadow-md dark:shadow-none">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="w-5 h-5 text-blue-400" />
-              <h3 className="text-sm font-bold text-blue-400">Łączny Przychód</h3>
+              <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <h3 className="text-sm font-bold text-blue-700 dark:text-blue-400">Łączny Przychód</h3>
             </div>
-            <p className="text-2xl font-bold text-white">{stats.totalRevenue.toFixed(2)} zł</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalRevenue.toFixed(2)} zł</p>
           </div>
-          <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+          <div className="bg-green-50 dark:bg-green-500/10 border border-green-300 dark:border-green-500/30 rounded-xl p-4 shadow-md dark:shadow-none">
             <div className="flex items-center gap-2 mb-2">
-              <Package className="w-5 h-5 text-green-400" />
-              <h3 className="text-sm font-bold text-green-400">Łączna Ilość</h3>
+              <Package className="w-5 h-5 text-green-600 dark:text-green-400" />
+              <h3 className="text-sm font-bold text-green-700 dark:text-green-400">Łączna Ilość</h3>
             </div>
-            <p className="text-2xl font-bold text-white">{stats.totalQuantity} szt.</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalQuantity} szt.</p>
           </div>
-          <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4">
+          <div className="bg-purple-50 dark:bg-purple-500/10 border border-purple-300 dark:border-purple-500/30 rounded-xl p-4 shadow-md dark:shadow-none">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="w-5 h-5 text-purple-400" />
-              <h3 className="text-sm font-bold text-purple-400">Liczba Transakcji</h3>
+              <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <h3 className="text-sm font-bold text-purple-700 dark:text-purple-400">Liczba Transakcji</h3>
             </div>
-            <p className="text-2xl font-bold text-white">{stats.saleCount}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.saleCount}</p>
           </div>
         </div>
       )}
+
+      {/* Safe Sales Limit Widget */}
+      {hasRhdAccess && <SafeSalesLimitWidget />}
 
       {/* RHD Warning */}
       {!hasRhdAccess && (
@@ -182,10 +260,10 @@ export default function MarketplaceClient({
           <div className="flex items-start gap-3">
             <div className="text-2xl">⚠️</div>
             <div className="flex-1">
-              <h3 className="font-bold text-white mb-1">
+              <h3 className="font-bold text-gray-900 dark:text-white mb-1">
                 Wymagany numer weterynaryjny
               </h3>
-              <p className="text-white/80 text-sm mb-3">
+              <p className="text-gray-700 dark:text-white/80 text-sm mb-3">
                 Aby rejestrować sprzedaż, musisz posiadać numer weterynaryjny RHD lub SHP (SB).
               </p>
               <Link
@@ -214,74 +292,122 @@ export default function MarketplaceClient({
 
       {/* Add Form - Always visible if has access */}
       {hasRhdAccess && (
-        <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl p-6 border border-white/10 dark:border-white/5">
-          <h2 className="text-xl font-bold text-white mb-4">
+        <div className="bg-white dark:bg-white/5 backdrop-blur-md rounded-xl p-6 border border-gray-300 dark:border-white/10 shadow-lg dark:shadow-none">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
             Dodaj sprzedaż
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white/80 mb-2">
                 Produkt *
               </label>
               <select
                 value={selectedProduct}
                 onChange={(e) => setSelectedProduct(e.target.value)}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 dark:bg-gray-900/90 dark:text-gray-100 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm dark:shadow-none"
                 disabled={isPending}
               >
-                <option value="">Wybierz produkt</option>
+                <option value="" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Wybierz produkt</option>
                 {userProducts && userProducts.length > 0 ? (
-                  userProducts.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.name} {product.batch_code ? `(Partia: ${product.batch_code})` : ''} {product.stock !== undefined ? `[Stock: ${product.stock}]` : ''}
-                    </option>
-                  ))
+                  userProducts.map((product) => {
+                    const stock = product.stock !== undefined ? parseInt(String(product.stock)) : 0;
+                    const price = product.price !== undefined ? parseFloat(String(product.price)).toFixed(2) : '0.00';
+                    
+                    // Build variant info
+                    let variantInfo = '';
+                    if (product.volume_ml && product.weight_g) {
+                      variantInfo = ` (${product.volume_ml}ml / ${product.weight_g}g)`;
+                    } else if (product.volume_ml) {
+                      variantInfo = ` (${product.volume_ml}ml)`;
+                    } else if (product.weight_g) {
+                      variantInfo = ` (${product.weight_g}g)`;
+                    }
+                    
+                    // Format: {name} ({volume}ml / {weight}g) | Cena: {price} zł | Stan: {stock} szt
+                    const displayText = stock === 0
+                      ? `${product.name}${variantInfo} | Cena: ${price} zł | (Brak w magazynie)`
+                      : `${product.name}${variantInfo} | Cena: ${price} zł | Stan: ${stock} szt`;
+                    
+                    return (
+                      <option 
+                        key={product.id} 
+                        value={product.id}
+                        disabled={stock === 0}
+                        className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                        style={stock === 0 ? { color: '#666', opacity: 0.6 } : {}}
+                      >
+                        {displayText}
+                      </option>
+                    );
+                  })
                 ) : (
-                  <option value="" disabled>Brak produktów w magazynie</option>
+                  <option value="" disabled className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Brak produktów w magazynie</option>
                 )}
               </select>
               {userProducts && userProducts.length === 0 && (
-                <p className="text-xs text-white/60 mt-1">
-                  Dodaj produkty w <Link href="/dashboard/beekeeper/warehouse" className="text-amber-400 hover:underline">magazynie</Link>
+                <p className="text-xs text-gray-600 dark:text-white/60 mt-1">
+                  Dodaj produkty w <Link href="/dashboard/beekeeper/warehouse" className="text-amber-600 dark:text-amber-400 hover:underline">magazynie</Link>
                 </p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white/80 mb-2">
                 Data sprzedaży *
               </label>
               <input
                 type="date"
                 value={saleDate}
                 onChange={(e) => setSaleDate(e.target.value)}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full px-4 py-2 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm dark:shadow-none"
                 disabled={isPending}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white/80 mb-2">
                 Ilość (szt.) *
               </label>
               <input
                 type="number"
                 step="1"
                 min="1"
+                max={maxQuantity !== undefined ? maxQuantity : undefined}
                 value={quantity}
                 onChange={(e) => {
                   const val = e.target.value;
                   // Only allow positive integers
                   if (val === '' || /^\d+$/.test(val)) {
                     setQuantity(val);
+                    // Clear error when user types
+                    setQuantityError("");
+                    
+                    // Validate against max quantity
+                    if (val && maxQuantity !== undefined) {
+                      const quantityNum = parseInt(val, 10);
+                      if (!isNaN(quantityNum) && quantityNum > maxQuantity) {
+                        setQuantityError(`Brak wystarczającej ilości w magazynie (Dostępne: ${maxQuantity})`);
+                      }
+                    }
                   }
                 }}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className={`w-full px-4 py-2 bg-white dark:bg-white/5 border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm dark:shadow-none ${
+                  quantityError ? 'border-red-500 dark:border-red-500/50' : 'border-gray-300 dark:border-white/10'
+                }`}
                 placeholder="1"
                 disabled={isPending}
               />
-              <p className="text-xs text-white/60 mt-1">Tylko liczby całkowite (1, 2, 3...)</p>
+              {quantityError ? (
+                <p className="text-xs text-red-600 dark:text-red-400 mt-1 font-medium">{quantityError}</p>
+              ) : (
+                <p className="text-xs text-gray-600 dark:text-white/60 mt-1">
+                  Tylko liczby całkowite (1, 2, 3...)
+                  {maxQuantity !== undefined && maxQuantity > 0 && (
+                    <span className="ml-1">• Maksymalnie: {maxQuantity} szt</span>
+                  )}
+                </p>
+              )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white/80 mb-2">
                 Cena jednostkowa (zł) *
               </label>
               <input
@@ -290,25 +416,32 @@ export default function MarketplaceClient({
                 min="0"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full px-4 py-2 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm dark:shadow-none"
                 placeholder="0.00"
                 disabled={isPending}
               />
               {selectedProduct && (
-                <p className="text-xs text-white/60 mt-1">
-                  Cena pobrana z tabeli produktów
-                </p>
+                <>
+                  <p className="text-xs text-gray-600 dark:text-white/60 mt-1">
+                    Cena pobrana z tabeli produktów
+                  </p>
+                  {selectedProductWeight && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400/80 mt-1 font-medium">
+                      Waga jednostkowa tego produktu: {selectedProductWeight}g
+                    </p>
+                  )}
+                </>
               )}
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-white/80 mb-2">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white/80 mb-2">
                 Odbiorca (opcjonalne - dla SB)
               </label>
               <input
                 type="text"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full px-4 py-2 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm dark:shadow-none"
                 placeholder="Nazwa odbiorcy (dla SB)"
                 disabled={isPending}
               />
@@ -333,29 +466,29 @@ export default function MarketplaceClient({
 
       {/* Reports Section - Hidden by default, shown when button clicked */}
       {hasRhdAccess && showReportControls && (
-        <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl p-6 border border-white/10 dark:border-white/5">
-          <h2 className="text-xl font-bold text-white mb-4">Raporty</h2>
+        <div className="bg-white dark:bg-white/5 backdrop-blur-md rounded-xl p-6 border border-gray-300 dark:border-white/10 shadow-lg dark:shadow-none">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Raporty</h2>
           
           {/* RHD Report Controls */}
-          <div className="mb-4 p-4 bg-white/5 rounded-lg">
-            <h3 className="text-sm font-bold text-white/80 mb-3">Raport RHD (Dzienny z przychodem narastającym)</h3>
+          <div className="mb-4 p-4 bg-gray-50 dark:bg-white/5 rounded-lg">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white/80 mb-3">Raport RHD (Dzienny z przychodem narastającym)</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
               <div>
-                <label className="block text-xs text-white/60 mb-1">Data od</label>
+                <label className="block text-xs text-gray-700 dark:text-white/60 mb-1">Data od</label>
                 <input
                   type="date"
                   value={reportStartDate}
                   onChange={(e) => setReportStartDate(e.target.value)}
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm dark:shadow-none"
                 />
               </div>
               <div>
-                <label className="block text-xs text-white/60 mb-1">Data do</label>
+                <label className="block text-xs text-gray-700 dark:text-white/60 mb-1">Data do</label>
                 <input
                   type="date"
                   value={reportEndDate}
                   onChange={(e) => setReportEndDate(e.target.value)}
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm dark:shadow-none"
                 />
               </div>
               <div className="flex items-end">
@@ -385,12 +518,12 @@ export default function MarketplaceClient({
                 <select
                   value={reportMonth}
                   onChange={(e) => setReportMonth(e.target.value)}
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
                   {Array.from({ length: 12 }, (_, i) => {
                     const monthNum = i + 1;
                     return (
-                      <option key={monthNum} value={String(monthNum)}>
+                      <option key={monthNum} value={String(monthNum)} className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">
                         {new Date(2024, i, 1).toLocaleDateString('pl-PL', { month: 'long' })}
                       </option>
                     );
@@ -398,14 +531,14 @@ export default function MarketplaceClient({
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-white/60 mb-1">Rok</label>
+                <label className="block text-xs text-gray-700 dark:text-white/60 mb-1">Rok</label>
                 <input
                   type="number"
                   value={reportYear}
                   onChange={(e) => setReportYear(parseInt(e.target.value))}
                   min={2020}
                   max={2099}
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
               <div className="flex items-end">
@@ -444,7 +577,7 @@ export default function MarketplaceClient({
 
       {/* Report Display */}
       {showReport && reportData.length > 0 && (
-        <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl p-6 border border-white/10 dark:border-white/5">
+        <div className="bg-white/5 dark:bg-white/5 backdrop-blur-md rounded-xl p-6 border border-white/10 dark:border-white/10">
           <div className="flex justify-between items-center mb-4">
             <div>
               <h2 className="text-xl font-bold text-white">
@@ -476,33 +609,33 @@ export default function MarketplaceClient({
             <table className="w-full text-sm">
               <thead className="bg-white/5 border-b border-white/10">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Lp.</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Data</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Produkt</th>
-                  {showReport === 'sb' && <th className="px-4 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Partia</th>}
-                  <th className="px-4 py-3 text-right text-xs font-bold text-white/80 uppercase tracking-wider">Ilość</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Lp.</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Data</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Produkt</th>
+                  {showReport === 'sb' && <th className="px-4 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Partia</th>}
+                  <th className="px-4 py-3 text-right text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Ilość</th>
                   {!hidePrices && showReport === 'rhd' && (
                     <>
-                      <th className="px-4 py-3 text-right text-xs font-bold text-white/80 uppercase tracking-wider">Przychód dzienny</th>
-                      <th className="px-4 py-3 text-right text-xs font-bold text-white/80 uppercase tracking-wider">Przychód narastająco</th>
+                      <th className="px-4 py-3 text-right text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Kwota Transakcji</th>
+                      <th className="px-4 py-3 text-right text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Przychód narastająco</th>
                     </>
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/10">
+              <tbody className="divide-y divide-gray-200 dark:divide-white/10">
                 {reportData.map((entry, index) => (
-                  <tr key={index} className="hover:bg-white/5 transition-colors">
-                    <td className="px-4 py-3 text-white/70">{entry.lp}</td>
-                    <td className="px-4 py-3 text-white/70">{entry.sale_date}</td>
-                    <td className="px-4 py-3 text-white/70 font-medium">{entry.product_name}</td>
+                  <tr key={index} className="bg-[#F8F9FA] dark:bg-white/[0.03] hover:bg-[#F5F5F5] dark:hover:bg-white/[0.06] transition-colors">
+                    <td className="px-4 py-3 text-gray-900 dark:text-white/70">{entry.lp}</td>
+                    <td className="px-4 py-3 text-gray-900 dark:text-white/70">{entry.sale_date}</td>
+                    <td className="px-4 py-3 text-gray-900 dark:text-white/70 font-medium">{entry.product_name}</td>
                     {showReport === 'sb' && (
-                      <td className="px-4 py-3 text-white/70">{entry.batch_code || '-'}</td>
+                      <td className="px-4 py-3 text-gray-900 dark:text-white/70">{entry.batch_code || '-'}</td>
                     )}
-                    <td className="px-4 py-3 text-right text-white/70">{entry.quantity} {entry.unit}</td>
+                    <td className="px-4 py-3 text-right text-gray-900 dark:text-white/70">{entry.quantity} {entry.unit}</td>
                     {!hidePrices && showReport === 'rhd' && (
                       <>
-                        <td className="px-4 py-3 text-right text-white/70">{entry.daily_revenue?.toFixed(2)} zł</td>
-                        <td className="px-4 py-3 text-right text-white font-bold">{entry.cumulative_revenue?.toFixed(2)} zł</td>
+                        <td className="px-4 py-3 text-right text-gray-900 dark:text-white/70">{entry.transaction_value?.toFixed(2).replace('.', ',')} zł</td>
+                        <td className="px-4 py-3 text-right text-gray-900 dark:text-white font-bold">{entry.cumulative_revenue?.toFixed(2).replace('.', ',')} zł</td>
                       </>
                     )}
                   </tr>
@@ -515,44 +648,69 @@ export default function MarketplaceClient({
 
       {/* Sales List */}
       <div>
-        <h2 className="text-2xl font-bold text-white mb-4">
-          Historia sprzedaży ({sales.length})
-        </h2>
-        {sales.length === 0 ? (
-          <div className="text-center py-12 bg-white/5 dark:bg-black/20 backdrop-blur-md border border-white/10 dark:border-white/5 rounded-xl">
-            <p className="text-white/60">
-              Brak zarejestrowanych sprzedaży
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Historia sprzedaży ({filteredSales.length})
+          </h2>
+        </div>
+        
+        {/* Year Tabs */}
+        {availableYears.length > 0 && (
+          <div className="mb-4 border-b border-gray-300 dark:border-white/10">
+            <Tabs value={selectedYear} onValueChange={setSelectedYear}>
+              <TabsList className="bg-transparent border-0 p-0 h-auto">
+                {availableYears.map(year => (
+                  <TabsTrigger 
+                    key={year} 
+                    value={String(year)}
+                    className="!text-gray-700 dark:!text-white/60 hover:!text-gray-900 dark:hover:!text-white rounded-none border-b-2 border-transparent data-[state=active]:border-amber-500 dark:data-[state=active]:border-amber-400 data-[state=active]:!text-amber-600 dark:data-[state=active]:!text-amber-400 data-[state=active]:font-bold px-4 py-2 -mb-px"
+                  >
+                    {year === currentYear ? `${year} (Bieżący)` : String(year)}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
+
+        {filteredSales.length === 0 ? (
+          <div className="text-center py-12 bg-white dark:bg-white/5 backdrop-blur-md border border-gray-300 dark:border-white/10 rounded-xl shadow-lg dark:shadow-none">
+            <p className="text-gray-700 dark:text-white/60">
+              {sales.length === 0 
+                ? 'Brak zarejestrowanych sprzedaży'
+                : `Brak sprzedaży w roku ${selectedYear}`
+              }
             </p>
           </div>
         ) : (
-          <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md border border-white/10 dark:border-white/5 rounded-xl overflow-hidden">
+          <div className="bg-white dark:bg-white/5 backdrop-blur-md border border-gray-300 dark:border-white/10 rounded-xl overflow-hidden shadow-lg dark:shadow-none">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-white/5 border-b border-white/10">
+                <thead className="bg-gray-100 dark:bg-white/5 border-b border-gray-300 dark:border-white/10">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Data</th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Produkt</th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Partia</th>
-                    <th className="px-6 py-3 text-right text-xs font-bold text-white/80 uppercase tracking-wider">Ilość</th>
-                    <th className="px-6 py-3 text-right text-xs font-bold text-white/80 uppercase tracking-wider">Wartość</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Data</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Produkt</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Partia</th>
+                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Ilość</th>
+                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Wartość</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/10">
-                  {sales.map((sale) => (
-                    <tr key={sale.id} className="hover:bg-white/5 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white/70">
+                <tbody className="divide-y divide-gray-200 dark:divide-white/10">
+                  {filteredSales.map((sale) => (
+                    <tr key={sale.id} className="bg-[#F8F9FA] dark:bg-white/[0.03] hover:bg-[#F5F5F5] dark:hover:bg-white/[0.06] transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-white/70">
                         {new Date(sale.sale_date).toLocaleDateString("pl-PL")}
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium text-white">
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
                         {sale.product_name || "Nieznany produkt"}
                       </td>
-                      <td className="px-6 py-4 text-sm text-white/70">
+                      <td className="px-6 py-4 text-sm text-gray-700 dark:text-white/70">
                         {sale.batch_code || "-"}
                       </td>
-                      <td className="px-6 py-4 text-right text-sm text-white/70">
+                      <td className="px-6 py-4 text-right text-sm text-gray-700 dark:text-white/70">
                         {sale.quantity_sold}
                       </td>
-                      <td className="px-6 py-4 text-right text-sm font-bold text-white">
+                      <td className="px-6 py-4 text-right text-sm font-bold text-gray-900 dark:text-white">
                         {sale.revenue?.toFixed(2) || "0.00"} zł
                       </td>
                     </tr>

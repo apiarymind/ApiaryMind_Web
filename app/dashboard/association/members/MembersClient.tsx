@@ -153,13 +153,13 @@ export default function MembersClient() {
               <select
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 dark:bg-gray-900/90 dark:text-gray-100 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
-                <option value="MEMBER">Członek</option>
-                <option value="PRESIDENT">Prezes</option>
-                <option value="VICE_PRESIDENT">Wiceprezes</option>
-                <option value="TREASURER">Skarbnik</option>
-                <option value="AUDIT_COMMITTEE">Członek Komisji Rewizyjnej</option>
+                <option value="MEMBER" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Członek</option>
+                <option value="PRESIDENT" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Prezes</option>
+                <option value="VICE_PRESIDENT" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Wiceprezes</option>
+                <option value="TREASURER" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Skarbnik</option>
+                <option value="AUDIT_COMMITTEE" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Członek Komisji Rewizyjnej</option>
               </select>
             </div>
             <div>
@@ -198,27 +198,27 @@ export default function MembersClient() {
       )}
 
       {/* Members List */}
-      <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl border border-white/10 dark:border-white/5 overflow-hidden">
+      <div className="bg-white dark:bg-black/20 backdrop-blur-md rounded-xl border border-gray-300 dark:border-white/5 overflow-hidden shadow-lg dark:shadow-none">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-white/5 border-b border-white/10">
+            <thead className="bg-gray-100 dark:bg-white/5 border-b border-gray-300 dark:border-white/10">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Użytkownik</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Rola</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Data Dołączenia</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Notatki</th>
-                <th className="px-6 py-3 text-right text-xs font-bold text-white/80 uppercase tracking-wider">Akcje</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Użytkownik</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Rola</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Data Dołączenia</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Notatki</th>
+                <th className="px-6 py-3 text-right text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Akcje</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10">
+            <tbody className="divide-y divide-gray-200 dark:divide-white/10">
               {members.map((member) => (
-                <tr key={member.id} className="hover:bg-white/5 transition-colors">
+                <tr key={member.id} className="bg-[#F8F9FA] dark:bg-white/[0.03] hover:bg-[#F5F5F5] dark:hover:bg-white/[0.06] transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-white">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
                       {member.user?.full_name || member.user?.email || 'Nieznany użytkownik'}
                     </div>
                     {member.user?.email && (
-                      <div className="text-xs text-white/60">{member.user.email}</div>
+                      <div className="text-xs text-gray-700 dark:text-white/60">{member.user.email}</div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -226,13 +226,13 @@ export default function MembersClient() {
                       <select
                         value={member.role}
                         onChange={(e) => handleUpdateRole(member.id, e.target.value)}
-                        className="px-3 py-1 bg-white/10 border border-white/20 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        className="px-3 py-1 bg-white text-gray-900 border border-gray-300 dark:bg-gray-900/90 dark:text-gray-100 dark:border-gray-700 rounded text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                       >
-                        <option value="MEMBER">Członek</option>
-                        <option value="PRESIDENT">Prezes</option>
-                        <option value="VICE_PRESIDENT">Wiceprezes</option>
-                        <option value="TREASURER">Skarbnik</option>
-                        <option value="AUDIT_COMMITTEE">Członek Komisji Rewizyjnej</option>
+                        <option value="MEMBER" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Członek</option>
+                        <option value="PRESIDENT" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Prezes</option>
+                        <option value="VICE_PRESIDENT" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Wiceprezes</option>
+                        <option value="TREASURER" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Skarbnik</option>
+                        <option value="AUDIT_COMMITTEE" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Członek Komisji Rewizyjnej</option>
                       </select>
                     ) : (
                       <span className={`inline-flex px-2 py-1 rounded-full text-xs font-bold border ${getRoleBadgeColor(member.role)}`}>
@@ -240,10 +240,10 @@ export default function MembersClient() {
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white/70">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white/70">
                     {new Date(member.joined_at).toLocaleDateString('pl-PL')}
                   </td>
-                  <td className="px-6 py-4 text-sm text-white/70">
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-white/70">
                     {member.notes || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

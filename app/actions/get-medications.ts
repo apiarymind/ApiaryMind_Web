@@ -2,19 +2,15 @@
 
 import { createClient } from "@/utils/supabase/server";
 
-export interface Medication {
-  id: string;
-  name: string;
-  active_substance?: string;
-  withdrawal_days: number;
-  description?: string;
-}
+import { MedicationsGlobal } from "@/types/supabase";
+
+export interface Medication extends MedicationsGlobal {}
 
 export async function getMedications(): Promise<Medication[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from('medications_global')
-    .select('id, name, active_substance, withdrawal_days, description')
+    .select('id, name, active_substance, withdrawal_days, removal_days, description, dosage, composition, contraindications, side_effects, created_at')
     .order('name');
 
   if (error) {
@@ -22,5 +18,5 @@ export async function getMedications(): Promise<Medication[]> {
     return [];
   }
 
-  return data as Medication[];
+  return (data || []) as Medication[];
 }

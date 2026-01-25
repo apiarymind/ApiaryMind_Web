@@ -142,16 +142,16 @@ export default function UsersClient() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white">Zarządzanie Użytkownikami</h2>
-          <p className="text-sm text-white/60 mt-1">Łącznie: {users.length} użytkowników</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Zarządzanie Użytkownikami</h2>
+          <p className="text-sm text-gray-700 dark:text-white/60 mt-1">Łącznie: {users.length} użytkowników</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl p-4 border border-white/10 dark:border-white/5">
+      <div className="bg-white dark:bg-black/20 backdrop-blur-md rounded-xl p-4 border border-gray-300 dark:border-white/5 transition-all duration-300 shadow-lg dark:shadow-none">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-white/80 mb-1 flex items-center gap-2">
+            <label className="block text-sm font-medium text-gray-900 dark:text-white/80 mb-1 flex items-center gap-2">
               <Search className="w-4 h-4" />
               Wyszukaj
             </label>
@@ -160,78 +160,86 @@ export default function UsersClient() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Email, imię, ID..."
-              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full px-4 py-2 bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-white/80 mb-1 flex items-center gap-2">
+            <label className="block text-sm font-medium text-gray-900 dark:text-white/80 mb-1 flex items-center gap-2">
               <Filter className="w-4 h-4" />
               Rola
             </label>
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
-              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 dark:bg-gray-900/90 dark:text-gray-100 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
-              <option value="all">Wszystkie</option>
-              <option value="SUPER_ADMIN">Super Admin</option>
-              <option value="ADMIN">Admin</option>
-              <option value="user">Użytkownik</option>
+              <option value="all" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Wszystkie</option>
+              <option value="SUPER_ADMIN" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Super Admin</option>
+              <option value="ADMIN" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Admin</option>
+              <option value="user" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Użytkownik</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-white/80 mb-1">Plan</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-white/80 mb-1">Plan</label>
             <select
               value={filterPlan}
               onChange={(e) => setFilterPlan(e.target.value)}
-              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 dark:bg-gray-900/90 dark:text-gray-100 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
-              <option value="all">Wszystkie</option>
-              <option value="FREE">FREE</option>
-              <option value="PLUS">PLUS</option>
-              <option value="PRO">PRO</option>
-              <option value="PRO_PLUS">PRO+</option>
-              <option value="BUSINESS">BUSINESS</option>
+              <option value="all" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Wszystkie</option>
+              <option value="FREE" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">FREE</option>
+              <option value="PLUS" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">PLUS</option>
+              <option value="PRO" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">PRO</option>
+              <option value="PRO_PLUS" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">PRO+</option>
+              <option value="BUSINESS" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">BUSINESS</option>
             </select>
           </div>
         </div>
       </div>
 
       {/* Users Table */}
-      <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl border border-white/10 dark:border-white/5 overflow-hidden">
+      <div className="backdrop-blur-md rounded-xl border overflow-hidden transition-all duration-300"
+           style={{
+             borderRadius: 'var(--theme-card-radius, 0.75rem)',
+             borderColor: 'var(--theme-card-border)',
+             borderWidth: 'var(--theme-card-border-width, 1px)',
+             boxShadow: 'var(--theme-card-shadow)',
+             backdropFilter: 'var(--theme-card-blur, blur(10px))',
+             backgroundColor: 'var(--theme-card-bg, rgba(255, 255, 255, 0.05))'
+           }}>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-white/5 border-b border-white/10">
+            <thead className="bg-gray-100 dark:bg-white/5 border-b border-gray-300 dark:border-white/10">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Użytkownik</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Rola</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Plan</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Statystyki</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Data Rejestracji</th>
-                <th className="px-6 py-3 text-right text-xs font-bold text-white/80 uppercase tracking-wider">Akcje</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Użytkownik</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Rola</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Plan</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Statystyki</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Data Rejestracji</th>
+                <th className="px-6 py-3 text-right text-xs font-bold text-gray-900 dark:text-white/80 uppercase tracking-wider">Akcje</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10">
+            <tbody className="divide-y divide-gray-200 dark:divide-white/10">
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-white/5 transition-colors">
+                <tr key={user.id} className="bg-[#F8F9FA] dark:bg-white/[0.03] hover:bg-[#F5F5F5] dark:hover:bg-white/[0.06] transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-white">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
                       {user.full_name || 'Brak imienia'}
                     </div>
-                    <div className="text-xs text-white/60">{user.email}</div>
-                    <div className="text-xs text-white/40 font-mono">{user.id.slice(0, 8)}...</div>
+                    <div className="text-xs text-gray-700 dark:text-white/60">{user.email}</div>
+                    <div className="text-xs text-gray-600 dark:text-white/40 font-mono">{user.id.slice(0, 8)}...</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {editingId === user.id ? (
                       <select
                         value={editData.role}
                         onChange={(e) => setEditData({ ...editData, role: e.target.value })}
-                        className="px-3 py-1 bg-white/10 border border-white/20 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        className="px-3 py-1 bg-white text-gray-900 border border-gray-300 dark:bg-gray-900/90 dark:text-gray-100 dark:border-gray-700 rounded text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                       >
-                        <option value="user">Użytkownik</option>
-                        <option value="ADMIN">Admin</option>
-                        <option value="SUPER_ADMIN">Super Admin</option>
+                        <option value="user" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Użytkownik</option>
+                        <option value="ADMIN" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Admin</option>
+                        <option value="SUPER_ADMIN" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Super Admin</option>
                       </select>
                     ) : (
                       getRoleBadge(user.system_role)
@@ -242,13 +250,13 @@ export default function UsersClient() {
                       <select
                         value={editData.plan}
                         onChange={(e) => setEditData({ ...editData, plan: e.target.value })}
-                        className="px-3 py-1 bg-white/10 border border-white/20 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        className="px-3 py-1 bg-white text-gray-900 border border-gray-300 dark:bg-gray-900/90 dark:text-gray-100 dark:border-gray-700 rounded text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                       >
-                        <option value="FREE">FREE</option>
-                        <option value="PLUS">PLUS</option>
-                        <option value="PRO">PRO</option>
-                        <option value="PRO_PLUS">PRO+</option>
-                        <option value="BUSINESS">BUSINESS</option>
+                        <option value="FREE" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">FREE</option>
+                        <option value="PLUS" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">PLUS</option>
+                        <option value="PRO" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">PRO</option>
+                        <option value="PRO_PLUS" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">PRO+</option>
+                        <option value="BUSINESS" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">BUSINESS</option>
                       </select>
                     ) : (
                       getPlanBadge(user.subscription_plan)
@@ -257,7 +265,7 @@ export default function UsersClient() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     {editingId === user.id ? (
                       <div className="space-y-2">
-                        <label className="flex items-center gap-2 text-white/80 text-sm">
+                        <label className="flex items-center gap-2 text-gray-900 dark:text-white/80 text-sm">
                           <input
                             type="checkbox"
                             checked={editData.isBeta}
@@ -271,7 +279,7 @@ export default function UsersClient() {
                             type="date"
                             value={editData.betaExpires}
                             onChange={(e) => setEditData({ ...editData, betaExpires: e.target.value })}
-                            className="w-full px-2 py-1 bg-white/10 border border-white/20 rounded text-white text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            className="w-full px-2 py-1 bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded text-gray-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
                             placeholder="Data wygaśnięcia"
                           />
                         )}
@@ -285,20 +293,20 @@ export default function UsersClient() {
                           </span>
                         )}
                         {user.beta_access_expires_at && (
-                          <span className="text-xs text-white/50">
+                          <span className="text-xs text-gray-600 dark:text-white/50">
                             Do: {new Date(user.beta_access_expires_at).toLocaleDateString('pl-PL')}
                           </span>
                         )}
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white/70">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white/70">
                     <div className="flex flex-col gap-1">
                       <span>{user.apiaries_count || 0} pasiek</span>
                       <span>{user.hives_count || 0} uli</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white/70">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white/70">
                     {new Date(user.created_at).toLocaleDateString('pl-PL')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -339,7 +347,7 @@ export default function UsersClient() {
         </div>
 
         {filteredUsers.length === 0 && (
-          <div className="text-center py-8 text-white/60">
+          <div className="text-center py-8 text-gray-700 dark:text-white/60">
             {searchTerm || filterRole !== 'all' || filterPlan !== 'all' 
               ? 'Brak wyników dla wybranych filtrów' 
               : 'Brak użytkowników'}

@@ -9,9 +9,9 @@ export interface UserReportData {
   address?: string;
   city?: string;
   voivodeship?: string;
-  zip_code?: string;
   rhd_number?: string;
   shp_number?: string;
+  wni_number?: string;
   nip?: string;
 }
 
@@ -26,9 +26,10 @@ export async function getUserReportData(): Promise<{ data: UserReportData | null
     }
 
     const supabase = createClient();
+    // FIXED: Use correct column name street_address (not address_street)
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('full_name, company_name, city, voivodeship, zip_code, address_street, rhd_number, shp_number, nip')
+      .select('full_name, company_name, city, voivodeship, street_address, rhd_number, shp_number, wni_number, nip')
       .eq('id', uid)
       .single();
 
@@ -41,10 +42,9 @@ export async function getUserReportData(): Promise<{ data: UserReportData | null
       return { data: null, error: "Profile not found" };
     }
 
-    // Build address string
+    // Build address string using voivodeship and city
     const addressParts: string[] = [];
-    if (profile.address_street) addressParts.push(profile.address_street);
-    if (profile.zip_code) addressParts.push(profile.zip_code);
+    if (profile.street_address) addressParts.push(profile.street_address);
     if (profile.city) addressParts.push(profile.city);
     if (profile.voivodeship) addressParts.push(profile.voivodeship);
     const address = addressParts.length > 0 ? addressParts.join(', ') : undefined;
@@ -56,9 +56,9 @@ export async function getUserReportData(): Promise<{ data: UserReportData | null
         address,
         city: profile.city || undefined,
         voivodeship: profile.voivodeship || undefined,
-        zip_code: profile.zip_code || undefined,
         rhd_number: profile.rhd_number || undefined,
         shp_number: profile.shp_number || undefined,
+        wni_number: profile.wni_number || undefined,
         nip: profile.nip || undefined,
       },
       error: null,

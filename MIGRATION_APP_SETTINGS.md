@@ -67,3 +67,8 @@ Jeśli nie można utworzyć tabeli, można użyć:
 
 
 
+
+
+
+
+

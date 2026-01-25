@@ -34,7 +34,7 @@ export function FeaturesBlockRenderer({ block, preview = false }: Props) {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="bg-white/60 dark:bg-white/5 backdrop-blur-md border border-amber-900/10 dark:border-white/10 rounded-xl p-6 shadow-lg"
+              className="bg-white/60 dark:bg-primary/15 backdrop-blur-md border border-amber-900/10 dark:border-primary/30 rounded-xl p-6 shadow-lg"
             >
               {feature.icon && (
                 <div className="text-4xl mb-4">{feature.icon}</div>
@@ -52,6 +52,11 @@ export function FeaturesBlockRenderer({ block, preview = false }: Props) {
     </section>
   );
 }
+
+
+
+
+
 
 
 

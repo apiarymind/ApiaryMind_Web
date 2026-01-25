@@ -2,6 +2,7 @@ import { getApiaryDetails } from '@/app/actions/get-apiary-details';
 import { getSessionUid } from '@/app/actions/auth-session';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import AddHiveModalClient from '@/app/components/apiaries/AddHiveModalClient';
 
 export default async function ApiaryDetailsPage({ params }: { params: { id: string } }) {
   const uid = await getSessionUid();
@@ -43,11 +44,22 @@ export default async function ApiaryDetailsPage({ params }: { params: { id: stri
                     )}
                 </div>
              </div>
+             <div className="flex items-center gap-3">
+                <AddHiveModalClient apiaryId={params.id} />
+                <Link
+                   href={`/dashboard/apiaries/${params.id}/operational`}
+                   className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 rounded-lg text-amber-200 font-semibold text-sm transition-colors"
+                >
+                   Dashboard Operacyjny
+                </Link>
+             </div>
         </div>
       </div>
 
       <div className="mt-8 border-t border-brown-700/50 pt-6">
-         <h2 className="text-xl font-bold text-amber-100 mb-4">Ule w tej pasiece ({hives.length})</h2>
+         <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-amber-100">Ule w tej pasiece ({hives.length})</h2>
+         </div>
          
          {hives.length === 0 ? (
             <div className="bg-brown-800/30 border border-brown-700 rounded-xl p-8 text-center max-w-lg mx-auto">

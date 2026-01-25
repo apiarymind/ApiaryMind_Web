@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { getRhdReport, getSbReport, checkRhdAccess, SalesReportEntry } from "@/app/actions/sales-log";
 import { exportToExcel, exportToCSV, exportToPDF } from "@/app/utils/export-reports";
 import { UserReportData } from "@/app/actions/get-user-report-data";
@@ -12,7 +12,32 @@ interface ReportsClientProps {
 }
 
 export default function ReportsClient({ hasRhdAccess, userData }: ReportsClientProps) {
-  const [reportType, setReportType] = useState<'rhd' | 'sb'>('rhd');
+  // Debug logging to verify incoming data matches database schema
+  console.log("DB_CHECK: RHD =", userData?.rhd_number, "SB =", userData?.shp_number);
+  
+  // Access profile data using exact snake_case property names from database schema
+  const rhd = userData?.rhd_number;
+  const sb = userData?.shp_number;
+  
+  // Conditional rendering rules based on database schema (snake_case)
+  // CASE A: RHD User (has rhd_number, no shp_number)
+  const isRhdUser = !!(rhd && rhd.trim().length > 0) && !(sb && sb.trim().length > 0);
+  // CASE B: SB User (has shp_number - takes precedence if both exist)
+  const isSbUser = !!(sb && sb.trim().length > 0);
+  // CASE C: Hobby Mode (neither exists)
+  const isHobbyMode = !(rhd && rhd.trim().length > 0) && !(sb && sb.trim().length > 0);
+  
+  // Determine available report type
+  const availableReportType: 'rhd' | 'sb' | null = isSbUser ? 'sb' : (isRhdUser ? 'rhd' : null);
+  
+  const [reportType, setReportType] = useState<'rhd' | 'sb'>(availableReportType || 'rhd');
+  
+  // Set default report type when component mounts or userData changes
+  useEffect(() => {
+    if (availableReportType) {
+      setReportType(availableReportType);
+    }
+  }, [availableReportType]);
   const [reportData, setReportData] = useState<SalesReportEntry[]>([]);
   const [reportStats, setReportStats] = useState<{ totalRevenue?: number; totalQuantity: number }>({ totalQuantity: 0 });
   const [hidePrices, setHidePrices] = useState(false);
@@ -85,29 +110,29 @@ export default function ReportsClient({ hasRhdAccess, userData }: ReportsClientP
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Generator Raportów</h1>
-        <p className="text-white/70 mt-1">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Generator Raportów</h1>
+        <p className="text-gray-700 dark:text-white/70 mt-1">
           Generuj i eksportuj raporty sprzedaży w różnych formatach
         </p>
       </div>
 
-      {/* RHD Access Warning */}
-      {!hasRhdAccess && (
+      {/* CASE C: No Data / Hobby Mode */}
+      {isHobbyMode && (
         <div className="bg-amber-500/20 border border-amber-500/50 rounded-xl p-4">
           <div className="flex items-start gap-3">
             <div className="text-2xl">⚠️</div>
             <div className="flex-1">
-              <h3 className="font-bold text-white mb-1">
-                Wymagany numer weterynaryjny
+              <h3 className="font-bold text-gray-900 dark:text-white mb-1">
+                Brak aktywnych numerów
               </h3>
-              <p className="text-white/80 text-sm mb-3">
-                Aby generować raporty, musisz posiadać numer weterynaryjny RHD lub SHP (SB).
+              <p className="text-gray-700 dark:text-white/80 text-sm mb-3">
+                Nie wykryto aktywnego numeru RHD ani SB. Uzupełnij Dane Weterynaryjne.
               </p>
               <a
                 href="/dashboard/settings"
                 className="inline-block px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-lg transition-colors text-sm"
               >
-                Dodaj numer w ustawieniach →
+                Przejdź do ustawień →
               </a>
             </div>
           </div>
@@ -127,139 +152,118 @@ export default function ReportsClient({ hasRhdAccess, userData }: ReportsClientP
         </div>
       )}
 
-      {/* Report Type Selection */}
-      {hasRhdAccess && (
-        <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl p-6 border border-white/10 dark:border-white/5">
-          <h2 className="text-xl font-bold text-white mb-4">Typ Raportu</h2>
-          <div className="flex gap-4 mb-6">
-            <button
-              type="button"
-              onClick={() => setReportType('rhd')}
-              className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-colors ${
-                reportType === 'rhd'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white/10 text-white/80 hover:bg-white/20'
-              }`}
-            >
-              Raport RHD (Dzienny z przychodem)
-            </button>
-            <button
-              type="button"
-              onClick={() => setReportType('sb')}
-              className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-colors ${
-                reportType === 'sb'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-white/10 text-white/80 hover:bg-white/20'
-              }`}
-            >
-              Raport SHP (SB) (Miesięczny ilościowy)
-            </button>
-          </div>
+      {/* CASE A: RHD User - Show ONLY RHD Report */}
+      {isRhdUser && (
+        <div className="bg-white dark:bg-black/20 backdrop-blur-md rounded-xl p-6 border border-gray-300 dark:border-primary/30 shadow-lg dark:shadow-none">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Ewidencja Sprzedaży RHD (Dzienny)</h2>
 
           {/* RHD Report Controls */}
-          {reportType === 'rhd' && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-2">
-                    Data od
-                  </label>
-                  <input
-                    type="date"
-                    value={reportStartDate}
-                    onChange={(e) => setReportStartDate(e.target.value)}
-                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-2">
-                    Data do
-                  </label>
-                  <input
-                    type="date"
-                    value={reportEndDate}
-                    onChange={(e) => setReportEndDate(e.target.value)}
-                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                </div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-900 dark:text-white/80 mb-2">
+                  Data od
+                </label>
+                <input
+                  type="date"
+                  value={reportStartDate}
+                  onChange={(e) => setReportStartDate(e.target.value)}
+                  className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm dark:shadow-none"
+                />
               </div>
-              <button
-                type="button"
-                onClick={handleGenerateReport}
-                disabled={isPending}
-                className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-400 text-white font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                <FileText className="w-4 h-4" />
-                {isPending ? "Generowanie..." : "Generuj Raport RHD"}
-              </button>
+              <div>
+                <label className="block text-sm font-medium text-gray-900 dark:text-white/80 mb-2">
+                  Data do
+                </label>
+                <input
+                  type="date"
+                  value={reportEndDate}
+                  onChange={(e) => setReportEndDate(e.target.value)}
+                  className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm dark:shadow-none"
+                />
+              </div>
             </div>
-          )}
+            <button
+              type="button"
+              onClick={handleGenerateReport}
+              disabled={isPending}
+              className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-400 text-white font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <FileText className="w-4 h-4" />
+              {isPending ? "Generowanie..." : "Generuj Raport RHD"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* CASE B: SB User - Show ONLY SB Report */}
+      {isSbUser && (
+        <div className="bg-white dark:bg-black/20 backdrop-blur-md rounded-xl p-6 border border-gray-300 dark:border-primary/30 shadow-lg dark:shadow-none">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Ewidencja Sprzedaży Bezpośredniej (Miesięczny)</h2>
 
           {/* SB Report Controls */}
-          {reportType === 'sb' && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-2">
-                    Miesiąc
-                  </label>
-                  <select
-                    value={reportMonth}
-                    onChange={(e) => setReportMonth(e.target.value)}
-                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  >
-                    {Array.from({ length: 12 }, (_, i) => {
-                      const monthNum = i + 1;
-                      return (
-                        <option key={monthNum} value={String(monthNum)}>
-                          {new Date(2024, i, 1).toLocaleDateString('pl-PL', { month: 'long' })}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-2">
-                    Rok
-                  </label>
-                  <input
-                    type="number"
-                    value={reportYear}
-                    onChange={(e) => setReportYear(parseInt(e.target.value))}
-                    min={2020}
-                    max={2099}
-                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                </div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-900 dark:text-white/80 mb-2">
+                  Miesiąc
+                </label>
+                <select
+                  value={reportMonth}
+                  onChange={(e) => setReportMonth(e.target.value)}
+                  className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 dark:bg-gray-900/90 dark:text-gray-100 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm dark:shadow-none"
+                >
+                  {Array.from({ length: 12 }, (_, i) => {
+                    const monthNum = i + 1;
+                    return (
+                      <option key={monthNum} value={String(monthNum)} className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">
+                        {new Date(2024, i, 1).toLocaleDateString('pl-PL', { month: 'long' })}
+                      </option>
+                    );
+                  })}
+                </select>
               </div>
-              <button
-                type="button"
-                onClick={handleGenerateReport}
-                disabled={isPending}
-                className="w-full px-4 py-2 bg-green-500 hover:bg-green-400 text-white font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                <FileText className="w-4 h-4" />
-                {isPending ? "Generowanie..." : "Generuj Raport SHP (SB)"}
-              </button>
+              <div>
+                <label className="block text-sm font-medium text-gray-900 dark:text-white/80 mb-2">
+                  Rok
+                </label>
+                <input
+                  type="number"
+                  value={reportYear}
+                  onChange={(e) => setReportYear(parseInt(e.target.value))}
+                  min={2020}
+                  max={2099}
+                  className="w-full px-4 py-2 bg-white dark:bg-primary/20 border border-gray-300 dark:border-primary/40 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm dark:shadow-none"
+                />
+              </div>
             </div>
-          )}
+            <button
+              type="button"
+              onClick={handleGenerateReport}
+              disabled={isPending}
+              className="w-full px-4 py-2 bg-green-500 hover:bg-green-400 text-white font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <FileText className="w-4 h-4" />
+              {isPending ? "Generowanie..." : "Generuj Raport SHP (SB)"}
+            </button>
+          </div>
         </div>
       )}
 
       {/* Export Options */}
-      {reportData.length > 0 && hasRhdAccess && (
-        <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl p-6 border border-white/10 dark:border-white/5">
+      {reportData.length > 0 && (isRhdUser || isSbUser) && (
+        <div className="bg-white dark:bg-black/20 backdrop-blur-md rounded-xl p-6 border border-gray-300 dark:border-primary/30 shadow-lg dark:shadow-none">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-white">Eksport Raportu</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Eksport Raportu</h2>
             {reportType === 'rhd' && (
-              <label className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg cursor-pointer">
+              <label className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-primary/15 rounded-lg cursor-pointer">
                 <input
                   type="checkbox"
                   checked={hidePrices}
                   onChange={(e) => setHidePrices(e.target.checked)}
                   className="w-4 h-4"
                 />
-                <span className="text-white/80 text-sm flex items-center gap-2">
+                <span className="text-gray-900 dark:text-white/80 text-sm flex items-center gap-2">
                   {hidePrices ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   Ukryj kwoty (dla weterynarii)
                 </span>
@@ -295,21 +299,21 @@ export default function ReportsClient({ hasRhdAccess, userData }: ReportsClientP
           </div>
 
           {/* Report Stats */}
-          <div className="mt-4 pt-4 border-t border-white/10">
+          <div className="mt-4 pt-4 border-t border-gray-300 dark:border-primary/30">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-white/60">Liczba pozycji</p>
-                <p className="text-xl font-bold text-white">{reportData.length}</p>
+                <p className="text-sm text-gray-700 dark:text-white/60">Liczba pozycji</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-white">{reportData.length}</p>
               </div>
               {reportType === 'rhd' && !hidePrices && reportStats.totalRevenue !== undefined && (
                 <div>
-                  <p className="text-sm text-white/60">Łączny przychód</p>
-                  <p className="text-xl font-bold text-white">{reportStats.totalRevenue.toFixed(2)} zł</p>
+                  <p className="text-sm text-gray-700 dark:text-white/60">Łączny przychód</p>
+                  <p className="text-xl font-bold text-gray-900 dark:text-white">{reportStats.totalRevenue.toFixed(2)} zł</p>
                 </div>
               )}
               <div>
-                <p className="text-sm text-white/60">Łączna ilość</p>
-                <p className="text-xl font-bold text-white">{reportStats.totalQuantity} szt</p>
+                <p className="text-sm text-gray-700 dark:text-white/60">Łączna ilość</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-white">{reportStats.totalQuantity} szt</p>
               </div>
             </div>
           </div>
@@ -318,24 +322,24 @@ export default function ReportsClient({ hasRhdAccess, userData }: ReportsClientP
 
       {/* Report Preview */}
       {reportData.length > 0 && (
-        <div className="bg-white/5 dark:bg-black/20 backdrop-blur-md rounded-xl p-6 border border-white/10 dark:border-white/5">
-          <h2 className="text-xl font-bold text-white mb-4">
+        <div className="bg-white dark:bg-black/20 backdrop-blur-md rounded-xl p-6 border border-gray-300 dark:border-primary/30 shadow-lg dark:shadow-none">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
             Podgląd Raportu ({reportType === 'rhd' ? 'RHD' : 'SHP (SB)'})
           </h2>
           
           {/* User Data Header for RHD */}
           {userData && reportType === 'rhd' && (
-            <div className="mb-4 p-4 bg-white/5 rounded-lg border border-white/10">
-              <h3 className="text-sm font-bold text-white/80 mb-2">DANE PODATNIKA</h3>
-              <p className="text-sm text-white/70">Nazwa: {userData.company_name || userData.full_name || 'Nie podano'}</p>
+            <div className="mb-4 p-4 bg-gray-50 dark:bg-primary/15 rounded-lg border border-gray-300 dark:border-primary/30">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white/80 mb-2">DANE PODATNIKA</h3>
+              <p className="text-sm text-gray-800 dark:text-white/70">Nazwa: {userData.company_name || userData.full_name || 'Nie podano'}</p>
               {userData.address && (
-                <p className="text-sm text-white/70">Adres: {userData.address}</p>
+                <p className="text-sm text-gray-800 dark:text-white/70">Adres: {userData.address}</p>
               )}
               {userData.nip && (
-                <p className="text-sm text-white/70">NIP: {userData.nip}</p>
+                <p className="text-sm text-gray-800 dark:text-white/70">NIP: {userData.nip}</p>
               )}
               {userData.rhd_number && (
-                <p className="text-sm text-white/70">Numer Weterynaryjny RHD: {userData.rhd_number}</p>
+                <p className="text-sm text-gray-800 dark:text-white/70">Numer Weterynaryjny RHD: {userData.rhd_number}</p>
               )}
             </div>
           )}
@@ -343,36 +347,36 @@ export default function ReportsClient({ hasRhdAccess, userData }: ReportsClientP
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left p-2 text-white/80">Lp.</th>
-                  <th className="text-left p-2 text-white/80">Data</th>
-                  <th className="text-left p-2 text-white/80">Produkt</th>
-                  {reportType === 'sb' && <th className="text-left p-2 text-white/80">Partia</th>}
-                  <th className="text-right p-2 text-white/80">Ilość</th>
+                <tr className="border-b border-gray-300 dark:border-white/10">
+                  <th className="text-left p-2 text-gray-900 dark:text-white/80">Lp.</th>
+                  <th className="text-left p-2 text-gray-900 dark:text-white/80">Data</th>
+                  <th className="text-left p-2 text-gray-900 dark:text-white/80">Produkt</th>
+                  {reportType === 'sb' && <th className="text-left p-2 text-gray-900 dark:text-white/80">Partia</th>}
+                  <th className="text-right p-2 text-gray-900 dark:text-white/80">Ilość</th>
                   {!hidePrices && reportType === 'rhd' && (
                     <>
-                      <th className="text-right p-2 text-white/80">Przychód dzienny</th>
-                      <th className="text-right p-2 text-white/80">Przychód narastająco</th>
+                      <th className="text-right p-2 text-gray-900 dark:text-white/80">Kwota Transakcji</th>
+                      <th className="text-right p-2 text-gray-900 dark:text-white/80">Przychód narastająco</th>
                     </>
                   )}
                 </tr>
               </thead>
               <tbody>
                 {reportData.map((entry, index) => (
-                  <tr key={index} className={`hover:bg-white/5 transition-colors border-b border-white/5 ${entry.isDailySummary ? 'bg-white/10 font-bold' : ''}`}>
-                    <td className="px-4 py-3 text-white/70">{entry.lp}</td>
-                    <td className="px-4 py-3 text-white/70">{entry.sale_date}</td>
-                    <td className={`px-4 py-3 ${entry.isDailySummary ? 'text-white font-bold' : 'text-white/70'} font-medium`}>{entry.product_name}</td>
+                  <tr key={index} className="bg-[#F8F9FA] dark:bg-white/[0.03] hover:bg-[#F5F5F5] dark:hover:bg-white/[0.06] transition-colors border-b border-gray-200 dark:border-white/5">
+                    <td className="px-4 py-3 text-gray-900 dark:text-white/70">{entry.lp}</td>
+                    <td className="px-4 py-3 text-gray-900 dark:text-white/70">{entry.sale_date}</td>
+                    <td className="px-4 py-3 text-gray-900 dark:text-white/70 font-medium">{entry.product_name}</td>
                     {reportType === 'sb' && (
-                      <td className="px-4 py-3 text-white/70">{entry.batch_code || '-'}</td>
+                      <td className="px-4 py-3 text-gray-900 dark:text-white/70">{entry.batch_code || '-'}</td>
                     )}
-                    <td className="px-4 py-3 text-right text-white/70">{entry.quantity} {entry.unit}</td>
+                    <td className="px-4 py-3 text-right text-gray-900 dark:text-white/70">{entry.quantity} {entry.unit}</td>
                     {!hidePrices && reportType === 'rhd' && (
                       <>
-                        <td className="px-4 py-3 text-right text-white/70">
-                          {entry.isDailySummary ? (entry.daily_revenue?.toFixed(2).replace('.', ',') + ' zł' || '0,00 zł') : ''}
+                        <td className="px-4 py-3 text-right text-gray-900 dark:text-white/70">
+                          {entry.transaction_value?.toFixed(2).replace('.', ',') + ' zł' || '0,00 zł'}
                         </td>
-                        <td className="px-4 py-3 text-right text-white font-bold">{entry.cumulative_revenue?.toFixed(2).replace('.', ',') + ' zł' || '0,00 zł'}</td>
+                        <td className="px-4 py-3 text-right text-gray-900 dark:text-white font-bold">{entry.cumulative_revenue?.toFixed(2).replace('.', ',') + ' zł' || '0,00 zł'}</td>
                       </>
                     )}
                   </tr>

@@ -213,25 +213,25 @@ export default function BetaSignupPage() {
                         </label>
                         <select required name="voivodeship" onChange={handleChange}
                                 className="w-full px-4 py-3.5 rounded-xl border outline-none transition-all appearance-none font-medium
-                                           bg-white/50 border-amber-900/10 text-amber-950 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/20
-                                           dark:bg-white/5 dark:border-white/10 dark:text-white dark:focus:border-amber-500 dark:focus:bg-black/60">
-                            <option value="">-- Wybierz --</option>
-                            <option value="dolnoslaskie">Dolnośląskie</option>
-                            <option value="kujawskopomorskie">Kujawsko-Pomorskie</option>
-                            <option value="lubelskie">Lubelskie</option>
-                            <option value="lubuskie">Lubuskie</option>
-                            <option value="lodzkie">Łódzkie</option>
-                            <option value="malopolskie">Małopolskie</option>
-                            <option value="mazowieckie">Mazowieckie</option>
-                            <option value="opolskie">Opolskie</option>
-                            <option value="podkarpackie">Podkarpackie</option>
-                            <option value="podlaskie">Podlaskie</option>
-                            <option value="pomorskie">Pomorskie</option>
-                            <option value="slaskie">Śląskie</option>
-                            <option value="swietokrzyskie">Świętokrzyskie</option>
-                            <option value="warminskomazurskie">Warmińsko-Mazurskie</option>
-                            <option value="wielkopolskie">Wielkopolskie</option>
-                            <option value="zachodniopomorskie">Zachodniopomorskie</option>
+                                           bg-white text-gray-900 border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20
+                                           dark:bg-gray-900/90 dark:text-gray-100 dark:border-gray-700 dark:focus:border-amber-500">
+                            <option value="" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">-- Wybierz --</option>
+                            <option value="dolnoslaskie" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Dolnośląskie</option>
+                            <option value="kujawskopomorskie" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Kujawsko-Pomorskie</option>
+                            <option value="lubelskie" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Lubelskie</option>
+                            <option value="lubuskie" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Lubuskie</option>
+                            <option value="lodzkie" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Łódzkie</option>
+                            <option value="malopolskie" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Małopolskie</option>
+                            <option value="mazowieckie" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Mazowieckie</option>
+                            <option value="opolskie" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Opolskie</option>
+                            <option value="podkarpackie" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Podkarpackie</option>
+                            <option value="podlaskie" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Podlaskie</option>
+                            <option value="pomorskie" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Pomorskie</option>
+                            <option value="slaskie" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Śląskie</option>
+                            <option value="swietokrzyskie" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Świętokrzyskie</option>
+                            <option value="warminskomazurskie" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Warmińsko-Mazurskie</option>
+                            <option value="wielkopolskie" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Wielkopolskie</option>
+                            <option value="zachodniopomorskie" className="bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100">Zachodniopomorskie</option>
                         </select>
                     </div>
                 </div>

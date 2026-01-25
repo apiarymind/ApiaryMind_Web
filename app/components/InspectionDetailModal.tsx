@@ -67,14 +67,14 @@ export default function InspectionDetailModal({ isOpen, onClose, inspection }: I
   const laying = (inspection.laying_pattern as string) || 'SOLID';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
       <div 
-        className="w-full max-w-2xl bg-neutral-900 border border-neutral-700 rounded-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-2xl bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-2xl shadow-light-card-xl dark:shadow-2xl relative max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <button 
           onClick={onClose} 
-          className="absolute top-4 right-4 text-neutral-400 hover:text-white transition-colors"
+          className="absolute top-4 right-4 text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white transition-colors"
         >
           <X className="h-6 w-6" />
         </button>
@@ -83,91 +83,91 @@ export default function InspectionDetailModal({ isOpen, onClose, inspection }: I
           
           {/* Header */}
           <div className="flex flex-col gap-1">
-            <h2 className="text-2xl font-bold text-white">Raport Przeglądu</h2>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-neutral-400">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Raport Przeglądu</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-600 dark:text-neutral-400">
                <span>{format(inspectionDateTime, "dd MMM yyyy, HH:mm", { locale: pl })}</span>
                <span className="hidden sm:inline">•</span>
                <span>{relativeTime}</span>
             </div>
             {inspection.swarming_mood && (
-                <div className="mt-2 inline-flex items-center gap-2 bg-red-500/20 border border-red-500/50 px-3 py-1.5 rounded-lg text-red-400 font-bold w-fit">
+                <div className="mt-2 inline-flex items-center gap-2 bg-red-50 dark:bg-red-500/20 border border-red-300 dark:border-red-500/50 px-3 py-1.5 rounded-lg text-red-700 dark:text-red-400 font-bold w-fit">
                   <AlertTriangle className="h-4 w-4" />
                   UWAGA: NASTRÓJ ROJOWY
                 </div>
             )}
           </div>
 
-          <div className="h-px bg-neutral-800" />
+          <div className="h-px bg-gray-300 dark:bg-neutral-800" />
 
           {/* Environmental Conditions */}
           <section>
             <h3 className="text-lg font-bold mb-4 text-yellow-500">Warunki</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-neutral-800/50 border border-neutral-700">
-                <Thermometer className="h-6 w-6 text-neutral-400" />
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-gray-100 dark:bg-neutral-800/50 border border-gray-300 dark:border-neutral-700">
+                <Thermometer className="h-6 w-6 text-gray-600 dark:text-neutral-400" />
                 <div>
-                  <p className="text-xs font-bold text-neutral-500 uppercase">Temperatura</p>
-                  <p className="text-xl font-bold text-white">{inspection.temperature ?? '--'}°C</p>
+                  <p className="text-xs font-bold text-gray-600 dark:text-neutral-500 uppercase">Temperatura</p>
+                  <p className="text-xl font-bold text-gray-900 dark:text-white">{inspection.temperature ?? '--'}°C</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-neutral-800/50 border border-neutral-700">
-                {weatherIcons[weather] || <Sun className="h-6 w-6 text-neutral-400" />}
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-gray-100 dark:bg-neutral-800/50 border border-gray-300 dark:border-neutral-700">
+                {weatherIcons[weather] || <Sun className="h-6 w-6 text-gray-600 dark:text-neutral-400" />}
                 <div>
-                  <p className="text-xs font-bold text-neutral-500 uppercase">Pogoda</p>
-                  <p className="text-xl font-bold text-white">{weatherLabels[weather] || weather}</p>
+                  <p className="text-xs font-bold text-gray-600 dark:text-neutral-500 uppercase">Pogoda</p>
+                  <p className="text-xl font-bold text-gray-900 dark:text-white">{weatherLabels[weather] || weather}</p>
                 </div>
               </div>
             </div>
           </section>
 
-          <div className="h-px bg-neutral-800" />
+          <div className="h-px bg-gray-300 dark:bg-neutral-800" />
 
           {/* Colony Status */}
           <section>
             <h3 className="text-lg font-bold mb-4 text-yellow-500">Rodzina</h3>
             <div className="flex flex-wrap gap-4">
               <div className="flex flex-col gap-1">
-                <span className="text-xs font-bold text-neutral-500 uppercase">Siła Rodziny</span>
+                <span className="text-xs font-bold text-gray-600 dark:text-neutral-500 uppercase">Siła Rodziny</span>
                 <span className={`text-sm font-bold px-3 py-1 rounded border ${strengthColors[strength] || 'text-white border-neutral-600'}`}>
                   {strengthLabels[strength] || strength}
                 </span>
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-xs font-bold text-neutral-500 uppercase">Nastrój</span>
+                <span className="text-xs font-bold text-gray-600 dark:text-neutral-500 uppercase">Nastrój</span>
                 <span className={`text-sm font-bold px-3 py-1 rounded border ${moodColors[mood] || 'text-white border-neutral-600'}`}>
                   {moodLabels[mood] || mood}
                 </span>
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-xs font-bold text-neutral-500 uppercase">Ramki z Czerwiem</span>
-                <span className="text-sm font-bold px-3 py-1 rounded border border-neutral-600 bg-neutral-800 text-white text-center min-w-[3rem]">
+                <span className="text-xs font-bold text-gray-600 dark:text-neutral-500 uppercase">Ramki z Czerwiem</span>
+                <span className="text-sm font-bold px-3 py-1 rounded border border-gray-400 dark:border-neutral-600 bg-gray-200 dark:bg-neutral-800 text-gray-900 dark:text-white text-center min-w-[3rem]">
                   {inspection.brood_frames_count ?? 0}
                 </span>
               </div>
             </div>
           </section>
 
-          <div className="h-px bg-neutral-800" />
+          <div className="h-px bg-gray-300 dark:bg-neutral-800" />
 
           {/* Queen & Biological Status */}
           <section>
             <h3 className="text-lg font-bold mb-4 text-yellow-500">Matka Pszczela</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-neutral-800/30 border border-neutral-700">
-                <span className="text-sm font-bold text-neutral-300">Matka Widziana?</span>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-gray-100 dark:bg-neutral-800/30 border border-gray-300 dark:border-neutral-700">
+                <span className="text-sm font-bold text-gray-700 dark:text-neutral-300">Matka Widziana?</span>
                 {inspection.is_queen_seen ? <Check className="h-5 w-5 text-green-500" /> : <X className="h-5 w-5 text-red-500" />}
               </div>
-              <div className="flex items-center justify-between p-3 rounded-xl bg-neutral-800/30 border border-neutral-700">
-                <span className="text-sm font-bold text-neutral-300">Matka Znakowana?</span>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-gray-100 dark:bg-neutral-800/30 border border-gray-300 dark:border-neutral-700">
+                <span className="text-sm font-bold text-gray-700 dark:text-neutral-300">Matka Znakowana?</span>
                 {inspection.is_queen_marked ? (
                   <Check className="h-5 w-5 text-green-500" />
                 ) : (
                   <X className="h-5 w-5 text-red-500" />
                 )}
               </div>
-              <div className="flex items-center justify-between p-3 rounded-xl bg-neutral-800/30 border border-neutral-700 sm:col-span-2">
-                <span className="text-sm font-bold text-neutral-300">Czerwienie</span>
-                <span className="bg-neutral-800 text-white text-xs font-bold px-2 py-1 rounded border border-neutral-600">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-gray-100 dark:bg-neutral-800/30 border border-gray-300 dark:border-neutral-700 sm:col-span-2">
+                <span className="text-sm font-bold text-gray-700 dark:text-neutral-300">Czerwienie</span>
+                <span className="bg-gray-200 dark:bg-neutral-800 text-gray-900 dark:text-white text-xs font-bold px-2 py-1 rounded border border-gray-400 dark:border-neutral-600">
                   {layingPatternLabels[laying] || laying}
                 </span>
               </div>
@@ -183,28 +183,37 @@ export default function InspectionDetailModal({ isOpen, onClose, inspection }: I
             </div>
           </section>
 
-          <div className="h-px bg-neutral-800" />
+          <div className="h-px bg-gray-300 dark:bg-neutral-800" />
 
           {/* Inventory & Production */}
           <section>
             <h3 className="text-lg font-bold mb-4 text-yellow-500">Miodnia i Zapasy</h3>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 rounded-xl bg-neutral-800/50 border border-neutral-700">
-                  <p className="text-xs font-bold text-neutral-500 mb-1">Korpusy</p>
-                  <p className="text-2xl font-bold text-white">{inspection.honey_supers_count ?? 0}</p>
+                <div className="p-3 rounded-xl bg-gray-200/50 dark:bg-neutral-800/50 border border-gray-300 dark:border-neutral-700">
+                  <p className="text-xs font-bold text-gray-600 dark:text-neutral-500 mb-1">Korpusy</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{inspection.honey_supers_count ?? 0}</p>
                 </div>
-                <div className="p-3 rounded-xl bg-neutral-800/50 border border-neutral-700">
-                  <p className="text-xs font-bold text-neutral-500 mb-1">Półnadstawki</p>
-                  <p className="text-2xl font-bold text-white">{inspection.half_supers_count ?? 0}</p>
+                <div className="p-3 rounded-xl bg-gray-200/50 dark:bg-neutral-800/50 border border-gray-300 dark:border-neutral-700">
+                  <p className="text-xs font-bold text-gray-600 dark:text-neutral-500 mb-1">Półnadstawki</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{inspection.half_supers_count ?? 0}</p>
                 </div>
               </div>
-              <div className="p-4 rounded-xl bg-neutral-800/50 border border-neutral-700">
+              <div className="p-4 rounded-xl bg-gray-200/50 dark:bg-neutral-800/50 border border-gray-300 dark:border-neutral-700">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-bold text-neutral-300">Zasklepienie Miodu</span>
-                  <span className="text-lg font-bold text-yellow-500">{inspection.frames_sealed_percent ?? 0}%</span>
+                  <span className="text-sm font-bold text-gray-700 dark:text-neutral-300">Zasklepione Ramki</span>
+                  <span className="text-lg font-bold text-yellow-500">
+                    {(() => {
+                      const honeySupers = inspection.honey_supers_count ?? 0;
+                      const halfSupers = inspection.half_supers_count ?? 0;
+                      const totalFrames = (honeySupers * 10) + (halfSupers * 5);
+                      const sealedPercent = inspection.frames_sealed_percent ?? 0;
+                      const sealedFrames = Math.round((totalFrames * sealedPercent) / 100);
+                      return `${sealedFrames} / ${totalFrames} ramek`;
+                    })()}
+                  </span>
                 </div>
-                <div className="w-full h-2 bg-neutral-700 rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-gray-300 dark:bg-neutral-700 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-yellow-500 transition-all"
                     style={{ width: `${inspection.frames_sealed_percent ?? 0}%` }}
@@ -214,14 +223,14 @@ export default function InspectionDetailModal({ isOpen, onClose, inspection }: I
             </div>
           </section>
 
-          <div className="h-px bg-neutral-800" />
+          <div className="h-px bg-gray-300 dark:bg-neutral-800" />
 
           {/* Health & Treatments */}
           <section>
             <h3 className="text-lg font-bold mb-4 text-yellow-500">Zdrowie</h3>
             <div className="space-y-4">
               <div>
-                <p className="text-xs font-bold text-neutral-500 mb-2 uppercase">Wykryte Szkodniki</p>
+                <p className="text-xs font-bold text-gray-600 dark:text-neutral-500 mb-2 uppercase">Wykryte Szkodniki</p>
                 <div className="flex flex-wrap gap-2">
                   {inspection.pests_detected && inspection.pests_detected.length > 0 ? (
                     inspection.pests_detected.map((pest: string, index: number) => (
@@ -237,15 +246,15 @@ export default function InspectionDetailModal({ isOpen, onClose, inspection }: I
                 </div>
               </div>
               {inspection.treatment_applied && (
-                <div className="p-4 rounded-xl bg-neutral-800/50 border border-neutral-700">
-                  <p className="text-xs font-bold text-neutral-500 mb-1 uppercase">Zastosowane Leczenie</p>
-                  <p className="text-sm font-semibold text-white">{inspection.treatment_applied}</p>
+                <div className="p-4 rounded-xl bg-gray-200/50 dark:bg-neutral-800/50 border border-gray-300 dark:border-neutral-700">
+                  <p className="text-xs font-bold text-gray-600 dark:text-neutral-500 mb-1 uppercase">Zastosowane Leczenie</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{inspection.treatment_applied}</p>
                 </div>
               )}
             </div>
           </section>
 
-          <div className="h-px bg-neutral-800" />
+          <div className="h-px bg-gray-300 dark:bg-neutral-800" />
 
           {/* Notes & Tasks */}
           <section>

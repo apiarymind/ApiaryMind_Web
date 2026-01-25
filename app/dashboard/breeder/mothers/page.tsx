@@ -197,6 +197,22 @@ export default function BreedingMothersPage() {
                       <span>{mother.insemination_method}</span>
                     </div>
                   )}
+
+                  {mother.father_line && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                      <Dna className="w-4 h-4 text-orange-500" />
+                      <span className="font-medium">Linia Ojca:</span>
+                      <span>{mother.father_line}</span>
+                    </div>
+                  )}
+
+                  {mother.mother_ref_number && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                      <Crown className="w-4 h-4 text-yellow-500" />
+                      <span className="font-medium">Matka Założycielka:</span>
+                      <span>{mother.mother_ref_number}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -235,9 +251,42 @@ function MotherModal({ isOpen, onClose, onSuccess, mother }: MotherModalProps) {
     line: mother?.line || '',
     insemination_method: mother?.insemination_method || '',
     year: mother?.year || new Date().getFullYear(),
+    mother_ref_number: mother?.mother_ref_number || '',
+    father_line: mother?.father_line || '',
+    breeder_wni: mother?.breeder_wni || '',
+    certificate_number: mother?.certificate_number || '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Update form data when mother changes
+  React.useEffect(() => {
+    if (mother) {
+      setFormData({
+        name: mother.name || '',
+        breed: mother.breed || '',
+        line: mother.line || '',
+        insemination_method: mother.insemination_method || '',
+        year: mother.year || new Date().getFullYear(),
+        mother_ref_number: mother.mother_ref_number || '',
+        father_line: mother.father_line || '',
+        breeder_wni: mother.breeder_wni || '',
+        certificate_number: mother.certificate_number || '',
+      });
+    } else {
+      setFormData({
+        name: '',
+        breed: '',
+        line: '',
+        insemination_method: '',
+        year: new Date().getFullYear(),
+        mother_ref_number: '',
+        father_line: '',
+        breeder_wni: '',
+        certificate_number: '',
+      });
+    }
+  }, [mother]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -254,18 +303,26 @@ function MotherModal({ isOpen, onClose, onSuccess, mother }: MotherModalProps) {
     if (mother) {
       result = await updateBreedingMother(mother.id, {
         name: formData.name.trim(),
-        breed: formData.breed || undefined,
-        line: formData.line || undefined,
-        insemination_method: formData.insemination_method || undefined,
+        breed: formData.breed?.trim() || undefined,
+        line: formData.line?.trim() || undefined,
+        insemination_method: formData.insemination_method?.trim() || undefined,
         year: formData.year || undefined,
+        mother_ref_number: formData.mother_ref_number?.trim() || undefined,
+        father_line: formData.father_line?.trim() || undefined,
+        breeder_wni: formData.breeder_wni?.trim() || undefined,
+        certificate_number: formData.certificate_number?.trim() || undefined,
       });
     } else {
       result = await createBreedingMother({
         name: formData.name.trim(),
-        breed: formData.breed || undefined,
-        line: formData.line || undefined,
-        insemination_method: formData.insemination_method || undefined,
+        breed: formData.breed?.trim() || undefined,
+        line: formData.line?.trim() || undefined,
+        insemination_method: formData.insemination_method?.trim() || undefined,
         year: formData.year || undefined,
+        mother_ref_number: formData.mother_ref_number?.trim() || undefined,
+        father_line: formData.father_line?.trim() || undefined,
+        breeder_wni: formData.breeder_wni?.trim() || undefined,
+        certificate_number: formData.certificate_number?.trim() || undefined,
       });
     }
 
@@ -279,6 +336,10 @@ function MotherModal({ isOpen, onClose, onSuccess, mother }: MotherModalProps) {
         line: '',
         insemination_method: '',
         year: new Date().getFullYear(),
+        mother_ref_number: '',
+        father_line: '',
+        breeder_wni: '',
+        certificate_number: '',
       });
     } else {
       setError(result.error || 'Wystąpił błąd');
@@ -291,7 +352,7 @@ function MotherModal({ isOpen, onClose, onSuccess, mother }: MotherModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">
             {mother ? 'Edytuj Matkę Reprodukcyjną' : 'Nowa Matka Reprodukcyjna'}
@@ -376,6 +437,66 @@ function MotherModal({ isOpen, onClose, onSuccess, mother }: MotherModalProps) {
               min="2000"
               max="2100"
             />
+          </div>
+
+          {/* KCHZ Fields Section */}
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 uppercase">Dane Prawne (KCHZ)</h4>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">
+                  Numer Matki Założycielki (Matka Matki)
+                </label>
+                <input
+                  type="text"
+                  value={formData.mother_ref_number}
+                  onChange={(e) => setFormData({ ...formData, mother_ref_number: e.target.value })}
+                  className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+                  placeholder="np. PL-2023-..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">
+                  Linia Ojca (Trutni)
+                </label>
+                <input
+                  type="text"
+                  value={formData.father_line}
+                  onChange={(e) => setFormData({ ...formData, father_line: e.target.value })}
+                  className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+                  placeholder="np. Alpejka / Trutowisko X"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">
+                  Numer Weterynaryjny (WNI)
+                </label>
+                <input
+                  type="text"
+                  value={formData.breeder_wni}
+                  onChange={(e) => setFormData({ ...formData, breeder_wni: e.target.value })}
+                  className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+                  placeholder="Wymagane do świadectw"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Wymagane do świadectw</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">
+                  Numer Świadectwa / Licencji
+                </label>
+                <input
+                  type="text"
+                  value={formData.certificate_number}
+                  onChange={(e) => setFormData({ ...formData, certificate_number: e.target.value })}
+                  className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+                  placeholder="Numer świadectwa pochodzenia"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-3 justify-end pt-4">
