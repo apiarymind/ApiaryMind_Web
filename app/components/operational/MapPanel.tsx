@@ -39,6 +39,49 @@ interface MapPanelProps {
   locationGeo: string | null;
 }
 
+/**
+ * Parsuje location_geo z dwóch formatów:
+ *   1. "lat,lng"  – plain string (np. "50.178,19.216")
+ *   2. JSON obj   – {"lat":50.178,"lon":19.216} lub {"lat":…,"lng":…}
+ *      Akceptuje też Python repr z apostrofami: {'lat':50.178,'lon':19.216}
+ */
+function parseLocationGeo(raw: string | null): { lat: number; lng: number } | null {
+  if (!raw || !raw.trim()) return null;
+  const trimmed = raw.trim();
+
+  // ── Próba 1: plain "lat,lng" ──────────────────────────────────────────────
+  // Musi zawierać dokładnie jeden przecinek MIĘDZY dwiema liczbami.
+  // Rozbijamy tylko po pierwszym przecinku żeby nie mylić z JSON-em.
+  const commaIdx = trimmed.indexOf(',');
+  if (commaIdx !== -1 && !trimmed.startsWith('{')) {
+    const latStr = trimmed.slice(0, commaIdx).trim();
+    const lngStr = trimmed.slice(commaIdx + 1).trim();
+    const lat = parseFloat(latStr);
+    const lng = parseFloat(lngStr);
+    if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+      return { lat, lng };
+    }
+  }
+
+  // ── Próba 2: JSON object (standard lub Python-style apostrofy) ────────────
+  try {
+    // Zamień apostrofy na cudzysłowy (Python repr → JSON)
+    const jsonStr = trimmed.replace(/'/g, '"');
+    const obj = JSON.parse(jsonStr);
+    if (obj && typeof obj === 'object') {
+      const lat = parseFloat(obj.lat ?? obj.latitude ?? obj.y);
+      const lng = parseFloat(obj.lng ?? obj.lon ?? obj.longitude ?? obj.x);
+      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        return { lat, lng };
+      }
+    }
+  } catch {
+    // niepoprawny JSON — ignoruj
+  }
+
+  return null;
+}
+
 export function MapPanel({ locationGeo }: MapPanelProps) {
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [isClient, setIsClient] = useState(false);
@@ -48,17 +91,7 @@ export function MapPanel({ locationGeo }: MapPanelProps) {
   }, []);
 
   useEffect(() => {
-    if (locationGeo) {
-      // Parse location_geo - format "lat,lng"
-      const parts = locationGeo.split(',');
-      if (parts.length === 2) {
-        const lat = parseFloat(parts[0].trim());
-        const lng = parseFloat(parts[1].trim());
-        if (!isNaN(lat) && !isNaN(lng)) {
-          setCoordinates({ lat, lng });
-        }
-      }
-    }
+    setCoordinates(parseLocationGeo(locationGeo));
   }, [locationGeo]);
 
   // Path options dla okręgu - złoty/bursztynowy kolor
@@ -74,8 +107,8 @@ export function MapPanel({ locationGeo }: MapPanelProps) {
       {/* Glassmorphism Header */}
       <div className="absolute top-0 left-0 right-0 z-[1000] bg-black/40 backdrop-blur-md border-b border-white/10 p-4">
         <div className="flex items-center gap-2">
-          <MapPin className="w-5 h-5 text-amber-400" />
-          <h3 className="text-lg font-bold text-amber-200">Lokalizacja Pasieki</h3>
+          <MapPin className="w-5 h-5 text-primary" />
+          <h3 className="text-lg font-bold text-text-muted">Lokalizacja Pasieki</h3>
         </div>
         {coordinates && (
           <p className="text-xs text-amber-200/60 mt-1">
@@ -134,4 +167,3 @@ export function MapPanel({ locationGeo }: MapPanelProps) {
     </div>
   );
 }
-

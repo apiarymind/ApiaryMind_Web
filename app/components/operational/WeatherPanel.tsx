@@ -64,6 +64,44 @@ function getWeatherFromCode(code: number): { condition: string; label: string } 
   return { condition: 'CLOUDY', label: 'Pochmurno' };
 }
 
+/**
+ * Parsuje location_geo z dwóch formatów:
+ *   1. "lat,lng"  – plain string (np. "50.178,19.216")
+ *   2. JSON obj   – {"lat":50.178,"lon":19.216} lub {"lat":…,"lng":…}
+ *      Akceptuje też Python repr z apostrofami: {'lat':50.178,'lon':19.216}
+ */
+function parseLocationGeo(raw: string | null): { lat: number; lng: number } | null {
+  if (!raw || !raw.trim()) return null;
+  const trimmed = raw.trim();
+
+  // ── Próba 1: plain "lat,lng" ──────────────────────────────────────────────
+  const commaIdx = trimmed.indexOf(',');
+  if (commaIdx !== -1 && !trimmed.startsWith('{')) {
+    const lat = parseFloat(trimmed.slice(0, commaIdx).trim());
+    const lng = parseFloat(trimmed.slice(commaIdx + 1).trim());
+    if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+      return { lat, lng };
+    }
+  }
+
+  // ── Próba 2: JSON object (standard lub Python-style apostrofy) ────────────
+  try {
+    const jsonStr = trimmed.replace(/'/g, '"');
+    const obj = JSON.parse(jsonStr);
+    if (obj && typeof obj === 'object') {
+      const lat = parseFloat(obj.lat ?? obj.latitude ?? obj.y);
+      const lng = parseFloat(obj.lng ?? obj.lon ?? obj.longitude ?? obj.x);
+      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        return { lat, lng };
+      }
+    }
+  } catch {
+    // niepoprawny JSON — ignoruj
+  }
+
+  return null;
+}
+
 export function WeatherPanel({ locationGeo }: WeatherPanelProps) {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,22 +114,17 @@ export function WeatherPanel({ locationGeo }: WeatherPanelProps) {
       return;
     }
 
-    // Parsuj współrzędne z formatu "lat,long"
-    const parts = locationGeo.split(',');
-    if (parts.length !== 2) {
+    // Parsuj współrzędne — obsługuje "lat,lng" i JSON (w tym Python repr)
+    const coords = parseLocationGeo(locationGeo);
+
+    if (!coords) {
       setLoading(false);
       setError('Nieprawidłowy format współrzędnych');
       return;
     }
 
-    const latitude = parseFloat(parts[0].trim());
-    const longitude = parseFloat(parts[1].trim());
-
-    if (isNaN(latitude) || isNaN(longitude)) {
-      setLoading(false);
-      setError('Nieprawidłowe współrzędne');
-      return;
-    }
+    const latitude = coords.lat;
+    const longitude = coords.lng;
 
     // Fetch danych z Open-Meteo API
     const fetchWeather = async () => {
@@ -197,8 +230,8 @@ export function WeatherPanel({ locationGeo }: WeatherPanelProps) {
   return (
     <div className="rounded-2xl border border-white/10 bg-black/30 backdrop-blur-xl p-6 h-[400px] flex flex-col">
       <div className="flex items-center gap-2 mb-6">
-        <Cloud className="w-5 h-5 text-amber-400" />
-        <h3 className="text-lg font-bold text-amber-200">Warunki Pogodowe</h3>
+        <Cloud className="w-5 h-5 text-primary" />
+        <h3 className="text-lg font-bold text-text-muted">Warunki Pogodowe</h3>
       </div>
 
       {loading ? (
@@ -221,7 +254,7 @@ export function WeatherPanel({ locationGeo }: WeatherPanelProps) {
                 {getWeatherIcon(weather.current.condition)}
                 <div>
                   <p className="text-xs text-amber-200/60 uppercase">Teraz</p>
-                  <p className="text-2xl font-bold text-amber-200">
+                  <p className="text-2xl font-bold text-text-muted">
                     {weather.current.temperature}°C
                   </p>
                 </div>
@@ -263,7 +296,7 @@ export function WeatherPanel({ locationGeo }: WeatherPanelProps) {
                   <div className="flex items-center gap-3 flex-1">
                     {getWeatherIcon(day.condition)}
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-amber-200">
+                      <p className="text-sm font-medium text-text-muted">
                         {formatDate(day.date)}
                       </p>
                       <p className="text-xs text-amber-200/60">
@@ -274,7 +307,7 @@ export function WeatherPanel({ locationGeo }: WeatherPanelProps) {
                   <div className="flex items-center gap-4 text-sm">
                     <div className="flex items-center gap-1">
                       <Thermometer className="w-3 h-3 text-amber-400/60" />
-                      <span className="text-amber-200">{day.temperature}°C</span>
+                      <span className="text-text-muted">{day.temperature}°C</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Wind className="w-3 h-3 text-amber-400/60" />
