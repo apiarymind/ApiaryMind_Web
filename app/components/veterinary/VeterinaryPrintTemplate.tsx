@@ -2,6 +2,7 @@
 
 import { TreatmentReportEntry } from "@/app/actions/veterinary/get-treatments-report";
 import Image from "next/image";
+import PrintPortal from "@/app/components/PrintPortal";
 
 interface VeterinaryPrintTemplateProps {
   reportData: TreatmentReportEntry[];
@@ -34,7 +35,7 @@ export default function VeterinaryPrintTemplate({
   const totalPages = Math.ceil(reportData.length / rowsPerPage);
 
   return (
-    <>
+    <PrintPortal>
       <style jsx global>{`
         @media print {
           @page {
@@ -43,42 +44,29 @@ export default function VeterinaryPrintTemplate({
             counter-increment: page;
           }
 
-          /* Hide everything first */
-          body * {
-            visibility: hidden;
+          /* Hide everything in body except the print portal */
+          body > *:not(#print-portal-root) {
+            display: none !important;
           }
 
-          /* Show only print template */
-          .print-template,
-          .print-template * {
-            visibility: visible !important;
+          /* Ensure the portal root is visible and takes full space */
+          #print-portal-root {
+            display: block !important;
+            position: absolute !important;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            z-index: 9999;
           }
 
           .print-template {
-            position: absolute;
-            left: 0;
-            top: 0;
             width: 100%;
             background: white !important;
             color: black !important;
             font-family: "Times New Roman", Times, serif;
             font-size: 11pt;
             line-height: 1.4;
-            padding: 0;
-            margin: 0;
-          }
-
-          /* Hide app UI elements */
-          nav,
-          aside,
-          header,
-          footer,
-          button,
-          .no-print,
-          .bg-neutral-900,
-          .border-neutral-800 {
-            display: none !important;
-            visibility: hidden !important;
           }
 
           /* Prevent page breaks inside rows */
@@ -242,6 +230,6 @@ export default function VeterinaryPrintTemplate({
           </div>
         </div>
       </div>
-    </>
+    </PrintPortal>
   );
 }
